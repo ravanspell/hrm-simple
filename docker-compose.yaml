@@ -1,0 +1,31 @@
+# hrm app includes two docker services
+# 1. node js + nest js REST API
+# 2. mysql dabase server
+
+services:
+  myhrm-app:
+    image: node:20-alpine
+    container_name: myhrm-app-v1
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    ports:
+      - "3001:3001"
+    command: sh -c "npm install && npm run start:dev"
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db-myhrm-app-v1
+    env_file:
+      - .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+volumes:
+  mysql_data:
+    driver: local
