@@ -2,7 +2,6 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Version } from '@nes
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
-import { Prisma } from '@prisma/client';
 
 
 @Controller('user')
@@ -12,7 +11,7 @@ export class UserController {
 
   @Post()
   @Version('1')
-  create(@Body() createUserDto: Prisma.UserCreateInput) {
+  create(@Body() createUserDto: CreateUserDto) {
     console.log("this is test log");
     return this.userService.create(createUserDto);
   }
