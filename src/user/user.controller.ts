@@ -2,23 +2,28 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Version } from '@nes
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { LoggerService } from 'src/logger/logger.service';
 
 
 @Controller('user')
 export class UserController {
   
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly loggerService: LoggerService
+  ) {}
 
   @Post()
   @Version('1')
   create(@Body() createUserDto: CreateUserDto) {
-    console.log("this is test log");
+    this.loggerService.logEmployeeAction('user create req',JSON.stringify(createUserDto));
     return this.userService.create(createUserDto);
   }
 
   @Get()
   @Version('1')
   findAll() {
+    this.loggerService.logEmployeeAction('im first log here','emp id');
     return this.userService.findAll();
   }
 
