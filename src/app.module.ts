@@ -4,13 +4,15 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { DatabaseModule } from './database/database/database.module';
+import { LoggerModule } from './logger/logger.module';
 
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     DatabaseModule, 
-    UserModule
+    UserModule, 
+    LoggerModule
   ],
   controllers: [AppController],
   providers: [AppService],
