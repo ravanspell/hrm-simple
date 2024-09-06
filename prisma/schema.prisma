@@ -13,29 +13,111 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// sample model
-model Post {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String   @db.VarChar(255)
-  content   String?
-  published Boolean  @default(false)
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
+model Users {
+  id                 BigInt            @id @default(autoincrement())
+  email              String            @unique()
+  firstName          String
+  lastName           String
+  gender             Gender
+  employmentStatus   EmploymentStatus?  @relation(fields: [employmentStatusId], references: [id])
+  employmentStatusId BigInt
+  startDate          DateTime
+  endDate            DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  createdBy          BigInt?
+  updatedBy          BigInt?
+  employeeLevel      EmployeeLevel?    @relation(fields: [employeeLevelId], references: [id])
+  employeeLevelId    BigInt?
+  empLeaveHistory    EmpLeaveHistory[]
+  leaveBalance       LeaveBalance[]
 }
-// sample model
-model Profile {
-  id     Int     @id @default(autoincrement())
-  bio    String?
-  user   User    @relation(fields: [userId], references: [id])
-  userId Int     @unique
+
+model EmploymentStatus {
+  id          BigInt  @id @default(autoincrement())
+  status      String
+  description String
+  users       Users[]
 }
-// sample model
-model User {
-  id      Int      @id @default(autoincrement())
-  email   String   @unique
-  name    String?
-  posts   Post[]
-  profile Profile?
+
+model EmployeeLevel {
+  id               BigInt             @id @default(autoincrement())
+  name             String
+  description      String?
+  leaveAllocations LeaveAllocations[]
+  Users            Users[]
+}
+
+model LeaveTypes {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   BigInt?
+  updatedBy   BigInt?
+
+  empLeaveHistory  EmpLeaveHistory[]
+  leaveBalance     LeaveBalance[]
+  leaveAllocations LeaveAllocations[]
+}
+
+model EmpLeaveHistory {
+  id          BigInt      @id @default(autoincrement())
+  employeeId  BigInt
+  leaveTypeId Int
+  leaveHours  BigInt
+  status      LeaveStatus
+  approvedBy  BigInt?
+  comments    String?
+
+  employee  Users      @relation(fields: [employeeId], references: [id])
+  leaveType LeaveTypes @relation(fields: [leaveTypeId], references: [id])
+
+  @@index([employeeId])
+  @@index([leaveTypeId])
+  @@index([status])
+  @@index([approvedBy])
+}
+
+model LeaveAllocations {
+  id              BigInt @id @default(autoincrement())
+  employeeLevelId BigInt
+  leaveTypeId     Int
+  totalLeaveHours Int
+
+  employeeLevel EmployeeLevel @relation(fields: [employeeLevelId], references: [id])
+  leaveType     LeaveTypes    @relation(fields: [leaveTypeId], references: [id])
+
+  @@index([employeeLevelId])
+}
+
+model LeaveBalance {
+  id                  BigInt   @id @default(autoincrement())
+  employeeId          BigInt
+  leaveTypeId         Int
+  usedLeaveHours      Int
+  leaveAllocatedHours Int
+  lastUpdated         DateTime @default(now())
+  createdBy           BigInt?
+  updatedBy           BigInt?
+
+  employee  Users      @relation(fields: [employeeId], references: [id])
+  leaveType LeaveTypes @relation(fields: [leaveTypeId], references: [id])
+
+  @@index([employeeId])
+  @@index([leaveTypeId])
+  @@index([updatedBy])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
