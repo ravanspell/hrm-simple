@@ -1,15 +1,50 @@
-import { Prisma } from "@prisma/client";
-import { IsEmail, IsNotEmpty, IsString, maxLength } from "class-validator";
+import { Prisma } from '@prisma/client';
+import {
+    IsString,
+    IsNotEmpty,
+    IsOptional,
+    IsDateString,
+    IsInt,
+    IsEmail,
+} from 'class-validator';
 
-export class CreateUserDto {
-
+export class CreateUserDto implements Prisma.UsersCreateInput {
+    @IsString()
     @IsNotEmpty()
-    @IsEmail()
-    email: Prisma.UserCreateInput['email']
+    firstName: string;
 
     @IsString()
-    name: Prisma.UserCreateInput['name']
+    @IsNotEmpty()
+    lastName: string;
 
-    posts: Prisma.PostCreateNestedManyWithoutAuthorInput
-    profile: Prisma.ProfileCreateNestedOneWithoutUserInput
+    @IsEmail()
+    @IsNotEmpty()
+    email: string;
+
+    @IsNotEmpty()
+    gender: Prisma.UsersCreateInput['gender']
+
+    @IsInt()
+    @IsNotEmpty()
+    employmentStatusId: number;
+
+    @IsDateString()
+    @IsNotEmpty()
+    startDate: Date;
+
+    @IsOptional()
+    @IsDateString()
+    endDate?: Date;
+
+    @IsOptional()
+    @IsInt()
+    createdBy?: number;
+
+    @IsOptional()
+    @IsInt()
+    updatedBy?: number;
+
+    @IsOptional()
+    @IsInt()
+    employeeLevelId?: number;
 }
