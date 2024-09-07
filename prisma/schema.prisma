@@ -13,29 +13,133 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// sample model
-model Post {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String   @db.VarChar(255)
-  content   String?
-  published Boolean  @default(false)
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
+model Organization {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  logo        String?
+  
+  users              User[]
+  employmentStatuses EmploymentStatus[]
+  leaveTypes         LeaveType[]
+  employeeLevels     EmployeeLevel[]
+  empLeaveHistories  EmpLeaveHistory[]
+  leaveBalances      LeaveBalance[]
+  leaveAllocations   LeaveAllocation[]
 }
-// sample model
-model Profile {
-  id     Int     @id @default(autoincrement())
-  bio    String?
-  user   User    @relation(fields: [userId], references: [id])
-  userId Int     @unique
-}
-// sample model
+
 model User {
-  id      Int      @id @default(autoincrement())
-  email   String   @unique
-  name    String?
-  posts   Post[]
-  profile Profile?
+  id               Int       @id @default(autoincrement())
+  organizationId   Int
+  firstName        String
+  lastName         String
+  email            String    @unique
+  gender           String
+  employmentStatus Int
+  employeeLevel    Int
+  startDate        DateTime?
+  endDate          DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  createdBy        Int?
+  updatedBy        Int?
+  
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  empLeaveHistories EmpLeaveHistory[]
+  leaveBalances    LeaveBalance[]
+
+  @@index([organizationId])
+}
+
+model EmploymentStatus {
+  id            Int          @id @default(autoincrement())
+  status        String
+  description   String?
+  organizationId Int
+
+  organization  Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+}
+
+model EmployeeLevel {
+  id            Int           @id @default(autoincrement())
+  name          String
+  description   String?
+  organizationId Int
+
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  leaveAllocations LeaveAllocation[]
+
+  @@index([organizationId])
+}
+
+model LeaveType {
+  id            Int           @id @default(autoincrement())
+  name          String
+  description   String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  createdBy     Int
+  updatedBy     Int
+  organizationId Int
+
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  empLeaveHistories EmpLeaveHistory[]
+  leaveAllocations LeaveAllocation[]
+  leaveBalances    LeaveBalance[]
+
+  @@index([organizationId])
+}
+
+model LeaveAllocation {
+  id             Int            @id @default(autoincrement())
+  employeeLevelId Int
+  leaveTypeId    Int
+  totalLeaveHours Int
+  organizationId Int
+
+  employeeLevel  EmployeeLevel @relation(fields: [employeeLevelId], references: [id])
+  leaveType      LeaveType     @relation(fields: [leaveTypeId], references: [id])
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+
+  @@index([employeeLevelId, leaveTypeId])
+  @@index([organizationId])
+}
+
+model EmpLeaveHistory {
+  id            Int           @id @default(autoincrement())
+  organizationId Int
+  employeeId    Int
+  leaveTypeId   Int
+  leaveHours    Int
+  status        String
+  approvedBy    Int
+  comments      String?
+
+  employee      User           @relation(fields: [employeeId], references: [id])
+  leaveType     LeaveType      @relation(fields: [leaveTypeId], references: [id])
+  organization  Organization   @relation(fields: [organizationId], references: [id])
+
+  @@index([employeeId, leaveTypeId, status, approvedBy])
+  @@index([organizationId])
+}
+
+model LeaveBalance {
+  id               Int        @id @default(autoincrement())
+  leaveTypeId      Int
+  employeeId       Int
+  usedLeaveHours   Int
+  leaveAllocatedHours Int
+  lastUpdated      DateTime   @default(now())
+  createdBy        Int
+  updatedBy        Int
+  organizationId   Int
+
+  employee         User        @relation(fields: [employeeId], references: [id])
+  leaveType        LeaveType   @relation(fields: [leaveTypeId], references: [id])
+  organization     Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([leaveTypeId, employeeId])
+  @@index([organizationId])
 }
