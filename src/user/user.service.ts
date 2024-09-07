@@ -9,18 +9,19 @@ export class UserService {
   constructor(private readonly databaseService: DatabaseService) {}
   
   async create(createUserDto: CreateUserDto) {
-    return this.databaseService.users.create({data: {
+    return this.databaseService.user.create({ data: {
       firstName: createUserDto.firstName,
       lastName: createUserDto.lastName,
       email: createUserDto.email,
       gender: createUserDto.gender,
-      startDate: createUserDto.startDate,
-      employmentStatusId: +createUserDto.employmentStatusId,
+      employmentStatus: +createUserDto.employmentStatus,
+      employeeLevel: 1,
+      organizationId: 1
     }})
   }
 
   findAll() {
-    return this.databaseService.users.findMany()
+    return this.databaseService.user.findMany()
   }
 
   findOne(id: number) {
