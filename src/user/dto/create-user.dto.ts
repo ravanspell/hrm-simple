@@ -8,8 +8,8 @@ import {
     IsEmail,
 } from 'class-validator';
 
-type TUser = Prisma.UserCreateInput;
-export class CreateUserDto implements Omit<TUser, 'organization'>{
+type TUser = Omit<Prisma.UserCreateInput, 'employmentStatus' | 'organization' | 'employeeLevel' | 'createdBy' | 'updatedBy'>;
+export class CreateUserDto implements TUser {
     @IsString()
     @IsNotEmpty()
     firstName: string;
@@ -27,7 +27,7 @@ export class CreateUserDto implements Omit<TUser, 'organization'>{
 
     @IsInt()
     @IsNotEmpty()
-    employmentStatus: number;
+    employmentStatusId: number;
 
     @IsDateString()
     @IsNotEmpty()
@@ -47,5 +47,9 @@ export class CreateUserDto implements Omit<TUser, 'organization'>{
 
     @IsOptional()
     @IsInt()
-    employeeLevel: number;
+    employeeLevelId: number;
+
+    @IsNotEmpty()
+    @IsDateString()
+    dateOfBirth: string | Date;
 }

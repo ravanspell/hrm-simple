@@ -3,6 +3,7 @@ import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoggerService } from 'src/logger/logger.service';
+import { FilterUsersDto } from './dto/filter-user.dto';
 
 
 @Controller('user')
@@ -22,9 +23,9 @@ export class UserController {
 
   @Get()
   @Version('1')
-  findAll() {
+  filter(@Body() filterUsersDto: FilterUsersDto[]) {
     this.loggerService.logEmployeeAction('im first log here','emp id');
-    return this.userService.findAll();
+    return this.userService.filterUsers(filterUsersDto);
   }
 
   @Get(':id')
