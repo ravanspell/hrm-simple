@@ -95,6 +95,34 @@ async function main() {
     ],
   });
 
+  await prisma.user.create({
+    data: {
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john.doe@example.com',
+      gender: 'Male',
+      dateOfBirth: new Date('1990-01-01'),  // Ensure date format is correct
+      startDate: new Date('2023-09-08'),     // Ensure date format is correct
+      createdBy: 1,   // Assuming 1 is a valid user ID
+      updatedBy: 1,   // Same as above
+
+      // Linking to an existing organization
+      organization: {
+        connect: { id: 1 },  // Assuming 1 is the ID of an existing organization
+      },
+
+      // Linking to an existing employment status
+      employmentStatus: {
+        connect: { id: 1 },  // Assuming 1 is the ID of an existing employment status
+      },
+
+      // Linking to an existing employee level
+      employeeLevel: {
+        connect: { id: 1 },  // Assuming 1 is the ID of an existing employee level
+      },
+    },
+  });
+
   console.log('Seeding finished!');
 }
 

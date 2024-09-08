@@ -18,7 +18,7 @@ model Organization {
   name        String
   description String?
   logo        String?
-  
+
   users              User[]
   employmentStatuses EmploymentStatus[]
   leaveTypes         LeaveType[]
@@ -33,22 +33,28 @@ model User {
   organizationId   Int
   firstName        String
   lastName         String
-  email            String    @unique
-  gender           String
-  employmentStatus Int
-  employeeLevel    Int
-  startDate        DateTime?
+  email            String     @unique
+  gender           String     
+  dateOfBirth      DateTime
+  employmentStatusId Int
+  employeeLevelId  Int
+  startDate        DateTime
   endDate          DateTime?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
-  createdBy        Int?
-  updatedBy        Int?
-  
+  createdBy        Int
+  updatedBy        Int
+
   organization     Organization @relation(fields: [organizationId], references: [id])
+  employmentStatus EmploymentStatus @relation(fields: [employmentStatusId], references: [id])
+  employeeLevel    EmployeeLevel    @relation(fields: [employeeLevelId], references: [id])
   empLeaveHistories EmpLeaveHistory[]
   leaveBalances    LeaveBalance[]
 
   @@index([organizationId])
+  @@index([employmentStatusId])
+  @@index([employeeLevelId])
+  @@index([email])
 }
 
 model EmploymentStatus {
@@ -58,6 +64,7 @@ model EmploymentStatus {
   organizationId Int
 
   organization  Organization @relation(fields: [organizationId], references: [id])
+  users         User[]
 
   @@index([organizationId])
 }
@@ -69,6 +76,7 @@ model EmployeeLevel {
   organizationId Int
 
   organization  Organization @relation(fields: [organizationId], references: [id])
+  users         User[]
   leaveAllocations LeaveAllocation[]
 
   @@index([organizationId])
@@ -113,7 +121,7 @@ model EmpLeaveHistory {
   employeeId    Int
   leaveTypeId   Int
   leaveHours    Int
-  status        String
+  status        String       
   approvedBy    Int
   comments      String?
 
