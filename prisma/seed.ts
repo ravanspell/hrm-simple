@@ -98,6 +98,7 @@ async function main() {
   await prisma.user.create({
     data: {
       firstName: 'John',
+      password: '$2a$12$TPOonEM.ScA0reQjHqlsCO0BZ5S2IJ1.6K.9jqeF4zs6xQaWT6MDe', // abc123
       lastName: 'Doe',
       email: 'john.doe@example.com',
       gender: 'Male',
