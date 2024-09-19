@@ -33,6 +33,7 @@ model User {
   organizationId   Int
   firstName        String
   lastName         String
+  password         String?
   email            String     @unique
   gender           String     
   dateOfBirth      DateTime
