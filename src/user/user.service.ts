@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DatabaseService } from 'src/database/database.service';
 import { FilterUsersDto, Gender } from './dto/filter-user.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -100,11 +100,11 @@ export class UserService {
 
     // Define the fields to select
     const selectClause: Prisma.UserSelect = {
-      id: true,                
+      id: true,
       firstName: true,
-      lastName: true,      
-      email: true,             
-      gender: true,            
+      lastName: true,
+      email: true,
+      gender: true,
       employeeLevel: includeEmployeeLevel ? {
         select: {
           name: true,
@@ -127,9 +127,17 @@ export class UserService {
     return users;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(email: string): Promise<User> {
+    const user = await this.databaseService.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+    return user;
   }
+
 
   update(id: number, updateUserDto: UpdateUserDto) {
     return `This action updates a #${id} user`;
