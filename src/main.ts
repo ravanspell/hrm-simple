@@ -8,7 +8,10 @@ async function bootstrap() {
   app.enableCors();
   // app.setGlobalPrefix(app.get('ConfigService').get('SERVER_API_PREFIX', '/api'));
   app.useGlobalInterceptors(new TransformInterceptor());
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }));
   await app.listen(3001);
 }
 bootstrap();
