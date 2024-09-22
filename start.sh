@@ -12,6 +12,9 @@ RESET='\033[0m'
 echo -e "${BLUE}---------------------------------------${RESET}"
 echo -e "${BOLD}${YELLOW}-----Starting MyHRM API Services-------${RESET}"
 echo -e "${BLUE}---------------------------------------${RESET}"
+echo -e "${BOLD}${YELLOW}----------- Node version --------------${RESET}"
+node --version
+echo -e "${BLUE}---------------------------------------${RESET}"
 
 # Installing dependencies
 npm install

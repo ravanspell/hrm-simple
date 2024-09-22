@@ -7,6 +7,8 @@ import { DatabaseModule } from './database/database.module';
 import { LoggerModule } from './logger/logger.module';
 import { EmployeeLeavesModule } from './employee-leaves/employee-leaves.module';
 import { AuthModule } from './auth/auth.module';
+import { APP_GUARD } from '@nestjs/core';
+import { PermissionsGuard } from './auth/guards/permissions.guard';
 
 @Module({
   imports: [
@@ -18,6 +20,13 @@ import { AuthModule } from './auth/auth.module';
     AuthModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      // apply permission guard for all endpoint routes.
+      useClass: PermissionsGuard,
+    },
+  ],
 })
 export class AppModule { }
