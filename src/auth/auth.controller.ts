@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { CurrentUser } from 'src/decorators/currentUser.decorator';
 import { User } from '@prisma/client';
+import { Request } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -29,8 +30,8 @@ export class AuthController {
     }
 
     @Get('logout')
-    async logout(@Req() req) {
-        req.session.destroy();
+    async logout(@Req() req: Request) {
+        req.session.destroy(() => {});
         return true;
     }
 }

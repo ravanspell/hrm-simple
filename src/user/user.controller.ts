@@ -5,6 +5,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { LoggerService } from 'src/logger/logger.service';
 import { FilterUsersDto } from './dto/filter-user.dto';
 import { AuthenticatedGuard } from 'src/auth/guards/authenticated.guard';
+import { PermissionsGuard } from 'src/auth/guards/permissions.guard';
+import { Permissions } from 'src/decorators/permissions.decorator';
 
 
 @Controller('user')
@@ -25,6 +27,7 @@ export class UserController {
   @Get()
   @Version('1')
   @UseGuards(AuthenticatedGuard)
+  @Permissions('can:filter')
   filter(@Body() filterUsersDto: FilterUsersDto[]) {
     this.loggerService.logEmployeeAction('im first log here','emp id');
     return this.userService.filterUsers(filterUsersDto);
