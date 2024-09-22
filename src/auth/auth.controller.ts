@@ -1,5 +1,4 @@
 import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { CurrentUser } from 'src/decorators/currentUser.decorator';
 import { User } from '@prisma/client';
@@ -7,13 +6,6 @@ import { Request } from 'express';
 
 @Controller('auth')
 export class AuthController {
-
-    constructor(private readonly authService: AuthService) { }
-
-    // @Post('signup')
-    // async signup() {
-    //     return this.authService.login();
-    // }
 
     @Post('login')
     @UseGuards(LocalAuthGuard)
@@ -31,7 +23,7 @@ export class AuthController {
 
     @Get('logout')
     async logout(@Req() req: Request) {
-        req.session.destroy(() => {});
+        req.session.destroy(() => { });
         return true;
     }
 }
