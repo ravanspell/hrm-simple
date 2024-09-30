@@ -1,15 +1,37 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  BadRequestException
+} from '@nestjs/common';
 import { FileManagementService } from './file-management.service';
-import { CreateFileManagementDto } from './dto/create-file-management.dto';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
+import { IsString } from 'class-validator';
+
+class InitUploadDto {
+  @IsString()
+  fileName: string;
+}
 
 @Controller('file-management')
 export class FileManagementController {
-  constructor(private readonly fileManagementService: FileManagementService) {}
+  constructor(private readonly fileManagementService: FileManagementService) { }
 
-  @Post()
-  create(@Body() createFileManagementDto: CreateFileManagementDto) {
-    return this.fileManagementService.create(createFileManagementDto);
+  @Post('upload/init')
+  async initUpload(@Body() initUploadDto: InitUploadDto) {
+    const { fileName } = initUploadDto;
+    // get the file extention out of the file name
+    const splittedFileName = fileName.split('.');
+    const fileType = splittedFileName[splittedFileName.length - 1];
+    if (!fileName || !fileType) {
+      throw new BadRequestException('Filename and fileType are required');
+    }
+    const { uploadUrl, key } = await this.fileManagementService.getPresignedUrl(fileName, fileType);
+    return { uploadUrl, key };
   }
 
   @Get()
