@@ -39,8 +39,10 @@ export class UserService {
     })
   }
 
-  async filterUsers(filters: FilterUsersDto[]) {
-    const conditions: Prisma.UserWhereInput[] = [];
+  async filterUsers(filters: FilterUsersDto[], orgId: number) {
+    const conditions: Prisma.UserWhereInput[] = [{
+      organizationId: orgId,
+    }];
 
     // Track whether we need to include relations like employeeLevel or employmentStatus
     let includeEmployeeLevel = false;
@@ -55,13 +57,6 @@ export class UserService {
 
       // Push conditions based on the field, operator, and value
       switch (field) {
-        case 'organization':
-          if (operator === 'is' && value) {
-            conditions.push({
-              organizationId: value as number,
-            });
-          }
-          break;
         case 'gender':
           if (operator === 'is' && typeof value === 'string') {
             conditions.push({
