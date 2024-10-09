@@ -33,6 +33,25 @@ model Organization {
   empLeaveHistories  EmpLeaveHistory[]
   leaveBalances      LeaveBalance[]
   leaveAllocations   LeaveAllocation[]
+  EmailSettings      EmailSettings[]
+}
+
+model EmailSettings {
+  id                     String      @id @default(uuid())
+  emailHost              String
+  emailPort              Int
+  displayName            String
+  defaultFromEmail       String
+  emailHostUsername      String
+  encryptedEmailAuthPassword String
+  useTLS                 Boolean     @default(false)
+  useSSL                 Boolean     @default(false)
+  isPrimary              Boolean     @default(false)
+  emailSendTimeout       Int         @default(30000)
+  organizationId         Int
+  organization           Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
 }
 
 model User {
