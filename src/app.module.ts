@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { PermissionsGuard } from './auth/guards/permissions.guard';
 import { AuthenticatedGuard } from './auth/guards/authenticated.guard';
 import { FileManagementModule } from './file-management/file-management.module';
+import { UtilitiesModule } from './utilities/utilities.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { FileManagementModule } from './file-management/file-management.module';
     EmployeeLeavesModule,
     AuthModule,
     FileManagementModule
+    UtilitiesModule
   ],
   controllers: [AppController],
   providers: [
