@@ -12,6 +12,7 @@ import { PermissionsGuard } from './auth/guards/permissions.guard';
 import { AuthenticatedGuard } from './auth/guards/authenticated.guard';
 import { FileManagementModule } from './file-management/file-management.module';
 import { UtilitiesModule } from './utilities/utilities.module';
+import { EmailSettingsModule } from './email-settings/email-settings.module';
 
 @Module({
   imports: [
@@ -21,8 +22,9 @@ import { UtilitiesModule } from './utilities/utilities.module';
     LoggerModule,
     EmployeeLeavesModule,
     AuthModule,
-    FileManagementModule
-    UtilitiesModule
+    FileManagementModule,
+    UtilitiesModule,
+    EmailSettingsModule
   ],
   controllers: [AppController],
   providers: [
