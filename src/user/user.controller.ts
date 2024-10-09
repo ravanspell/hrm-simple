@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Version, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Version, Req } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -6,6 +6,7 @@ import { LoggerService } from 'src/logger/logger.service';
 import { FilterUsersDto } from './dto/filter-user.dto';
 import { Permissions } from 'src/decorators/permissions.decorator';
 import { Authentication } from 'src/decorators/auth.decorator';
+import { RequestWithTenant } from 'src/coretypes';
 
 
 @Controller('user')
@@ -27,9 +28,10 @@ export class UserController {
   @Version('1')
   @Authentication()
   @Permissions('can:filter')
-  filter(@Body() filterUsersDto: FilterUsersDto[]) {
+  filter(@Body() filterUsersDto: FilterUsersDto[], @Req() request: RequestWithTenant) {
     this.loggerService.logEmployeeAction('im first log here','emp id');
-    return this.userService.filterUsers(filterUsersDto);
+    const orgId = request.organization.id;
+    return this.userService.filterUsers(filterUsersDto, orgId);
   }
 
   @Get(':id')
