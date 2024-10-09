@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { PermissionsGuard } from './auth/guards/permissions.guard';
 import { AuthenticatedGuard } from './auth/guards/authenticated.guard';
+import { UtilitiesModule } from './utilities/utilities.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { AuthenticatedGuard } from './auth/guards/authenticated.guard';
     UserModule,
     LoggerModule,
     EmployeeLeavesModule,
-    AuthModule
+    AuthModule,
+    UtilitiesModule
   ],
   controllers: [AppController],
   providers: [
