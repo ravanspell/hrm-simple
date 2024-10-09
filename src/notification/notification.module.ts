@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { NotificationService } from './notification.service';
 import { NotificationFactory } from './notification.factory';
 import { EmailModule } from './strategies/email/email.module';
+import { EmailSettingsModule } from 'src/email-settings/email-settings.module';
 
 @Module({
-  imports: [ConfigModule, EmailModule],
+  imports: [EmailModule, EmailSettingsModule],
   providers: [NotificationService, NotificationFactory],
   exports: [NotificationService],
 })
