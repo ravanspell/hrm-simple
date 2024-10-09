@@ -9,6 +9,11 @@ import { PrismaClient } from '@prisma/client';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableVersioning({
+    type: VersioningType.URI,
+  });
+  // apply 'api' prefix for all API endpoints
+  app.setGlobalPrefix('api');
   // session store is a mysql db table where user session data
   // is being stored. Typically Redis would be a ideal solution here.
   const sessionStore = new PrismaSessionStore(new PrismaClient(),
@@ -19,8 +24,6 @@ async function bootstrap() {
     }
   );
   app.enableCors();
-  // apply 'api' prefix for all API endpoints
-  app.setGlobalPrefix('api');
   app.use(
     session({
       secret: process.env.SESSION_TOKEN_SECRET,
