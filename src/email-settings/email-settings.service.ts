@@ -123,15 +123,22 @@ export class EmailSettingsService {
     });
   }
 
-  async getDecryptedPassword(id: string): Promise<string> {
+  async getEmailSettings(organizationId: string, emailSettingId: string): Promise<any> {
+    const where = {organizationId}
+    if(emailSettingId) {
+      where['id'] = emailSettingId;
+    }
     const emailSettings = await this.databaseService.emailSettings.findUnique({
-      where: { id },
+      where,
     });
 
     if (!emailSettings) {
       throw new NotFoundException('Email settings not found.');
     }
 
-    return this.encryptionService.decrypt(emailSettings.encryptedEmailAuthPassword);
+    return {
+      ...emailSettings,
+      emailAuthPassword: this.encryptionService.decrypt(emailSettings.emailAuthPassword)
+    }
   }
 }
