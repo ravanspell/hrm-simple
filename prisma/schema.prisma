@@ -21,7 +21,7 @@ model Session {
 }
 
 model Organization {
-  id          Int      @id @default(autoincrement())
+  id          String      @id @default(uuid())
   name        String
   description String?
   logo        String?
@@ -43,34 +43,34 @@ model EmailSettings {
   displayName            String
   defaultFromEmail       String
   emailHostUsername      String
-  encryptedEmailAuthPassword String
+  emailAuthPassword      String
   useTLS                 Boolean     @default(false)
   useSSL                 Boolean     @default(false)
   isPrimary              Boolean     @default(false)
   emailSendTimeout       Int         @default(30000)
-  organizationId         Int
+  organizationId         String
   organization           Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId])
 }
 
 model User {
-  id               Int       @id @default(autoincrement())
-  organizationId   Int
+  id               String      @id @default(uuid())
+  organizationId   String
   firstName        String
   lastName         String
   password         String?
   email            String     @unique
   gender           String     
   dateOfBirth      DateTime
-  employmentStatusId Int
-  employeeLevelId  Int
+  employmentStatusId String
+  employeeLevelId  String
   startDate        DateTime
   endDate          DateTime?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
-  createdBy        Int
-  updatedBy        Int
+  createdBy        String
+  updatedBy        String
 
   organization     Organization @relation(fields: [organizationId], references: [id])
   employmentStatus EmploymentStatus @relation(fields: [employmentStatusId], references: [id])
@@ -85,54 +85,54 @@ model User {
 }
 
 model EmploymentStatus {
-  id            Int          @id @default(autoincrement())
-  status        String
-  description   String?
-  organizationId Int
+  id              String      @id @default(uuid())
+  status          String
+  description     String?
+  organizationId  String
 
-  organization  Organization @relation(fields: [organizationId], references: [id])
-  users         User[]
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  users           User[]
 
   @@index([organizationId])
 }
 
 model EmployeeLevel {
-  id            Int           @id @default(autoincrement())
-  name          String
-  description   String?
-  organizationId Int
+  id              String      @id @default(uuid())
+  name            String
+  description     String?
+  organizationId  String
 
-  organization  Organization @relation(fields: [organizationId], references: [id])
-  users         User[]
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  users           User[]
   leaveAllocations LeaveAllocation[]
 
   @@index([organizationId])
 }
 
 model LeaveType {
-  id            Int           @id @default(autoincrement())
-  name          String
-  description   String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  createdBy     Int
-  updatedBy     Int
-  organizationId Int
+  id              String      @id @default(uuid())
+  name            String
+  description     String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  createdBy       String
+  updatedBy       String
+  organizationId  String
 
-  organization  Organization @relation(fields: [organizationId], references: [id])
-  empLeaveHistories EmpLeaveHistory[]
-  leaveAllocations LeaveAllocation[]
-  leaveBalances    LeaveBalance[]
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  empLeaveHistories   EmpLeaveHistory[]
+  leaveAllocations  LeaveAllocation[]
+  leaveBalances     LeaveBalance[]
 
   @@index([organizationId])
 }
 
 model LeaveAllocation {
-  id             Int            @id @default(autoincrement())
-  employeeLevelId Int
-  leaveTypeId    Int
-  totalLeaveHours Int
-  organizationId Int
+  id               String      @id @default(uuid())
+  employeeLevelId  String
+  leaveTypeId      String
+  totalLeaveHours  Int
+  organizationId   String
 
   employeeLevel  EmployeeLevel @relation(fields: [employeeLevelId], references: [id])
   leaveType      LeaveType     @relation(fields: [leaveTypeId], references: [id])
@@ -143,37 +143,37 @@ model LeaveAllocation {
 }
 
 model EmpLeaveHistory {
-  id            Int           @id @default(autoincrement())
-  organizationId Int
-  employeeId    Int
-  leaveTypeId   Int
-  leaveHours    Int
-  status        String       
-  approvedBy    Int
-  comments      String?
+  id                String      @id @default(uuid())
+  organizationId    String
+  employeeId        String
+  leaveTypeId       String
+  leaveHours        Int
+  status            String       
+  approvedBy        Int
+  comments          String?
 
-  employee      User           @relation(fields: [employeeId], references: [id])
-  leaveType     LeaveType      @relation(fields: [leaveTypeId], references: [id])
-  organization  Organization   @relation(fields: [organizationId], references: [id])
+  employee          User           @relation(fields: [employeeId], references: [id])
+  leaveType         LeaveType      @relation(fields: [leaveTypeId], references: [id])
+  organization      Organization   @relation(fields: [organizationId], references: [id])
 
   @@index([employeeId, leaveTypeId, status, approvedBy])
   @@index([organizationId])
 }
 
 model LeaveBalance {
-  id               Int        @id @default(autoincrement())
-  leaveTypeId      Int
-  employeeId       Int
-  usedLeaveHours   Int
+  id                  String      @id @default(uuid())
+  leaveTypeId         String
+  employeeId          String
+  usedLeaveHours      Int
   leaveAllocatedHours Int
-  lastUpdated      DateTime   @default(now())
-  createdBy        Int
-  updatedBy        Int
-  organizationId   Int
+  lastUpdated         DateTime   @default(now())
+  createdBy           String
+  updatedBy           String
+  organizationId      String
 
-  employee         User        @relation(fields: [employeeId], references: [id])
-  leaveType        LeaveType   @relation(fields: [leaveTypeId], references: [id])
-  organization     Organization @relation(fields: [organizationId], references: [id])
+  employee            User        @relation(fields: [employeeId], references: [id])
+  leaveType           LeaveType   @relation(fields: [leaveTypeId], references: [id])
+  organization        Organization @relation(fields: [organizationId], references: [id])
 
   @@index([leaveTypeId, employeeId])
   @@index([organizationId])

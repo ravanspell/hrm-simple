@@ -79,7 +79,7 @@ export class EmailSettingsService {
 
     // If updating the password, encrypt it
     if (updateDto.emailAuthPassword) {
-      updateDto.encryptedEmailAuthPassword = await this.encryptionService.encrypt(
+      updateDto.emailAuthPassword = this.encryptionService.encrypt(
         updateDto.emailAuthPassword,
       );
       delete updateDto.emailAuthPassword;
@@ -101,11 +101,7 @@ export class EmailSettingsService {
 
     return this.databaseService.emailSettings.update({
       where: { id },
-      data: {
-        ...updateDto,
-        // Ensure that if emailAuthPassword was provided, it's already encrypted
-        encryptedEmailAuthPassword: updateDto.encryptedEmailAuthPassword,
-      },
+      data: updateDto
     });
   }
 
@@ -138,7 +134,7 @@ export class EmailSettingsService {
 
     return {
       ...emailSettings,
-      emailAuthPassword: this.encryptionService.decrypt(emailSettings.emailAuthPassword)
+      emailAuthPassword: this.encryptionService.decrypt(emailSettings.)
     }
   }
 }
