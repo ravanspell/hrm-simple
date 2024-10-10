@@ -19,9 +19,9 @@ export class UserController {
 
   @Post()
   @Version('1')
-  create(@Body() createUserDto: CreateUserDto) {
+  create(@Body() createUserDto: CreateUserDto, @Req req: RequestWithTenant) {
     this.loggerService.logEmployeeAction('user create req',JSON.stringify(createUserDto));
-    return this.userService.create(createUserDto);
+    return this.userService.create({...createUserDto, organizationId : req.organization.id});
   }
 
   @Get()

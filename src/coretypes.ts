@@ -15,3 +15,7 @@ export interface RequestWithTenant extends Request {
     user: User;
     organization: Organization;
 }
+
+export type WithOrganization<T extends object> = T & {
+    organizationId: number;
+};

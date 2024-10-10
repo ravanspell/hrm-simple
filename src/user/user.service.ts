@@ -4,12 +4,13 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { DatabaseService } from 'src/database/database.service';
 import { FilterUsersDto, Gender } from './dto/filter-user.dto';
 import { Prisma, User } from '@prisma/client';
+import { WithOrganization } from 'src/coretypes';
 
 @Injectable()
 export class UserService {
   constructor(private readonly databaseService: DatabaseService) { }
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: WithOrganization<CreateUserDto>) {
     return this.databaseService.user.create({
       data: {
         firstName: createUserDto.firstName,
@@ -20,7 +21,7 @@ export class UserService {
         startDate: new Date(),
         // Linking to an existing organization
         organization: {
-          connect: { id: 1 },  // Assuming 1 is the ID of an existing organization
+          connect: { id: createUserDto.organizationId },
         },
 
         // Linking to an existing employment status
