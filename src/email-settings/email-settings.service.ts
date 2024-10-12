@@ -9,23 +9,21 @@ export class EmailSettingsService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly encryptionService: EncryptionService,
-  ) {}
+  ) { }
 
   async create(createDto: CreateEmailSettingsDto) {
     // Encrypt the email authentication password
     const encryptedPassword = this.encryptionService.encrypt(createDto.emailAuthPassword);
-
-    // If isPrimary is true, unset other primary email settings for the organization
+    return this.databaseService.$transaction(async (tx) => {
+      // If isPrimary is true, unset other primary email settings for the organization
     if (createDto.isPrimary) {
-      await this.databaseService.emailSettings.updateMany({
-        where: {
-          organizationId: createDto.organizationId,
-          isPrimary: true,
-        },
-        data: {
+      const currentPrimaryItem = await this.findPrimaryByOrganization(createDto.organizationId);
+      if (currentPrimaryItem) {
+        await this.update(currentPrimaryItem.id, {
+          ...currentPrimaryItem,
           isPrimary: false,
-        },
-      });
+        });
+      }
     }
 
     return this.databaseService.emailSettings.create({
@@ -44,6 +42,7 @@ export class EmailSettingsService {
           connect: { id: createDto.organizationId },
         },
       },
+    });
     });
   }
 
@@ -120,8 +119,8 @@ export class EmailSettingsService {
   }
 
   async getEmailSettings(organizationId: string, emailSettingId: string): Promise<any> {
-    const where = {organizationId}
-    if(emailSettingId) {
+    const where = { organizationId }
+    if (emailSettingId) {
       where['id'] = emailSettingId;
     }
     const emailSettings = await this.databaseService.emailSettings.findFirst({
