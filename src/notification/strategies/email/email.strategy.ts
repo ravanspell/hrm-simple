@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { ConfigService } from '@nestjs/config';
 import { NotificationStrategy } from '../../notification.strategy.interface';
 import { EmailSettingsService } from 'src/email-settings/email-settings.service';
 
@@ -13,13 +12,14 @@ export class EmailStrategy implements NotificationStrategy {
   async send(to: string, data: { subject: string; body: string }) {
     this.emailSettingsService.getEmailSettings('orgid','settingsId');
     nodemailer.createTransport({
-      service: this.configService.get<string>('EMAIL_SERVICE'),
+      service: '',
       auth: {
-        user: this.configService.get<string>('EMAIL_USER'),
-        pass: this.configService.get<string>('EMAIL_PASS'),
-      },
+        user: '',
+        pass: '',
+      }
+    });
     const mailOptions = {
-      from: this.configService.get<string>('EMAIL_FROM'),
+      from: '',
       to,
       subject: data.subject,
       text: data.body,

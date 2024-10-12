@@ -1,16 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { EmailService } from './email/email.service';
+import { EmailStrategy } from './strategies/email/email.strategy';
 
 @Injectable()
 export class NotificationService {
   constructor(
-    private readonly emailService: EmailService,
-    private readonly pushService: PushService,
-  ) {}
+    private readonly emailStrategy: EmailStrategy,
+  ) { }
 
   async sendEmail(to: string, subject: string, body: string) {
-    return this.emailService.sendEmail(to, subject, body);
+    return this.emailStrategy.send(to, { subject, body });
   }
-
-  // You can add more generic methods or handle multiple notifications here
 }

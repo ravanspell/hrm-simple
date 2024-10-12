@@ -1,7 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
-import { Request } from 'express';
 import { IS_AUTH_REQUIRED } from 'src/decorators/auth.decorator';
 import { RequestWithTenant } from 'src/coretypes';
 
@@ -10,7 +9,9 @@ export class AuthenticatedGuard implements CanActivate {
     constructor(private readonly reflector: Reflector) { }
 
     canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
-        const isAuthRequired = this.reflector.get<string[]>(IS_AUTH_REQUIRED, context.getHandler())
+        const isAuthRequired = this.reflector.get<string[]>(IS_AUTH_REQUIRED, context.getHandler());
+        console.log("isAuthRequired--->", isAuthRequired);
+        
         if (isAuthRequired) {
             const request = context.switchToHttp().getRequest<RequestWithTenant>();
             if (request.isAuthenticated && request.isAuthenticated()) {
@@ -26,5 +27,6 @@ export class AuthenticatedGuard implements CanActivate {
             }
             throw new UnauthorizedException('User is not authenticated');
         }
+        return true;
     }
 }

@@ -1,15 +1,5 @@
-// multi tenancy poc skelton
+import { User, Organization } from '@prisma/client';
 import { Request } from 'express';
-
-interface User {
-    id: number;
-    name: string;
-}
-
-interface Organization {
-    id: number;
-    name: string;
-}
 
 export interface RequestWithTenant extends Request {
     user: User;
