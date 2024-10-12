@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { CreateEmailSettingsDto } from './dto/create-email-setting.dto';
 import { UpdateEmailSettingDto } from './dto/update-email-setting.dto';
 import { EncryptionService } from 'src/utilities/encryption/encryption.service';
+import { EmailSettings, PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class EmailSettingsService {
@@ -14,35 +15,40 @@ export class EmailSettingsService {
   async create(createDto: CreateEmailSettingsDto) {
     // Encrypt the email authentication password
     const encryptedPassword = this.encryptionService.encrypt(createDto.emailAuthPassword);
-    return this.databaseService.$transaction(async (tx) => {
+    // start transaction for email setting creation
+    console.log("createDto--->", createDto.organizationId);
+    console.log("createDto--xxx->", createDto);
+    return this.databaseService.$transaction(async (tx: PrismaClient) => {
       // If isPrimary is true, unset other primary email settings for the organization
-    if (createDto.isPrimary) {
-      const currentPrimaryItem = await this.findPrimaryByOrganization(createDto.organizationId);
-      if (currentPrimaryItem) {
-        await this.update(currentPrimaryItem.id, {
-          ...currentPrimaryItem,
-          isPrimary: false,
-        });
+      if (createDto.isPrimary) {
+        const currentPrimaryEmailSetting = await this.findPrimaryEmailSettings(createDto.organizationId, tx);
+        if (currentPrimaryEmailSetting) {
+          await this.update(currentPrimaryEmailSetting.id, {
+            ...currentPrimaryEmailSetting,
+            isPrimary: false,
+          });
+          console.log("I exe ok!!!");
+        }
       }
-    }
-
-    return this.databaseService.emailSettings.create({
-      data: {
-        emailHost: createDto.emailHost,
-        emailPort: createDto.emailPort,
-        displayName: createDto.displayName,
-        defaultFromEmail: createDto.defaultFromEmail,
-        emailHostUsername: createDto.emailHostUsername,
-        emailAuthPassword: encryptedPassword,
-        useTLS: createDto.useTLS ?? false,
-        useSSL: createDto.useSSL ?? false,
-        isPrimary: createDto.isPrimary ?? false,
-        emailSendTimeout: createDto.emailSendTimeout ?? 30000,
-        organization: {
-          connect: { id: createDto.organizationId },
+      
+      
+      return tx.emailSettings.create({
+        data: {
+          emailHost: createDto.emailHost,
+          emailPort: createDto.emailPort,
+          displayName: createDto.displayName,
+          defaultFromEmail: createDto.defaultFromEmail,
+          emailHostUsername: createDto.emailHostUsername,
+          emailAuthPassword: encryptedPassword,
+          useTLS: createDto.useTLS ?? false,
+          useSSL: createDto.useSSL ?? false,
+          isPrimary: createDto.isPrimary ?? false,
+          emailSendTimeout: createDto.emailSendTimeout ?? 30000,
+          organization: {
+            connect: { id: createDto.organizationId },
+          },
         },
-      },
-    });
+      });
     });
   }
 
@@ -52,30 +58,7 @@ export class EmailSettingsService {
     });
   }
 
-  async findPrimaryByOrganization(organizationId: string) {
-    const primary = await this.databaseService.emailSettings.findFirst({
-      where: {
-        organizationId,
-        isPrimary: true,
-      },
-    });
-
-    if (!primary) {
-      throw new NotFoundException('Primary email settings not found for this organization.');
-    }
-
-    return primary;
-  }
-
   async update(id: string, updateDto: UpdateEmailSettingDto) {
-    const emailSettings = await this.databaseService.emailSettings.findUnique({
-      where: { id },
-    });
-
-    if (!emailSettings) {
-      throw new NotFoundException('Email settings not found.');
-    }
-
     // If updating the password, encrypt it
     if (updateDto.emailAuthPassword) {
       updateDto.emailAuthPassword = this.encryptionService.encrypt(
@@ -84,41 +67,46 @@ export class EmailSettingsService {
       delete updateDto.emailAuthPassword;
     }
 
-    // If setting this as primary, unset others
-    if (updateDto.isPrimary) {
-      await this.databaseService.emailSettings.updateMany({
-        where: {
-          organizationId: emailSettings.organizationId,
-          isPrimary: true,
-          id: { not: id },
-        },
-        data: {
-          isPrimary: false,
-        },
+    return this.databaseService.$transaction(async (tx: PrismaClient) => {
+      // If isPrimary is true, unset other primary email settings for the organization
+      if (updateDto.isPrimary) {
+        const currentPrimaryEmailSetting = await this.findPrimaryEmailSettings(updateDto.organizationId, tx);
+        if (currentPrimaryEmailSetting) {
+          await this.update(currentPrimaryEmailSetting.id, {
+            ...currentPrimaryEmailSetting,
+            isPrimary: false,
+          });
+        }
+      }
+      return tx.emailSettings.update({
+        where: { id },
+        data: updateDto
       });
-    }
-
-    return this.databaseService.emailSettings.update({
-      where: { id },
-      data: updateDto
     });
   }
 
   async remove(id: string) {
-    const emailSettings = await this.databaseService.emailSettings.findUnique({
-      where: { id },
-    });
-
-    if (!emailSettings) {
-      throw new NotFoundException('Email settings not found.');
-    }
-
     return this.databaseService.emailSettings.delete({
       where: { id },
     });
   }
 
-  async getEmailSettings(organizationId: string, emailSettingId: string): Promise<any> {
+  /**
+   * Return the primary email settings of the org
+   * @param organizationId 
+   * @param dbServiceForTransactions Prisma client for transactions!
+   * @returns EmailSettings
+ */
+  async findPrimaryEmailSettings(organizationId: string, dbServiceForTransactions: PrismaClient = null): Promise<EmailSettings> {
+    return await (dbServiceForTransactions || this.databaseService).emailSettings.findFirst({
+      where: {
+        organizationId,
+        isPrimary: true,
+      },
+    });
+  }
+
+  async getEmailSettings(organizationId: string, emailSettingId: string): Promise<EmailSettings> {
     const where = { organizationId }
     if (emailSettingId) {
       where['id'] = emailSettingId;
@@ -126,10 +114,6 @@ export class EmailSettingsService {
     const emailSettings = await this.databaseService.emailSettings.findFirst({
       where,
     });
-
-    if (!emailSettings) {
-      throw new NotFoundException('Email settings not found.');
-    }
 
     return {
       ...emailSettings,

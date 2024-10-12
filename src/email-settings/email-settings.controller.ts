@@ -24,11 +24,11 @@ export class EmailSettingsController {
   @Authentication()
   // @UseGuards(AuthGuard)
   create(@Body() createDto: CreateEmailSettingsDto, @Req() req: RequestWithTenant) {
-    const CreateEmailSettingsData = {
+    const createEmailSettingsData = {
       ...createDto,
-      orgnizationId: req.user.organizationId,
+      organizationId: req.user.organizationId,
     };
-    return this.emailSettingsService.create(CreateEmailSettingsData);
+    return this.emailSettingsService.create(createEmailSettingsData);
   }
 
   @Get('organization/:orgId')
@@ -42,7 +42,7 @@ export class EmailSettingsController {
   @Version('1')
   // @UseGuards(AuthGuard)
   findPrimaryByOrganization(@Param('orgId') orgId: string) {
-    return this.emailSettingsService.findPrimaryByOrganization(orgId);
+    return this.emailSettingsService.findPrimaryEmailSettings(orgId);
   }
 
   @Patch(':id')
