@@ -30,7 +30,7 @@ export class UserController {
   @Permissions('can:filter')
   filter(@Body() filterUsersDto: FilterUsersDto[], @Req() request: RequestWithTenant) {
     this.loggerService.logEmployeeAction('im first log here','emp id');
-    const orgId = request.organization.id;
+    const orgId = request.user.organizationId;
     return this.userService.filterUsers(filterUsersDto, orgId);
   }
 

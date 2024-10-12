@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { EmailStrategy } from './email.strategy';
-import { ConfigModule } from '@nestjs/config';
+import { EmailSettingsModule } from 'src/email-settings/email-settings.module';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [EmailSettingsModule],
   providers: [EmailStrategy],
   exports: [EmailStrategy],
 })
