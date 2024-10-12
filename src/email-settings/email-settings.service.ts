@@ -35,7 +35,7 @@ export class EmailSettingsService {
         displayName: createDto.displayName,
         defaultFromEmail: createDto.defaultFromEmail,
         emailHostUsername: createDto.emailHostUsername,
-        encryptedEmailAuthPassword: encryptedPassword,
+        emailAuthPassword: encryptedPassword,
         useTLS: createDto.useTLS ?? false,
         useSSL: createDto.useSSL ?? false,
         isPrimary: createDto.isPrimary ?? false,
@@ -124,7 +124,7 @@ export class EmailSettingsService {
     if(emailSettingId) {
       where['id'] = emailSettingId;
     }
-    const emailSettings = await this.databaseService.emailSettings.findUnique({
+    const emailSettings = await this.databaseService.emailSettings.findFirst({
       where,
     });
 
@@ -134,7 +134,7 @@ export class EmailSettingsService {
 
     return {
       ...emailSettings,
-      emailAuthPassword: this.encryptionService.decrypt(emailSettings.)
+      emailAuthPassword: this.encryptionService.decrypt(emailSettings.emailAuthPassword)
     }
   }
 }
