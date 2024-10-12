@@ -10,7 +10,6 @@ export class AuthenticatedGuard implements CanActivate {
 
     canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
         const isAuthRequired = this.reflector.get<string[]>(IS_AUTH_REQUIRED, context.getHandler());
-        console.log("isAuthRequired--->", isAuthRequired);
         
         if (isAuthRequired) {
             const request = context.switchToHttp().getRequest<RequestWithTenant>();

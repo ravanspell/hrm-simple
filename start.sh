@@ -27,7 +27,7 @@ fi
 
 # fill prisma seed data for dependency tables
 echo -e "${BOLD}${YELLOW}Start execute db seeds...${RESET}"
-npx prisma db seed
+# npx prisma db seed
 
 # Start Prisma Studio in the background
 echo -e "${BOLD}${YELLOW}Starting Prisma Studio...${RESET}"
