@@ -31,11 +31,12 @@ export class EmailSettingsController {
     return this.emailSettingsService.create(createEmailSettingsData);
   }
 
-  @Get('organization/:orgId')
+  @Get()
   @Version('1')
+  @Authentication()
   // @UseGuards(AuthGuard)
-  findAllByOrganization(@Param('orgId') orgId: string) {
-    return this.emailSettingsService.findAllByOrganization(orgId);
+  findAllByOrganization(@Req() req: RequestWithTenant) {
+    return this.emailSettingsService.findAllByOrganization(req?.user?.organizationId);
   }
 
   @Get('primary/organization/:orgId')

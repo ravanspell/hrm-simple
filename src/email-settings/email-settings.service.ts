@@ -27,30 +27,43 @@ export class EmailSettingsService {
           });
         }
       }
-      
-      
-      return tx.emailSettings.create({
-        data: {
-          emailHost: createDto.emailHost,
-          emailPort: createDto.emailPort,
-          displayName: createDto.displayName,
-          defaultFromEmail: createDto.defaultFromEmail,
-          emailHostUsername: createDto.emailHostUsername,
-          emailAuthPassword: encryptedPassword,
-          useTLS: createDto.useTLS ?? false,
-          useSSL: createDto.useSSL ?? false,
-          isPrimary: createDto.isPrimary ?? false,
-          emailSendTimeout: createDto.emailSendTimeout ?? 30000,
-          organization: {
-            connect: { id: createDto.organizationId },
-          },
+      const newEmailSetting = {
+        emailHost: createDto.emailHost,
+        emailPort: createDto.emailPort,
+        displayName: createDto.displayName,
+        defaultFromEmail: createDto.defaultFromEmail,
+        emailHostUsername: createDto.emailHostUsername,
+        emailAuthPassword: encryptedPassword,
+        useTLS: createDto.useTLS ?? false,
+        useSSL: createDto.useSSL ?? false,
+        isPrimary: createDto.isPrimary ?? false,
+        emailSendTimeout: createDto.emailSendTimeout ?? 30000,
+        organization: {
+          connect: { id: createDto.organizationId },
         },
-      });
+      };
+      await tx.emailSettings.create({ data: newEmailSetting });
+      // create shalow copy of the created 
+      const emailSettings = { ...newEmailSetting }
+      delete emailSettings.emailAuthPassword;
+      delete emailSettings.organization;
+      return emailSettings;
     });
   }
 
   async findAllByOrganization(organizationId: string) {
     return this.databaseService.emailSettings.findMany({
+      select: {
+        id: true,
+        emailHost: true,
+        emailPort: true,
+        displayName: true,
+        defaultFromEmail: true,
+        emailHostUsername: true,
+        useTLS: true,
+        useSSL: true,
+        isPrimary: true,
+      },
       where: { organizationId },
     });
   }
