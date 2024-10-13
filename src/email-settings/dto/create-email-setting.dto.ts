@@ -36,5 +36,6 @@ export class CreateEmailSettingsDto {
   emailSendTimeout?: number;
 
   @IsString()
-  organizationId: string;
+  @IsOptional()
+  organizationId?: string;
 }
