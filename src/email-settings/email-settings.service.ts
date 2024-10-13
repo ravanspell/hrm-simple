@@ -16,8 +16,6 @@ export class EmailSettingsService {
     // Encrypt the email authentication password
     const encryptedPassword = this.encryptionService.encrypt(createDto.emailAuthPassword);
     // start transaction for email setting creation
-    console.log("createDto--->", createDto.organizationId);
-    console.log("createDto--xxx->", createDto);
     return this.databaseService.$transaction(async (tx: PrismaClient) => {
       // If isPrimary is true, unset other primary email settings for the organization
       if (createDto.isPrimary) {
@@ -27,7 +25,6 @@ export class EmailSettingsService {
             ...currentPrimaryEmailSetting,
             isPrimary: false,
           });
-          console.log("I exe ok!!!");
         }
       }
       
@@ -98,7 +95,7 @@ export class EmailSettingsService {
    * @returns EmailSettings
  */
   async findPrimaryEmailSettings(organizationId: string, dbServiceForTransactions: PrismaClient = null): Promise<EmailSettings> {
-    return await (dbServiceForTransactions || this.databaseService).emailSettings.findFirst({
+    return await (dbServiceForTransactions).emailSettings.findFirst({
       where: {
         organizationId,
         isPrimary: true,
