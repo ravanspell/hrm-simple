@@ -2,14 +2,14 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { CopyObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class FileManagementService {
   private s3Client: S3Client;
   private dirtyBucket: string;
-  // private permanentBucket: string;
+  private permanentBucket: string;
 
   constructor(private configService: ConfigService) {
     this.s3Client = new S3Client({
@@ -20,8 +20,15 @@ export class FileManagementService {
       },
     });
     this.dirtyBucket = this.configService.get<string>('DIRTY_BUCKET_NAME');
-    // this.permanentBucket = this.configService.get<string>('AWS_PERMANENT_BUCKET');
+    this.permanentBucket = this.configService.get<string>('AWS_PERMANENT_BUCKET');
   }
+  /**
+   * Generates a presigned URL for uploading a file to the dirty bucket.
+   *
+   * @param filename - uploading file name.
+   * @param fileType - file extention of the file.
+   * @returns upload url and key
+  */
   async getPresignedUrl(filename: string, fileType: string): Promise<{ uploadUrl: string; key: string }> {
     const key = `${uuidv4()}_${filename}`;
 
@@ -38,6 +45,40 @@ export class FileManagementService {
       console.error('Error generating pre-signed URL:', error);
       throw new InternalServerErrorException('Could not generate upload URL');
     }
+  }
+  /**
+   * Confirms the existence of a file in the dirty bucket, copies it to the permanent bucket,
+   *
+   * @param fileKey - The key (path) of the file in the S3 bucket.
+   * @returns A promise that resolves to true if successful, false otherwise.
+  */
+  async confirmAndMoveFile(fileKey: string): Promise<boolean> {
+    // Check if the file exists in the dirty bucket
+    const headResult = await this.s3Client.send(
+      new HeadObjectCommand({
+        Bucket: this.dirtyBucket,
+        Key: fileKey,
+      })
+    );
+    console.log(`File '${fileKey}' exists in '${this.dirtyBucket}'.`);
+
+    // file size in bytes
+    const fileSize = headResult.ContentLength || 0;
+    // Copy the file to the permanent bucket
+    const copiedFile = await this.s3Client.send(
+      new CopyObjectCommand({
+        Bucket: this.permanentBucket,
+        CopySource: `${this.dirtyBucket}/${fileKey}`,
+        Key: fileKey,
+      })
+    );
+    
+    console.log(`Copied '${fileKey}' to '${this.permanentBucket}'.`);
+    return true;
+  }
+
+  createFileRecord() {
+    return `This action returns all fileManagement`;
   }
 
   findAll() {
