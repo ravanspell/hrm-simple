@@ -4,6 +4,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
 import { CopyObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class FileManagementService {
@@ -11,7 +12,10 @@ export class FileManagementService {
   private dirtyBucket: string;
   private permanentBucket: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private databseService: DatabaseService
+  ) {
     this.s3Client = new S3Client({
       region: this.configService.get<string>('AWS_REGION'),
       credentials: {
@@ -96,9 +100,29 @@ export class FileManagementService {
     return `This action returns all fileManagement`;
   }
 
-  findAll() {
-    return `This action returns all fileManagement`;
-  }
+  async findOrganizationAll(organizationId: string, page: number = 1, limit: number = 10) {
+    // Ensure page and limit are positive integers
+    page = page < 1 ? 1 : page;
+    limit = limit < 1 ? 10 : limit;
+
+    const skip = (page - 1) * limit;
+
+    // Fetch files with pagination
+    const [files, total] = await Promise.all([
+      this.databseService.fileMgt.findMany({
+        where: { organizationId },
+        skip: skip,
+        take: limit,
+        orderBy: { uploadedAt: 'desc' }, // Optional: Order by upload date
+      }),
+      this.databseService.fileMgt.count({
+        where: { organizationId },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+    return { files, total, page, totalPages };
+  };
 
   findOne(id: number) {
     return `This action returns a #${id} fileManagement`;
