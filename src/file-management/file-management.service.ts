@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
-import { CopyObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { CopyObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -72,9 +72,24 @@ export class FileManagementService {
         Key: fileKey,
       })
     );
-    
+
     console.log(`Copied '${fileKey}' to '${this.permanentBucket}'.`);
     return true;
+  }
+
+  /**
+   * Generates a presigned URL for downloading a file from the permanent bucket.
+   * @param fileKey - The key (path) of the file in the S3 bucket.
+   * @param expiresIn - Time in seconds for the presigned URL to remain valid.
+   * @returns Presigned URL as a string.
+   */
+  async generatePresignedDownloadUrl(fileKey: string, expiresIn: number = 3600): Promise<string> {
+    const command = new GetObjectCommand({
+      Bucket: this.permanentBucket,
+      Key: fileKey,
+    });
+    const url = await getSignedUrl(this.s3Client, command, { expiresIn });
+    return url;
   }
 
   createFileRecord() {
