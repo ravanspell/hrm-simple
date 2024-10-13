@@ -22,7 +22,6 @@ export class EmailSettingsController {
   @Post()
   @Version('1')
   @Authentication()
-  // @UseGuards(AuthGuard)
   create(@Body() createDto: CreateEmailSettingsDto, @Req() req: RequestWithTenant) {
     const createEmailSettingsData = {
       ...createDto,
@@ -31,30 +30,30 @@ export class EmailSettingsController {
     return this.emailSettingsService.create(createEmailSettingsData);
   }
 
-  @Get('organization/:orgId')
+  @Get()
   @Version('1')
-  // @UseGuards(AuthGuard)
-  findAllByOrganization(@Param('orgId') orgId: string) {
-    return this.emailSettingsService.findAllByOrganization(orgId);
+  @Authentication()
+  findAllByOrganization(@Req() req: RequestWithTenant) {
+    return this.emailSettingsService.findAllByOrganization(req?.user?.organizationId);
   }
 
   @Get('primary/organization/:orgId')
   @Version('1')
-  // @UseGuards(AuthGuard)
+  @Authentication()
   findPrimaryByOrganization(@Param('orgId') orgId: string) {
     return this.emailSettingsService.findPrimaryEmailSettings(orgId);
   }
 
   @Patch(':id')
   @Version('1')
-  // @UseGuards(AuthGuard)
+  @Authentication()
   update(@Param('id') id: string, @Body() updateDto: UpdateEmailSettingDto) {
     return this.emailSettingsService.update(id, updateDto);
   }
 
   @Delete(':id')
   @Version('1')
-  // @UseGuards(AuthGuard)
+  @Authentication()
   remove(@Param('id') id: string) {
     return this.emailSettingsService.remove(id);
   }
