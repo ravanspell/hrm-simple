@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
-import { compare } from 'bcryptjs';
+import { compare, hash, genSalt } from 'bcryptjs';
 
 @Injectable()
 export class AuthService {
@@ -11,6 +11,9 @@ export class AuthService {
         if (!user) {
             return null;
         }
+        // const salt = await genSalt(10);
+        // const hashd = await hash(password, salt);
+        // console.log('Hashed password:', hashd);
         const authenticated = await await compare(password, user.password);
         if (!authenticated) {
             return null;

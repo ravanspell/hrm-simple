@@ -20,26 +20,23 @@ export class UserService {
         startDate: new Date(),
         // Linking to an existing organization
         organization: {
-          connect: { id: 1 },  // Assuming 1 is the ID of an existing organization
+          connect: { id: 'wewe' },  // Assuming 1 is the ID of an existing organization
         },
-
         // Linking to an existing employment status
         employmentStatus: {
-          connect: { id: 1 },  // Assuming 1 is the ID of an existing employment status
+          connect: { id: 'wewee' },  // Assuming 1 is the ID of an existing employment status
         },
-
         // Linking to an existing employee level
         employeeLevel: {
-          connect: { id: 1 },  // Assuming 1 is the ID of an existing employee level
+          connect: { id: 'wewewe' },  // Assuming 1 is the ID of an existing employee level
         },
-
-        createdBy: 1,
-        updatedBy: 1
+        createdBy: 'wewewxxe',
+        updatedBy: 'wewewxxe'
       }
     })
   }
 
-  async filterUsers(filters: FilterUsersDto[], orgId: number) {
+  async filterUsers(filters: FilterUsersDto[], orgId: string) {
     const conditions: Prisma.UserWhereInput[] = [{
       organizationId: orgId,
     }];
@@ -68,7 +65,7 @@ export class UserService {
           includeEmployeeLevel = true;
           if (operator === 'is' && value) {
             conditions.push({
-              employeeLevelId: value as number, // Prisma will auto-join employeeLevel based on this condition
+              employeeLevelId: value as string, // Prisma will auto-join employeeLevel based on this condition
             });
           }
           break;
@@ -76,7 +73,7 @@ export class UserService {
           includeEmploymentStatus = true;
           if (operator === 'is' && value) {
             conditions.push({
-              employmentStatusId: value as number, // Prisma will auto-join employmentStatus based on this condition
+              employmentStatusId: value as string, // Prisma will auto-join employmentStatus based on this condition
             });
           }
           break;
@@ -132,7 +129,6 @@ export class UserService {
     }
     return user;
   }
-
 
   update(id: number, updateUserDto: UpdateUserDto) {
     return `This action updates a #${id} user`;
