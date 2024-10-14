@@ -123,7 +123,7 @@ export class EmailSettingsService {
     });
   }
 
-  async getEmailSettings(organizationId: string, emailSettingId: string): Promise<any> {
+  async getEmailSettings(organizationId: string, emailSettingId: string = null): Promise<any> {
     const where = {organizationId}
     if(emailSettingId) {
       where['id'] = emailSettingId;
