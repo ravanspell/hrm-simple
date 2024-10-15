@@ -40,6 +40,18 @@ export class S3Buckets extends Construct {
           days: 2, // Delete objects after 2 days
         },
       }],
+      corsRule: [
+        {
+          allowedHeaders: ['*'],
+          allowedMethods: ['GET', 'PUT', 'POST', 'DELETE', 'HEAD'],
+          allowedOrigins: ['*'],
+          // This allows the front-end to access the ETag header in the response of a cross-origin request.
+          exposeHeaders: ['ETag'],
+          // This allows the browser to cache the CORS preflight response for 3000 seconds,
+          // reducing the number of preflight requests and improving performance.
+          maxAgeSeconds: 3000,
+        }
+      ]
     });
 
     // Output the Dirty Bucket Name
