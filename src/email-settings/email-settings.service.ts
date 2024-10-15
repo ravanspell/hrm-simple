@@ -100,7 +100,6 @@ export class EmailSettingsService {
       where: { id },
     });
   }
-
   /**
    * Return the primary email settings of the org
    * @param organizationId 
@@ -116,7 +115,7 @@ export class EmailSettingsService {
     });
   }
 
-  async getEmailSettings(organizationId: string, emailSettingId: string): Promise<EmailSettings> {
+  async getEmailSettings(organizationId: string, emailSettingId: string = null): Promise<any> {
     const where = { organizationId }
     if (emailSettingId) {
       where['id'] = emailSettingId;

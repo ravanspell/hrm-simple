@@ -5,26 +5,36 @@ import { EmailSettingsService } from 'src/email-settings/email-settings.service'
 
 @Injectable()
 export class EmailStrategy implements NotificationStrategy {
-  private transporter;
-
   constructor(private readonly emailSettingsService: EmailSettingsService) {}
 
-  async send(to: string, data: { subject: string; body: string }) {
-    this.emailSettingsService.getEmailSettings('orgid','settingsId');
-    nodemailer.createTransport({
-      service: '',
+  async send(to: string, data: any): Promise<void> {
+    // Fetch primary email settings for the organization
+    const emailSettings =
+      await this.emailSettingsService.getEmailSettings('orgId');
+    // Create a Nodemailer transporter
+    const transporter = nodemailer.createTransport({
+      host: emailSettings.emailHost,
+      port: emailSettings.emailPort,
+      secure: emailSettings.useSSL, // true for 465, false for other ports
       auth: {
-        user: '',
-        pass: '',
-      }
+        user: emailSettings.emailHostUsername,
+        pass: emailSettings.emailAuthPassword,
+      },
+      tls: {
+        rejectUnauthorized: !emailSettings.useTLS,
+      },
+      // Optional: Set connection timeout
+      connectionTimeout: emailSettings.emailSendTimeout,
     });
+    // Define email options
     const mailOptions = {
-      from: '',
+      from: `"${emailSettings.displayName}" <${emailSettings.defaultFromEmail}>`,
       to,
-      subject: data.subject,
-      text: data.body,
+      subject: data,
+      text: data,
+      // html: '<b>Hello world?</b>' // If sending HTML emails
     };
-
-    await this.transporter.sendMail(mailOptions);
+    // Send the email
+    await transporter.sendMail(mailOptions);
   }
 }
