@@ -6,11 +6,13 @@ import {
   Patch,
   Param,
   Delete,
-  BadRequestException
+  BadRequestException,
+  Req
 } from '@nestjs/common';
 import { FileManagementService } from './file-management.service';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
 import { IsString } from 'class-validator';
+import { RequestWithTenant } from 'src/coretypes';
 
 class InitUploadDto {
   @IsString()
@@ -34,9 +36,12 @@ export class FileManagementController {
     return { uploadUrl, key };
   }
 
-  @Get()
-  findAll() {
-    return this.fileManagementService.findAll();
+  @Get('organization')
+  findAll(
+    @Param('page') page: number,
+    @Param('pageSize') pageSize: number,
+    @Req() req: RequestWithTenant) {
+    return this.fileManagementService.findOrganizationAll(req.user.organizationId, page, pageSize);
   }
 
   @Get(':id')

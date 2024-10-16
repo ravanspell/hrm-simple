@@ -34,6 +34,7 @@ model Organization {
   leaveBalances      LeaveBalance[]
   leaveAllocations   LeaveAllocation[]
   EmailSettings      EmailSettings[]
+  files              FileMgt[]
 }
 
 model EmailSettings {
@@ -177,4 +178,17 @@ model LeaveBalance {
 
   @@index([leaveTypeId, employeeId])
   @@index([organizationId])
+}
+
+
+model FileMgt {
+  id              String          @id @default(uuid())
+  s3ObjectKey     String          @unique
+  fileName        String
+  fileSize        BigInt
+  folderPath      String?
+  organizationId  String
+  uploadedAt      DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id])
 }

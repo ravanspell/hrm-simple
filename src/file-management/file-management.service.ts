@@ -2,16 +2,20 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { CopyObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class FileManagementService {
   private s3Client: S3Client;
   private dirtyBucket: string;
-  // private permanentBucket: string;
+  private permanentBucket: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private databseService: DatabaseService
+  ) {
     this.s3Client = new S3Client({
       region: this.configService.get<string>('AWS_REGION'),
       credentials: {
@@ -20,8 +24,15 @@ export class FileManagementService {
       },
     });
     this.dirtyBucket = this.configService.get<string>('DIRTY_BUCKET_NAME');
-    // this.permanentBucket = this.configService.get<string>('AWS_PERMANENT_BUCKET');
+    this.permanentBucket = this.configService.get<string>('AWS_PERMANENT_BUCKET');
   }
+  /**
+   * Generates a presigned URL for uploading a file to the dirty bucket.
+   *
+   * @param filename - uploading file name.
+   * @param fileType - file extention of the file.
+   * @returns upload url and key
+  */
   async getPresignedUrl(filename: string, fileType: string): Promise<{ uploadUrl: string; key: string }> {
     const key = `${uuidv4()}_${filename}`;
 
@@ -39,10 +50,79 @@ export class FileManagementService {
       throw new InternalServerErrorException('Could not generate upload URL');
     }
   }
+  /**
+   * Confirms the existence of a file in the dirty bucket, copies it to the permanent bucket,
+   *
+   * @param fileKey - The key (path) of the file in the S3 bucket.
+   * @returns A promise that resolves to true if successful, false otherwise.
+  */
+  async confirmAndMoveFile(fileKey: string): Promise<boolean> {
+    // Check if the file exists in the dirty bucket
+    const headResult = await this.s3Client.send(
+      new HeadObjectCommand({
+        Bucket: this.dirtyBucket,
+        Key: fileKey,
+      })
+    );
+    console.log(`File '${fileKey}' exists in '${this.dirtyBucket}'.`);
 
-  findAll() {
+    // file size in bytes
+    const fileSize = headResult.ContentLength || 0;
+    // Copy the file to the permanent bucket
+    const copiedFile = await this.s3Client.send(
+      new CopyObjectCommand({
+        Bucket: this.permanentBucket,
+        CopySource: `${this.dirtyBucket}/${fileKey}`,
+        Key: fileKey,
+      })
+    );
+
+    console.log(`Copied '${fileKey}' to '${this.permanentBucket}'.`);
+    return true;
+  }
+
+  /**
+   * Generates a presigned URL for downloading a file from the permanent bucket.
+   * @param fileKey - The key (path) of the file in the S3 bucket.
+   * @param expiresIn - Time in seconds for the presigned URL to remain valid.
+   * @returns Presigned URL as a string.
+   */
+  async generatePresignedDownloadUrl(fileKey: string, expiresIn: number = 3600): Promise<string> {
+    const command = new GetObjectCommand({
+      Bucket: this.permanentBucket,
+      Key: fileKey,
+    });
+    const url = await getSignedUrl(this.s3Client, command, { expiresIn });
+    return url;
+  }
+
+  createFileRecord() {
     return `This action returns all fileManagement`;
   }
+
+  async findOrganizationAll(organizationId: string, page: number = 1, limit: number = 10) {
+    // Ensure page and limit are positive integers
+    page = page < 1 ? 1 : page;
+    limit = limit < 1 ? 10 : limit;
+
+    const skip = (page - 1) * limit;
+
+    // Fetch files with pagination
+    const [files, total] = await Promise.all([
+      this.databseService.fileMgt.findMany({
+        where: { organizationId },
+        skip: skip,
+        take: limit,
+        orderBy: { uploadedAt: 'desc' }, // Optional: Order by upload date
+      }),
+      this.databseService.fileMgt.count({
+        where: { organizationId },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+    return { files, total, page, totalPages };
+  };
 
   findOne(id: number) {
     return `This action returns a #${id} fileManagement`;
