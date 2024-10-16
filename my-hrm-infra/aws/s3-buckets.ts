@@ -17,7 +17,6 @@ import { PERMANENT_BUCKET_NAME, DIRTY_BUCKET_NAME } from './constants';
 export class S3Buckets extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
-
     /**
      * Create S3 Bucket: my-hrm-dirty-bucket
      *

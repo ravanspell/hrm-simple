@@ -33,7 +33,7 @@ export class AWSStack extends TerraformStack {
             key: 'terraform.tfstate',
             region: AWS_REGION,
             accessKey: '',
-            secretKey: '',
+            secretKey: ''
         });
         // Instantiate S3 Buckets Configuration
         new S3Buckets(this, 'S3Buckets');
