@@ -8,6 +8,7 @@ import {
   HeadObjectCommand,
   HeadObjectCommandOutput,
   PutObjectCommand,
+  PutObjectTaggingCommand,
   S3Client
 } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
@@ -155,53 +156,53 @@ export class FileManagementService {
     limit: number = 10
   ) {
     const skip = (page - 1) * limit;
-      // folderId provided, return from the specific folder
-      const files = await this.databseService.fileMgt.findMany({
-        where: {
-          folderId: folderId || null,
-          organizationId,
-          fileStatus: 'ACTIVE', // Only active files
-        },
-        select: {
-          id: true,
-          fileName: true,
-          fileSize: true,
-          s3ObjectKey: true,
-          uploadedAt: true,
-          folderId: true,
-        },
-        skip,
-        take: limit
-      });
+    // folderId provided, return from the specific folder
+    const files = await this.databseService.fileMgt.findMany({
+      where: {
+        folderId: folderId || null,
+        organizationId,
+        fileStatus: 'ACTIVE', // Only active files
+      },
+      select: {
+        id: true,
+        fileName: true,
+        fileSize: true,
+        s3ObjectKey: true,
+        uploadedAt: true,
+        folderId: true,
+      },
+      skip,
+      take: limit
+    });
 
-      const folders = await this.databseService.folder.findMany({
-        where: {
-          parentId: folderId || null,
-          organizationId,
-        },
-        select: {
-          id: true,
-          name: true,
-          parentId: true,
-          createdAt: true,
-        },
-        skip,
-        take: limit
-      });
+    const folders = await this.databseService.folder.findMany({
+      where: {
+        parentId: folderId || null,
+        organizationId,
+      },
+      select: {
+        id: true,
+        name: true,
+        parentId: true,
+        createdAt: true,
+      },
+      skip,
+      take: limit
+    });
 
-      const totalFiles = await this.databseService.fileMgt.count({
-        where: { 
-          folderId: folderId || null, 
-          organizationId, 
-          fileStatus: 'ACTIVE' 
-        },
-      });
-      const totalFolders = await this.databseService.folder.count({
-        where: { 
-          parentId: folderId || null, 
-          organizationId 
-        },
-      });
+    const totalFiles = await this.databseService.fileMgt.count({
+      where: {
+        folderId: folderId || null,
+        organizationId,
+        fileStatus: 'ACTIVE'
+      },
+    });
+    const totalFolders = await this.databseService.folder.count({
+      where: {
+        parentId: folderId || null,
+        organizationId
+      },
+    });
     // Combine files and folders into a single list
     const combined = [
       ...files.map(file => ({
@@ -233,5 +234,26 @@ export class FileManagementService {
       },
     };
   }
+  /**
+   * Function to apply tags to an S3 object.
+   * @param bucketName - The name of the S3 bucket.
+   * @param objectKey - The key of the S3 object.
+   * @param tags - An array of tags to apply to the object.
+  */
+  async applyS3ObjectTags(
+    bucketName: string,
+    objectKey: string,
+    tags: { Key: string, Value: string }[]
+  ) {
+    const command = new PutObjectTaggingCommand({
+      Bucket: bucketName,
+      Key: objectKey,
+      Tagging: {
+        TagSet: tags,
+      },
+    });
+    const response = await this.s3Client.send(command);
+    console.log('Tags applied successfully:', response);
+  };
 }
 
