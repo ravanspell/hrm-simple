@@ -35,6 +35,7 @@ model Organization {
   leaveAllocations   LeaveAllocation[]
   EmailSettings      EmailSettings[]
   files              FileMgt[]
+  folders            Folder[]
 }
 
 model EmailSettings {
@@ -180,15 +181,36 @@ model LeaveBalance {
   @@index([organizationId])
 }
 
-
 model FileMgt {
   id              String          @id @default(uuid())
   s3ObjectKey     String          @unique
   fileName        String
   fileSize        BigInt
-  folderPath      String?
+  folderId        String?
   organizationId  String
   uploadedAt      DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-  organization   Organization     @relation(fields: [organizationId], references: [id])
+  fileStatus      FileStatus      @default(ACTIVE)  // New column for file status
+  deletionTime    DateTime?       // Optional, used for soft-deletes with TTL
+  organization    Organization    @relation(fields: [organizationId], references: [id])
+  folder          Folder?         @relation(fields: [folderId], references: [id], onDelete: Cascade)
+}
+
+enum FileStatus {
+  ACTIVE
+  DELETED
+}
+
+model Folder {
+  id              String          @id @default(uuid())
+  name            String
+  parentId        String?         // For nested folders, NULL if it's a root folder
+  path            String          // Full folder path (e.g., "/documents/contracts")
+  organizationId  String          // Reference to the tenant
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  organization    Organization    @relation(fields: [organizationId], references: [id])
+  parentFolder    Folder?         @relation("FolderParent", fields: [parentId], references: [id])
+  subFolders      Folder[]        @relation("FolderParent")
+  files           FileMgt[]       // Files inside this folder
 }
