@@ -87,6 +87,15 @@ export class S3Buckets extends Construct {
             storageClass: 'STANDARD_IA', // Transition to STANDARD_IA storage class
           },
         ]
+      },
+      {
+        enabled: true,
+        expiration: {
+          days: 120, // Delete after 4 months (approximately 120 days)
+        },
+        tags: {
+          fileStatus: 'DELETED', // Objects tagged with 'fileStatus=DELETE' will be deleted after 120 days
+        },
       }],
     });
 
