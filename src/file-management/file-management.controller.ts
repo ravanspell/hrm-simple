@@ -7,7 +7,8 @@ import {
   Param,
   Delete,
   BadRequestException,
-  Req
+  Req,
+  Query
 } from '@nestjs/common';
 import { FileManagementService } from './file-management.service';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
@@ -42,6 +43,27 @@ export class FileManagementController {
     @Param('pageSize') pageSize: number,
     @Req() req: RequestWithTenant) {
     return this.fileManagementService.findOrganizationAll(req.user.organizationId, page, pageSize);
+  }
+
+  // Get combined list of files and folders with pagination
+  @Get()
+  async listFilesAndFolders(
+    @Query('folderId') folderId: string | null,
+    @Query('page') page: number = 1, // Default to page 1
+    @Query('limit') limit: number = 10, // Default to 10 items per page
+    @Req() req: RequestWithTenant
+  ) {
+    const organizationId = req.user.organizationId;
+    const result = await this.fileManagementService.getFilesAndFolders(
+      folderId,
+      organizationId,
+      page,
+      limit
+    );
+    return {
+      message: 'Files and folders retrieved successfully',
+      ...result
+    };
   }
 
   @Get(':id')
