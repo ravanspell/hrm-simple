@@ -1,5 +1,6 @@
 import { PrismaClient, Organization, Prisma } from '@prisma/client';
 import { faker } from '@faker-js/faker';
+import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
 
@@ -240,7 +241,58 @@ async function main() {
   }
 
   console.log(`Seeded ${usersCreated} users across ${organizations.length} organizations.`);
-  console.log('Seeding finished.');
+
+  //----------- File managment --------------------- //
+
+  // Create a root folder
+  const rootFolder = await prisma.folder.create({
+    data: {
+      name: 'root',
+      path: '/',
+      organizationId: organizations[0].id,
+      // Include other required fields for Folder
+    },
+  });
+
+  const folders = [rootFolder];
+
+  // Generate 300 random entries (folders and files)
+  for (let i = 0; i < 300; i++) {
+    const isFolder = Math.random() < 0.5;
+
+    if (isFolder) {
+      // Create a subfolder
+      const parentFolder = folders[Math.floor(Math.random() * folders.length)];
+      const folderName = `folder_${uuidv4().slice(0, 8)}`;
+      const newFolder = await prisma.folder.create({
+        data: {
+          name: folderName,
+          parentId: parentFolder.id,
+          path: `${parentFolder.path}${folderName}/`,
+          organizationId: organizations[0].id,
+          // Include other required fields for Folder
+        },
+      });
+      folders.push(newFolder);
+    } else {
+      // Create a file
+      const parentFolder = folders[Math.floor(Math.random() * folders.length)];
+      const fileName = `file_${uuidv4().slice(0, 8)}.txt`;
+      await prisma.fileMgt.create({
+        data: {
+          s3ObjectKey: uuidv4(),
+          fileName: fileName,
+          fileSize: BigInt(Math.floor(Math.random() * 1_000_000)), // Random file size up to ~1MB
+          folderId: parentFolder.id,
+          organizationId: organizations[0].id,
+          fileStatus: 'ACTIVE',
+          // Include other required fields for FileMgt
+        },
+      });
+    }
+  }
+
+  console.log('✅ Seed data created successfully.');
 }
 
 main()
