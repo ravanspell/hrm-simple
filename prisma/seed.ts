@@ -244,54 +244,107 @@ async function main() {
 
   //----------- File managment --------------------- //
 
-  // Create a root folder
-  const rootFolder = await prisma.folder.create({
-    data: {
-      name: 'root',
-      path: '/',
+  const s3Keys = [
+    'file_62716cf3.zip',
+    'file_9a1eef3f.xlsx',
+    'file_c4e8b967.jpeg',
+    'file_d7e92a1c.pdf',
+    'file_f654c7c4.docx',
+  ];
+
+  // Create 60 root files to mimic pagination
+  for (let i = 1; i <= 60; i++) {
+    const s3ObjectKey = s3Keys[Math.floor(Math.random() * s3Keys.length)];
+    const fileName = `RootFile_${i}.${s3ObjectKey.split('.').pop()}`; // Meaningful file name
+
+    await prisma.fileMgt.create({
+      data: {
+        s3ObjectKey: s3ObjectKey,
+        fileName: fileName,
+        fileSize: Math.floor(Math.random() * 1_000_000) + 1_000, // Random file size between 1KB and 1MB
+        folderId: null, // Root folder
+        organizationId: organizations[0].id,
+        fileStatus: 'ACTIVE',
+      },
+    });
+  }
+
+  // Create 20 root folders
+  for (let i = 1; i <= 20; i++) {
+    const folderName = `RootFolder_${i}`;
+    const path = `/${folderName}`;
+
+    await prisma.folder.create({
+      data: {
+        name: folderName,
+        parentId: null, // Root folder
+        path: path,
+        organizationId: organizations[0].id,
+      },
+    });
+  }
+
+  // Fetch all root folders
+  const rootFolders = await prisma.folder.findMany({
+    where: {
+      parentId: null,
       organizationId: organizations[0].id,
-      // Include other required fields for Folder
     },
   });
 
-  const folders = [rootFolder];
+  for (const rootFolder of rootFolders) {
+    // Create 5 files in each root folder
+    for (let i = 1; i <= 5; i++) {
+      const s3ObjectKey = s3Keys[Math.floor(Math.random() * s3Keys.length)];
+      const fileName = `RootFile_${i}.${s3ObjectKey.split('.').pop()}`; // Meaningful file name
 
-  // Generate 300 random entries (folders and files)
-  for (let i = 0; i < 300; i++) {
-    const isFolder = Math.random() < 0.5;
-
-    if (isFolder) {
-      // Create a subfolder
-      const parentFolder = folders[Math.floor(Math.random() * folders.length)];
-      const folderName = `folder_${uuidv4().slice(0, 8)}`;
-      const newFolder = await prisma.folder.create({
-        data: {
-          name: folderName,
-          parentId: parentFolder.id,
-          path: `${parentFolder.path}${folderName}/`,
-          organizationId: organizations[0].id,
-          // Include other required fields for Folder
-        },
-      });
-      folders.push(newFolder);
-    } else {
-      // Create a file
-      const parentFolder = folders[Math.floor(Math.random() * folders.length)];
-      const fileName = `file_${uuidv4().slice(0, 8)}.txt`;
       await prisma.fileMgt.create({
         data: {
-          s3ObjectKey: uuidv4(),
+          id: `file-${rootFolder.id}-${i}`,
+          s3ObjectKey: s3ObjectKey,
           fileName: fileName,
-          fileSize: BigInt(Math.floor(Math.random() * 1_000_000)), // Random file size up to ~1MB
-          folderId: parentFolder.id,
+          fileSize: Math.floor(Math.random() * 1_000_000) + 1_000,
+          folderId: rootFolder.id,
           organizationId: organizations[0].id,
           fileStatus: 'ACTIVE',
-          // Include other required fields for FileMgt
         },
       });
     }
-  }
 
+    // Create 2 subfolders in each root folder
+    for (let j = 1; j <= 2; j++) {
+      const subfolderName = `${rootFolder.name}_Subfolder_${j}`;
+      const path = `${rootFolder.path}/${subfolderName}`;
+
+      const subfolder = await prisma.folder.create({
+        data: {
+          id: `folder-${rootFolder.id}-${j}`,
+          name: subfolderName,
+          parentId: rootFolder.id,
+          path: path,
+          organizationId: organizations[0].id,
+        },
+      });
+
+      // Create 2 files in each subfolder
+      for (let k = 1; k <= 2; k++) {
+        const s3ObjectKey = s3Keys[Math.floor(Math.random() * s3Keys.length)];
+        const fileName = `RootFile_${k}.${s3ObjectKey.split('.').pop()}`; // Meaningful file name
+
+        await prisma.fileMgt.create({
+          data: {
+            id: `file-${subfolder.id}-${k}`,
+            s3ObjectKey: s3ObjectKey,
+            fileName: fileName,
+            fileSize: Math.floor(Math.random() * 1_000_000) + 1_000,
+            folderId: subfolder.id,
+            organizationId: organizations[0].id,
+            fileStatus: 'ACTIVE',
+          },
+        });
+      }
+    }
+  }
   console.log('✅ Seed data created successfully.');
 }
 

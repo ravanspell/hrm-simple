@@ -183,9 +183,9 @@ model LeaveBalance {
 
 model FileMgt {
   id              String          @id @default(uuid())
-  s3ObjectKey     String          @unique
+  s3ObjectKey     String          // @unique
   fileName        String
-  fileSize        BigInt
+  fileSize        Int
   folderId        String?
   organizationId  String
   uploadedAt      DateTime        @default(now())
