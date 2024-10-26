@@ -244,6 +244,9 @@ async function main() {
 
   //----------- File managment --------------------- //
 
+  // Fetch a sample user for createdBy and updatedBy fields
+  const sampleUser = await prisma.user.findFirst();
+
   const s3Keys = [
     'file_62716cf3.zip',
     'file_9a1eef3f.xlsx',
@@ -265,6 +268,8 @@ async function main() {
         folderId: null, // Root folder
         organizationId: organizations[0].id,
         fileStatus: 'ACTIVE',
+        createdBy: sampleUser?.id || 'system',
+        updatedBy: sampleUser?.id || 'system',
       },
     });
   }
@@ -280,6 +285,8 @@ async function main() {
         parentId: null, // Root folder
         path: path,
         organizationId: organizations[0].id,
+        createdBy: sampleUser?.id || 'system',
+        updatedBy: sampleUser?.id || 'system',
       },
     });
   }
@@ -307,6 +314,8 @@ async function main() {
           folderId: rootFolder.id,
           organizationId: organizations[0].id,
           fileStatus: 'ACTIVE',
+          createdBy: sampleUser?.id || 'system',
+          updatedBy: sampleUser?.id || 'system',
         },
       });
     }
@@ -323,6 +332,8 @@ async function main() {
           parentId: rootFolder.id,
           path: path,
           organizationId: organizations[0].id,
+          createdBy: sampleUser?.id || 'system',
+          updatedBy: sampleUser?.id || 'system',
         },
       });
 
@@ -340,6 +351,8 @@ async function main() {
             folderId: subfolder.id,
             organizationId: organizations[0].id,
             fileStatus: 'ACTIVE',
+            createdBy: sampleUser?.id || 'system',
+            updatedBy: sampleUser?.id || 'system',
           },
         });
       }

@@ -79,6 +79,11 @@ model User {
   employeeLevel    EmployeeLevel    @relation(fields: [employeeLevelId], references: [id])
   empLeaveHistories EmpLeaveHistory[]
   leaveBalances    LeaveBalance[]
+  // Relations with FileMgt and Folder tables
+  filesCreated      FileMgt[]    @relation("FileCreatedBy")  // Files created by the user
+  filesUpdated      FileMgt[]    @relation("FileUpdatedBy")  // Files last updated by the user
+  foldersCreated    Folder[]     @relation("FolderCreatedBy") // Folders created by the user
+  foldersUpdated    Folder[]     @relation("FolderUpdatedBy") // Folders last updated by the user
 
   @@index([organizationId])
   @@index([employmentStatusId])
@@ -192,8 +197,19 @@ model FileMgt {
   updatedAt       DateTime        @updatedAt
   fileStatus      FileStatus      @default(ACTIVE)  // New column for file status
   deletionTime    DateTime?       // Optional, used for soft-deletes with TTL
-  organization    Organization    @relation(fields: [organizationId], references: [id])
-  folder          Folder?         @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  createdBy       String      // User ID of the creator
+  updatedBy       String      // User ID of the last updater
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  folder          Folder?      @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  creator         User         @relation("FileCreatedBy", fields: [createdBy], references: [id])
+  updater         User         @relation("FileUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([organizationId])  // Index for organization-wide queries
+  @@index([folderId])        // Index for querying files by folder
+  @@index([fileStatus])      // Index for querying active/deleted files
+  @@index([uploadedAt])      // Index to optimize queries based on upload date
 }
 
 enum FileStatus {
@@ -209,8 +225,17 @@ model Folder {
   organizationId  String          // Reference to the tenant
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  createdBy       String          // User ID of the creator
+  updatedBy       String          // User ID of the last updater
+
   organization    Organization    @relation(fields: [organizationId], references: [id])
   parentFolder    Folder?         @relation("FolderParent", fields: [parentId], references: [id])
   subFolders      Folder[]        @relation("FolderParent")
   files           FileMgt[]       // Files inside this folder
+  creator         User            @relation("FolderCreatedBy", fields: [createdBy], references: [id])
+  updater         User            @relation("FolderUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@index([organizationId])       // Index for organization-wide queries
+  @@index([parentId])             // Index to quickly retrieve subfolders
+  @@index([path])                 // Index on path to optimize path-based queries
 }
