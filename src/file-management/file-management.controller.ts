@@ -53,16 +53,48 @@ export class FileManagementController {
     @Query('limit') limit: number = 10, // Default to 10 items per page
     @Req() req: RequestWithTenant
   ) {
-    const organizationId = req.user.organizationId;
-    const result = await this.fileManagementService.getFilesAndFolders(
-      folderId,
-      organizationId,
-      page,
-      limit
-    );
+    const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d' //req.user.organizationId;
+    const skip = (page - 1) * limit;
+
+    // Fetch files, folders, and counts in parallel
+    const [files, folders, fileCount, folderCount] = await Promise.all([
+      this.fileManagementService.getFiles(folderId, organizationId, skip, limit),
+      this.fileManagementService.getFolders(folderId, organizationId, skip, limit),
+      this.fileManagementService.getFileCount(folderId, organizationId),
+      this.fileManagementService.getFolderCount(folderId, organizationId),
+    ]);
+
+    // Combine files and folders into a single array
+    const combined = [
+      ...files.map(file => ({
+        id: file.id,
+        name: file.fileName,
+        size: file.fileSize,
+        key: file.s3ObjectKey,
+        uploadedAt: file.uploadedAt,
+        folder: false,
+      })),
+      ...folders.map(folder => ({
+        id: folder.id,
+        name: folder.name,
+        createdAt: folder.createdAt,
+        folder: true,
+        fileCount: folder._count.files,
+        folderCount: folder._count.subFolders,
+      })),
+    ];
+
+    const totalItems = fileCount + folderCount;
+    const totalPages = Math.ceil(totalItems / limit);
+
     return {
-      message: 'Files and folders retrieved successfully',
-      ...result
+      data: combined,
+      pagination: {
+        totalItems,
+        page,
+        limit,
+        totalPages,
+      },
     };
   }
 
@@ -79,5 +111,17 @@ export class FileManagementController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.fileManagementService.remove(+id);
+  }
+  /**
+   * Retrieves the hierarchy of parent folder IDs for breadcrumb navigation.
+   * @param folderId - ID of the folder.
+   * @returns Array of parent folder IDs from root to the specified folder's parent.
+   */
+  @Get('breadcrumb/:folderId')
+  async getBreadcrumb(@Param('folderId') folderId: string) {
+    console.log("folderId--->", folderId);
+    
+    const parentFolderIds = await this.fileManagementService.getParentFolderIds(folderId);
+    return { parentFolderIds };
   }
 }

@@ -148,20 +148,20 @@ export class FileManagementService {
     );
     return headResult;
   }
-
-  async getFilesAndFolders(
-    folderId: string | null,
-    organizationId: string,
-    page: number = 1,
-    limit: number = 10
-  ) {
-    const skip = (page - 1) * limit;
-    // folderId provided, return from the specific folder
-    const files = await this.databseService.fileMgt.findMany({
+  /**
+   * Fetches active files within a specified folder for a given organization.
+   * @param folderId - ID of the folder (null for root directory).
+   * @param organizationId - ID of the organization.
+   * @param skip - Number of records to skip (for pagination).
+   * @param take - Number of records to fetch (limit).
+   * @returns Array of files with basic details.
+   */
+  async getFiles(folderId: string | null, organizationId: string, skip: number, take: number) {
+    return this.databseService.fileMgt.findMany({
       where: {
         folderId: folderId || null,
         organizationId,
-        fileStatus: 'ACTIVE', // Only active files
+        fileStatus: 'ACTIVE',
       },
       select: {
         id: true,
@@ -169,13 +169,22 @@ export class FileManagementService {
         fileSize: true,
         s3ObjectKey: true,
         uploadedAt: true,
-        folderId: true,
       },
       skip,
-      take: limit
+      take,
     });
+  }
 
-    const folders = await this.databseService.folder.findMany({
+  /**
+   * Fetches folders within a specified parent folder along with counts for files and subfolders.
+   * @param folderId - ID of the parent folder (null for root).
+   * @param organizationId - ID of the organization.
+   * @param skip - Number of records to skip (for pagination).
+   * @param take - Number of records to fetch (limit).
+   * @returns Array of folders with counts for files and subfolders.
+   */
+  async getFolders(folderId: string | null, organizationId: string, skip: number, take: number) {
+    return this.databseService.folder.findMany({
       where: {
         parentId: folderId || null,
         organizationId,
@@ -183,56 +192,72 @@ export class FileManagementService {
       select: {
         id: true,
         name: true,
-        parentId: true,
         createdAt: true,
+        _count: {
+          select: {
+            files: true,
+            subFolders: true,
+          },
+        },
       },
       skip,
-      take: limit
+      take,
     });
+  }
 
-    const totalFiles = await this.databseService.fileMgt.count({
+  /**
+   * Retrieves the total count of files in a specified folder for pagination.
+   * @param folderId - ID of the folder (null for root).
+   * @param organizationId - ID of the organization.
+   * @returns Number of active files within the folder.
+   */
+  async getFileCount(folderId: string | null, organizationId: string): Promise<number> {
+    return this.databseService.fileMgt.count({
       where: {
         folderId: folderId || null,
         organizationId,
-        fileStatus: 'ACTIVE'
+        fileStatus: 'ACTIVE',
       },
     });
-    const totalFolders = await this.databseService.folder.count({
+  }
+
+  /**
+   * Retrieves the total count of folders in a specified parent folder for pagination.
+   * @param folderId - ID of the parent folder (null for root).
+   * @param organizationId - ID of the organization.
+   * @returns Number of subfolders within the parent folder.
+   */
+  async getFolderCount(folderId: string | null, organizationId: string): Promise<number> {
+    return this.databseService.folder.count({
       where: {
         parentId: folderId || null,
-        organizationId
+        organizationId,
       },
     });
-    // Combine files and folders into a single list
-    const combined = [
-      ...files.map(file => ({
-        id: file.id,
-        name: file.fileName,
-        size: file.fileSize,
-        key: file.s3ObjectKey,
-        uploadedAt: file.uploadedAt,
-        folder: false, // This is a file
-      })),
-      ...folders.map(folder => ({
-        id: folder.id,
-        name: folder.name,
-        createdAt: folder.createdAt,
-        folder: true, // This is a folder
-      })),
-    ];
+  }
 
-    const totalItems = totalFiles + totalFolders;
-    const totalPages = Math.ceil(totalItems / limit);
+  /**
+   * Recursively retrieves all ancestor folder IDs for a specified folder.
+   * @param folderId - ID of the folder.
+   * @returns Array of parent folder IDs from root to the current folder's parent.
+   */
+  async getParentFolderIds(folderId: string): Promise<string[]> {
+    const parentIds: string[] = [];
+    let currentFolderId = folderId;
 
-    return {
-      data: combined,
-      pagination: {
-        totalItems,
-        page,
-        limit,
-        totalPages,
-      },
-    };
+    while (currentFolderId) {
+      const currentFolder = await this.databseService.folder.findUnique({
+        where: { id: currentFolderId },
+        select: { parentId: true },
+      });
+      if (currentFolder?.parentId) {
+        parentIds.unshift(currentFolder.parentId);
+        currentFolderId = currentFolder.parentId;
+      } else {
+        break;
+      }
+    }
+    return parentIds;
   }
   /**
    * Function to apply tags to an S3 object.
