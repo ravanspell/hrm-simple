@@ -15,6 +15,7 @@ import { UpdateFileManagementDto } from './dto/update-file-management.dto';
 import { IsString } from 'class-validator';
 import { RequestWithTenant } from 'src/coretypes';
 import { RenameFileDto } from './dto/rename-file.dto';
+import { RenameFolderDto } from './dto/rename-folder.dto';
 
 class InitUploadDto {
   @IsString()
@@ -109,6 +110,17 @@ export class FileManagementController {
     const { id, fileName } = renameFileDto;
     await this.fileManagementService.findFileById(id);
     return this.fileManagementService.updateFileName(id, fileName);
+  }
+  /**
+  * Endpoint to rename a specified folder with validation.
+  * @param renameFolderDto - DTO containing the folder ID and the new validated name.
+  * @returns Confirmation message.
+  */
+  @Patch('rename-folder')
+  async renameFolder(@Body() renameFolderDto: RenameFolderDto) {
+    const { id, folderName } = renameFolderDto;
+    await this.fileManagementService.findFolderById(id);
+    return this.fileManagementService.updateFolderName(id, folderName);
   }
 
   @Get(':id')

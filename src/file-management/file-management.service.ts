@@ -48,6 +48,32 @@ export class FileManagementService {
     return file;
   }
   /**
+   * Checks if a file exists by its ID.
+   * @param id - The ID of the file.
+   * @returns The file record if it exists.
+   * @throws NotFoundException if the file does not exist.
+   */
+  async findFolderById(id: string) {
+    const file = await this.databseService.folder.findUnique({ where: { id } });
+    if (!file) {
+      throw new NotFoundException(`Specified folder not found`);
+    }
+    return file;
+  }
+  /**
+   * Updates the name of a folder.
+   * @param id - The ID of the folder.
+   * @param folderName - The new fodler name to set.
+   * @returns Success message indicating the folder name was updated.
+   */
+  async updateFolderName(id: string, folderName: string) {
+    await this.databseService.folder.update({
+      where: { id },
+      data: { name: folderName },
+    });
+    return { message: `Folder renamed to ${folderName} successfully.` };
+  }
+  /**
    * Generates a presigned URL for uploading a file to the dirty bucket.
    *
    * @param filename - uploading file name.
