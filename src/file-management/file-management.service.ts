@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
@@ -33,6 +33,19 @@ export class FileManagementService {
     });
     this.dirtyBucket = this.configService.get<string>('DIRTY_BUCKET_NAME');
     this.permanentBucket = this.configService.get<string>('AWS_PERMANENT_BUCKET');
+  }
+  /**
+   * Checks if a file exists by its ID.
+   * @param id - The ID of the file.
+   * @returns The file record if it exists.
+   * @throws NotFoundException if the file does not exist.
+   */
+  async findFileById(id: string) {
+    const file = await this.databseService.fileMgt.findUnique({ where: { id } });
+    if (!file) {
+      throw new NotFoundException(`Specified file not found`);
+    }
+    return file;
   }
   /**
    * Generates a presigned URL for uploading a file to the dirty bucket.
@@ -280,5 +293,17 @@ export class FileManagementService {
     const response = await this.s3Client.send(command);
     console.log('Tags applied successfully:', response);
   };
+  /**
+   * Updates the name of a file.
+   * @param id - The ID of the file.
+   * @param newName - The new name to set.
+   * @returns Success message indicating the file name was updated.
+   */
+  async updateFileName(id: string, newName: string) {
+    await this.databseService.fileMgt.update({
+      where: { id },
+      data: { fileName: newName },
+    });
+    return { message: `File renamed to ${newName} successfully.` };
+  }
 }
-

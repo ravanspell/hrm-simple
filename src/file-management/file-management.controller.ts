@@ -14,6 +14,7 @@ import { FileManagementService } from './file-management.service';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
 import { IsString } from 'class-validator';
 import { RequestWithTenant } from 'src/coretypes';
+import { RenameFileDto } from './dto/rename-file.dto';
 
 class InitUploadDto {
   @IsString()
@@ -97,6 +98,18 @@ export class FileManagementController {
       },
     };
   }
+  /**
+   * Renames a specified file.
+   * @param id - The ID of the file to rename.
+   * @param newName - The new name to assign to the file.
+   * @returns Confirmation message or error.
+   */
+  @Patch('rename-file')
+  async renameFile(@Body() renameFileDto: RenameFileDto) {
+    const { id, fileName } = renameFileDto;
+    await this.fileManagementService.findFileById(id);
+    return this.fileManagementService.updateFileName(id, fileName);
+  }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
@@ -119,8 +132,6 @@ export class FileManagementController {
    */
   @Get('breadcrumb/:folderId')
   async getBreadcrumb(@Param('folderId') folderId: string) {
-    console.log("folderId--->", folderId);
-    
     const parentFolderIds = await this.fileManagementService.getParentFolderIds(folderId);
     return { parentFolderIds };
   }
