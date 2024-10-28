@@ -90,7 +90,7 @@ export class FileManagementController {
     const totalPages = Math.ceil(totalItems / limit);
 
     return {
-      data: combined,
+      filesAndFolders: combined,
       pagination: {
         totalItems,
         page,
@@ -143,7 +143,7 @@ export class FileManagementController {
    * @returns Array of parent folder IDs from root to the specified folder's parent.
    */
   @Get('breadcrumb/:folderId')
-  async getBreadcrumb(@Param('folderId') folderId: string) {
+  async getBreadcrumb(@Param('folderId') folderId: string = null) {
     const parentFolderIds = await this.fileManagementService.getParentFolderIds(folderId);
     return { parentFolderIds };
   }

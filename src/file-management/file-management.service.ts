@@ -281,19 +281,19 @@ export class FileManagementService {
    * @returns Array of parent folder IDs from root to the current folder's parent.
    */
   async getParentFolderIds(folderId: string): Promise<string[]> {
-    const parentIds: string[] = [];
+    const parentIds = [];
     let currentFolderId = folderId;
 
     while (currentFolderId) {
       const currentFolder = await this.databseService.folder.findUnique({
         where: { id: currentFolderId },
-        select: { parentId: true },
+        select: { parentId: true, name: true, id: true },
       });
-      if (currentFolder?.parentId) {
-        parentIds.unshift(currentFolder.parentId);
-        currentFolderId = currentFolder.parentId;
-      } else {
-        break;
+
+      parentIds.unshift({ id: currentFolder.id, name: currentFolder.name });
+      currentFolderId = currentFolder.parentId;
+      if (!currentFolder?.parentId) {
+        break
       }
     }
     return parentIds;
