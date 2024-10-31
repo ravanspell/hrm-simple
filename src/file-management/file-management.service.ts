@@ -209,6 +209,11 @@ export class FileManagementService {
         s3ObjectKey: true,
         uploadedAt: true,
       },
+      orderBy: [
+        {
+          updatedAt: 'desc'
+        },
+      ],
       skip,
       take,
     });
@@ -239,6 +244,11 @@ export class FileManagementService {
           },
         },
       },
+      orderBy: [
+        {
+          updatedAt: 'desc'
+        },
+      ],
       skip,
       take,
     });
@@ -331,5 +341,29 @@ export class FileManagementService {
       data: { fileName: newName },
     });
     return { message: `File renamed to ${newName} successfully.` };
+  }
+
+  /**
+   * Creates a new folder within an organization, optionally within a parent folder.
+   * @param createFolderDto - The folder creation data.
+   * @returns The created folder record.
+   */
+  async createFolder(createFolderData: any) {
+    const { name, organizationId, parentId, path } = createFolderData;
+    // Create the new folder in the database
+    return this.databseService.folder.create({
+      data: {
+        name,
+        path,
+        organization: {
+          connect: { id: organizationId },
+        },
+        ...(parentId && {
+          parentFolder: { connect: { id: parentId } },
+        }),
+        creator: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
+        updater: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
+      },
+    });
   }
 }

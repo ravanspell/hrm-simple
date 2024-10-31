@@ -16,6 +16,7 @@ import { IsString } from 'class-validator';
 import { RequestWithTenant } from 'src/coretypes';
 import { RenameFileDto } from './dto/rename-file.dto';
 import { RenameFolderDto } from './dto/rename-folder.dto';
+import { CreateFolderDto } from './dto/create-folder.dto';
 
 class InitUploadDto {
   @IsString()
@@ -47,6 +48,28 @@ export class FileManagementController {
     return this.fileManagementService.findOrganizationAll(req.user.organizationId, page, pageSize);
   }
 
+  /**
+   * Endpoint to create a new folder.
+   * @param createFolderDto - DTO containing the new folder's name, organization, and optional parent ID.
+   * @returns The created folder record.
+   */
+  @Post('create-folder')
+  async createFolder(@Body() createFolderDto: CreateFolderDto) {
+    const { parentId, name } = createFolderDto;
+    let path = `/${name}`;
+    // Determine the path based on parent folder (if any)
+    if (parentId) {
+      const parentFolder = await this.fileManagementService.findFolderById(parentId);
+      path = `${parentFolder.path}/${name}`;
+    }
+    const folderData = {
+      name,
+      parentId,
+      organizationId: '69fb3a34-1bcc-477d-8a22-99c194ea468d',
+      path,
+    }
+    return this.fileManagementService.createFolder(folderData);
+  }
   // Get combined list of files and folders with pagination
   @Get()
   async listFilesAndFolders(
@@ -65,17 +88,8 @@ export class FileManagementController {
       this.fileManagementService.getFileCount(folderId, organizationId),
       this.fileManagementService.getFolderCount(folderId, organizationId),
     ]);
-
     // Combine files and folders into a single array
     const combined = [
-      ...files.map(file => ({
-        id: file.id,
-        name: file.fileName,
-        size: file.fileSize,
-        key: file.s3ObjectKey,
-        uploadedAt: file.uploadedAt,
-        folder: false,
-      })),
       ...folders.map(folder => ({
         id: folder.id,
         name: folder.name,
@@ -83,6 +97,14 @@ export class FileManagementController {
         folder: true,
         fileCount: folder._count.files,
         folderCount: folder._count.subFolders,
+      })),
+      ...files.map(file => ({
+        id: file.id,
+        name: file.fileName,
+        size: file.fileSize,
+        key: file.s3ObjectKey,
+        uploadedAt: file.uploadedAt,
+        folder: false,
       })),
     ];
 
