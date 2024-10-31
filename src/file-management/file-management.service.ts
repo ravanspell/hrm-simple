@@ -9,10 +9,18 @@ import {
   HeadObjectCommandOutput,
   PutObjectCommand,
   PutObjectTaggingCommand,
-  S3Client
+  S3Client,
+  Tag,
 } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import { DatabaseService } from 'src/database/database.service';
+import { FileMgt, Prisma } from '@prisma/client';
+
+interface TaggingResult {
+  status: "fulfilled" | "rejected";
+  key: string;
+  error?: Error;
+}
 
 @Injectable()
 export class FileManagementService {
@@ -174,8 +182,44 @@ export class FileManagementService {
     return `This action updates a #${id} fileManagement`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} fileManagement`;
+  /**
+   * Deletes multiple files based on an array of file IDs.
+   * @param ids - Array of file IDs to delete.
+   * @param files - Array of file data to update status.
+   * @returns 
+   */
+  async softdeleteFiles(ids: string[], files: FileMgt[]) {
+    await this.databseService.fileMgt.updateMany({
+      where: { id: { in: ids } },
+      data: [files.map(file => ({
+        ...file,
+        fileStatus: 'DELETED'
+      }))]
+    });
+
+    const fileS3ObjectKeys = files.map(file => file.s3ObjectKey);
+    
+    this.tagMultipleObjectsWithRollback(
+      this.permanentBucket,
+      fileS3ObjectKeys,
+      [{ Key: 'fileStatus', Value: 'DELETED' }]
+    )
+  }
+
+  /**
+  * Retrieves files based on a flexible filter.
+  * @param where - db filter criteria to apply (e.g., ID, size, name).
+  * @param select - Optional fields to select from the result.
+  * @returns Array of files matching the filter criteria.
+  */
+  async findFiles(
+    where: Prisma.FileMgtWhereInput,
+    select?: Prisma.FileMgtSelect
+  ) {
+    return this.databseService.fileMgt.findMany({
+      where,
+      select,
+    });
   }
 
   async getObjectMetadata(fileKey: string, bucket: string = this.dirtyBucket): Promise<HeadObjectCommandOutput> {
@@ -317,7 +361,7 @@ export class FileManagementService {
   async applyS3ObjectTags(
     bucketName: string,
     objectKey: string,
-    tags: { Key: string, Value: string }[]
+    tags: Tag[]
   ) {
     const command = new PutObjectTaggingCommand({
       Bucket: bucketName,
@@ -329,6 +373,51 @@ export class FileManagementService {
     const response = await this.s3Client.send(command);
     console.log('Tags applied successfully:', response);
   };
+
+  /**
+ * Tags multiple objects in an S3 bucket with a specified set of tags. 
+ * Implements a transaction-like behavior: if any tagging operation fails, 
+ * all successfully tagged objects will have their tags reverted (rollback).
+ * 
+ * @param bucketName - The name of the S3 bucket.
+ * @param keys - The list of object keys to tag.
+ * @param tags - An array of tag objects to apply to each S3 object.
+ * @param roolBackTags - Tag should add when rollback
+ * 
+ * @throws Error if any tagging operation fails, with all successful taggings rolled back.
+ */
+  async tagMultipleObjectsWithRollback(
+    bucketName: string,
+    keys: string[],
+    tags: Tag[],
+    roolBackTags: Tag[] = [],
+  ): Promise<void> {
+    const taggingPromises: Promise<TaggingResult>[] = keys.map((key) => {
+      return this.applyS3ObjectTags(
+        bucketName,
+        key,
+        tags
+      )
+        .then(() => ({ status: "fulfilled", key } as TaggingResult)) // Success result
+        .catch((error) => ({ status: "rejected", key, error } as TaggingResult)); // Failure result
+    });
+
+    const results = await Promise.allSettled(taggingPromises);
+
+    // Separate fulfilled and rejected results using type narrowing
+    const failedTags = results
+      .filter((result): result is PromiseFulfilledResult<TaggingResult> => result.status === "rejected")
+      .map((result) => result.value); // Cast to TaggingResult
+
+    const successfulTags = results
+      .filter((result): result is PromiseFulfilledResult<TaggingResult> => result.status === "fulfilled")
+      .map((result) => result.value); // Cast to TaggingResult
+
+    console.log("successfulTags-->", successfulTags);
+    console.log("Tags applied to all objects successfully.");
+  }
+
+
   /**
    * Updates the name of a file.
    * @param id - The ID of the file.

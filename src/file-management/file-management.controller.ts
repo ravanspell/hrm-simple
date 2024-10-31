@@ -8,7 +8,9 @@ import {
   Delete,
   BadRequestException,
   Req,
-  Query
+  Query,
+  NotFoundException,
+  UnprocessableEntityException
 } from '@nestjs/common';
 import { FileManagementService } from './file-management.service';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
@@ -17,6 +19,7 @@ import { RequestWithTenant } from 'src/coretypes';
 import { RenameFileDto } from './dto/rename-file.dto';
 import { RenameFolderDto } from './dto/rename-folder.dto';
 import { CreateFolderDto } from './dto/create-folder.dto';
+import { DeleteFilesDto } from './dto/delete-files.dto';
 
 class InitUploadDto {
   @IsString()
@@ -155,9 +158,23 @@ export class FileManagementController {
     return this.fileManagementService.update(+id, updateFileManagementDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.fileManagementService.remove(+id);
+  /**
+    * Endpoint to delete multiple files or a single file based on file IDs.
+    * @param deleteFilesDto - DTO containing an array of file IDs to delete.
+    * @returns Confirmation message of the deletion.
+    */
+  @Delete('soft-delete-files')
+  async deleteFiles(@Body() deleteFilesDto: DeleteFilesDto) {
+    const { ids } = deleteFilesDto;
+    const files = await this.fileManagementService.findFiles({
+      id: { in: ids }},
+    );
+    // collect avaialbe file ids for delete
+    const availalbeFilesForDelete = files.map(file => file.id);
+    if (availalbeFilesForDelete.length === 0) {
+      throw new UnprocessableEntityException('files not available for delete');
+    }
+    return this.fileManagementService.softdeleteFiles(availalbeFilesForDelete, files);
   }
   /**
    * Retrieves the hierarchy of parent folder IDs for breadcrumb navigation.
