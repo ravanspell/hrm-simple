@@ -150,30 +150,6 @@ export class FileManagementService {
     return `This action returns all fileManagement`;
   }
 
-  async findOrganizationAll(organizationId: string, page: number = 1, limit: number = 10) {
-    // Ensure page and limit are positive integers
-    page = page < 1 ? 1 : page;
-    limit = limit < 1 ? 10 : limit;
-
-    const skip = (page - 1) * limit;
-
-    // Fetch files with pagination
-    const [files, total] = await Promise.all([
-      this.databseService.fileMgt.findMany({
-        where: { organizationId },
-        skip: skip,
-        take: limit,
-        orderBy: { uploadedAt: 'desc' }, // Optional: Order by upload date
-      }),
-      this.databseService.fileMgt.count({
-        where: { organizationId },
-      }),
-    ]);
-
-    const totalPages = Math.ceil(total / limit);
-    return { files, total, page, totalPages };
-  };
-
   findOne(id: number) {
     return `This action returns a #${id} fileManagement`;
   }
@@ -198,7 +174,7 @@ export class FileManagementService {
     });
 
     const fileS3ObjectKeys = files.map(file => file.s3ObjectKey);
-    
+
     this.tagMultipleObjectsWithRollback(
       this.permanentBucket,
       fileS3ObjectKeys,
@@ -246,18 +222,20 @@ export class FileManagementService {
         organizationId,
         fileStatus: 'ACTIVE',
       },
-      select: {
-        id: true,
-        fileName: true,
-        fileSize: true,
-        s3ObjectKey: true,
-        uploadedAt: true,
-      },
       orderBy: [
         {
           updatedAt: 'desc'
         },
       ],
+      include: {
+        updater: {
+          select: {
+            firstName: true,
+            lastName: true,
+            id: true
+          }
+        }
+      },
       skip,
       take,
     });
@@ -277,16 +255,20 @@ export class FileManagementService {
         parentId: folderId || null,
         organizationId,
       },
-      select: {
-        id: true,
-        name: true,
-        createdAt: true,
+      include: {
         _count: {
           select: {
             files: true,
             subFolders: true,
           },
         },
+        updater: {
+          select: {
+            firstName: true,
+            lastName: true,
+            id: true
+          }
+        }
       },
       orderBy: [
         {

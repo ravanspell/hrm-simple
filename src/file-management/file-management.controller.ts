@@ -9,7 +9,6 @@ import {
   BadRequestException,
   Req,
   Query,
-  NotFoundException,
   UnprocessableEntityException
 } from '@nestjs/common';
 import { FileManagementService } from './file-management.service';
@@ -41,14 +40,6 @@ export class FileManagementController {
     }
     const { uploadUrl, key } = await this.fileManagementService.getPresignedUrl(fileName, fileType);
     return { uploadUrl, key };
-  }
-
-  @Get('organization')
-  findAll(
-    @Param('page') page: number,
-    @Param('pageSize') pageSize: number,
-    @Req() req: RequestWithTenant) {
-    return this.fileManagementService.findOrganizationAll(req.user.organizationId, page, pageSize);
   }
 
   /**
@@ -96,18 +87,22 @@ export class FileManagementController {
       ...folders.map(folder => ({
         id: folder.id,
         name: folder.name,
-        createdAt: folder.createdAt,
+        updatedAt: folder.updatedAt,
         folder: true,
         fileCount: folder._count.files,
         folderCount: folder._count.subFolders,
+        updatedBy: `${folder.updater.firstName} ${folder.updater.lastName}`,
+        updatedById: folder.updater.id
       })),
       ...files.map(file => ({
         id: file.id,
         name: file.fileName,
         size: file.fileSize,
         key: file.s3ObjectKey,
-        uploadedAt: file.uploadedAt,
+        updatedAt: file.updatedAt,
         folder: false,
+        updatedBy: `${file.updater.firstName} ${file.updater.lastName}`,
+        updatedById: file.updater.id
       })),
     ];
 
@@ -167,7 +162,8 @@ export class FileManagementController {
   async deleteFiles(@Body() deleteFilesDto: DeleteFilesDto) {
     const { ids } = deleteFilesDto;
     const files = await this.fileManagementService.findFiles({
-      id: { in: ids }},
+      id: { in: ids }
+    },
     );
     // collect avaialbe file ids for delete
     const availalbeFilesForDelete = files.map(file => file.id);
