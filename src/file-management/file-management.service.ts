@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   CopyObjectCommand,
   GetObjectCommand,
+  GetObjectCommandOutput,
   HeadObjectCommand,
   HeadObjectCommandOutput,
   PutObjectCommand,
@@ -15,6 +16,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { DatabaseService } from 'src/database/database.service';
 import { FileMgt, Prisma } from '@prisma/client';
+import * as archiver from 'archiver';
 
 interface TaggingResult {
   status: "fulfilled" | "rejected";
@@ -40,7 +42,7 @@ export class FileManagementService {
       },
     });
     this.dirtyBucket = this.configService.get<string>('DIRTY_BUCKET_NAME');
-    this.permanentBucket = this.configService.get<string>('AWS_PERMANENT_BUCKET');
+    this.permanentBucket = this.configService.get<string>('PERMANENT_BUCKET_NAME');
   }
   /**
    * Checks if a file exists by its ID.
@@ -436,5 +438,50 @@ export class FileManagementService {
         updater: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
       },
     });
+  }
+
+  /**
+   * Get S3 object as a readable stream for a file.
+   * @param s3ObjectKey - The S3 object key of the file.
+   * @returns The S3 object as a readable stream.
+   */
+  async getS3ObjectStream(s3ObjectKey: string): Promise<GetObjectCommandOutput> {
+    
+    const params = {
+      Bucket: this.permanentBucket, // S3 bucket name from environment variables
+      Key: s3ObjectKey, // S3 object key for the file
+    };
+    const command = new GetObjectCommand(params);
+    const response = await this.s3Client.send(command);
+    return response;
+  }
+
+  /**
+   * Recursively add folder contents to archive.
+   * @param folderId - The ID of the folder to add to the archive.
+   * @param archive - The archive object to append files and folders to.
+   */
+  async addFolderToArchive(folderId: string, archive: archiver.Archiver) {
+    // Fetch folder details, including files and subfolders
+    const folder = await this.databseService.folder.findUnique({
+      where: {
+        id: folderId
+      },
+      include: {
+        files: true,
+        subFolders: true
+      }
+    });
+
+    // Add each file in the folder to the archive
+    for (const file of folder.files) {
+      const s3ObjectStream = await this.getS3ObjectStream(file.s3ObjectKey);
+      archive.append(s3ObjectStream.Body, { name: `${folder.path}/${file.fileName}` }); // Append the file to the archive with the correct path
+    }
+
+    // Recursively add subfolders to the archive
+    for (const subFolder of folder.subFolders) {
+      await this.addFolderToArchive(subFolder.id, archive); // Recursive call for each subfolder
+    }
   }
 }

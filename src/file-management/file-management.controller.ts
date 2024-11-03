@@ -9,7 +9,9 @@ import {
   BadRequestException,
   Req,
   Query,
-  UnprocessableEntityException
+  UnprocessableEntityException,
+  NotFoundException,
+  Res
 } from '@nestjs/common';
 import { FileManagementService } from './file-management.service';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
@@ -19,6 +21,8 @@ import { RenameFileDto } from './dto/rename-file.dto';
 import { RenameFolderDto } from './dto/rename-folder.dto';
 import { CreateFolderDto } from './dto/create-folder.dto';
 import { DeleteFilesDto } from './dto/delete-files.dto';
+import { Response } from 'express';
+import * as archiver from 'archiver';
 
 class InitUploadDto {
   @IsString()
@@ -181,5 +185,47 @@ export class FileManagementController {
   async getBreadcrumb(@Param('folderId') folderId: string = null) {
     const parentFolderIds = await this.fileManagementService.getParentFolderIds(folderId);
     return { parentFolderIds };
+  }
+
+  /**
+   * Handle download request by determining the type (file, folder, or multiple items).
+   * @param ids - Array of file or folder IDs to download.
+   * @param res - The response object to stream the download.
+   */
+  @Get('download')
+  async download(@Query('ids') idsString: string, @Res() res: Response) {
+    console.log("ids-->", idsString);
+    const ids = idsString.split(',');
+    
+    
+    // Set response headers to indicate a zip download
+    res.setHeader('Content-Disposition', 'attachment; filename=download.zip');
+    res.setHeader('Content-Type', 'application/zip'); // Indicate that the response is a zip file
+    const archive = archiver('zip');
+    archive.pipe(res); // Pipe the archive stream to the response
+
+    // Iterate through each ID to determine if it is a file or folder
+    for (const id of ids) {
+      // Check if the ID belongs to a file
+      const file = await this.fileManagementService.findFileById(id);
+
+      if (file) {
+        const s3ObjectStream = await this.fileManagementService.getS3ObjectStream(file.s3ObjectKey);
+        archive.append(s3ObjectStream.Body, { name: file.fileName }); // Append the file to the archive
+        continue;
+      }
+      // Check if the ID belongs to a folder
+      const folder = await this.fileManagementService.findFolderById(id);
+      if (folder) {
+        await this.fileManagementService.addFolderToArchive(folder.id, archive); // Add folder contents to the archive
+        continue;
+      }
+
+      // Throw exception if neither file nor folder is found
+      throw new NotFoundException(`File or Folder with ID ${id} not found`);
+    }
+
+    // Finalize the archive (end the stream)
+    archive.finalize();
   }
 }
