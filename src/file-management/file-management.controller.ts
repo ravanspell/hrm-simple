@@ -196,8 +196,8 @@ export class FileManagementController {
   async download(@Query('ids') idsString: string, @Res() res: Response) {
     console.log("ids-->", idsString);
     const ids = idsString.split(',');
-    
-    
+
+
     // Set response headers to indicate a zip download
     res.setHeader('Content-Disposition', 'attachment; filename=download.zip');
     res.setHeader('Content-Type', 'application/zip'); // Indicate that the response is a zip file
@@ -227,5 +227,27 @@ export class FileManagementController {
 
     // Finalize the archive (end the stream)
     archive.finalize();
+  }
+
+  /**
+ * Retrieves the hierarchy of parent folder IDs for breadcrumb navigation.
+ * @param folderId - ID of the folder.
+ * @returns Array of parent folder IDs from root to the specified folder's parent.
+ */
+  @Post('upload/confirm')
+  async uploadConfirmation(@Body('files') files: string[]) {
+
+    // Check if the file exists in the dirty bucket
+    const dirtyBucketObjMetadata = files.map((fileKey: string) => (
+      this.fileManagementService.getObjectMetadata(fileKey)
+    ))
+
+    await Promise.all(dirtyBucketObjMetadata);
+
+    const moveFileToPermemntStoragePromises = files.map((fileKey: string) => (
+      this.fileManagementService.confirmAndMoveFile(fileKey)
+    ))
+    await Promise.all(moveFileToPermemntStoragePromises)
+    return dirtyBucketObjMetadata;
   }
 }

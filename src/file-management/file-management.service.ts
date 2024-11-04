@@ -114,14 +114,8 @@ export class FileManagementService {
    * @returns A promise that resolves to true if successful, false otherwise.
   */
   async confirmAndMoveFile(fileKey: string): Promise<boolean> {
-    // Check if the file exists in the dirty bucket
-    const headResult = await this.getObjectMetadata(fileKey)
-    console.log(`File '${fileKey}' exists in '${this.dirtyBucket}'.`);
-
-    // file size in bytes
-    const fileSize = headResult.ContentLength || 0;
     // Copy the file to the permanent bucket
-    const copiedFile = await this.s3Client.send(
+    await this.s3Client.send(
       new CopyObjectCommand({
         Bucket: this.permanentBucket,
         CopySource: `${this.dirtyBucket}/${fileKey}`,
