@@ -1,18 +1,28 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
 import {
   CopyObjectCommand,
   GetObjectCommand,
+  GetObjectCommandOutput,
   HeadObjectCommand,
   HeadObjectCommandOutput,
   PutObjectCommand,
   PutObjectTaggingCommand,
-  S3Client
+  S3Client,
+  Tag,
 } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import { DatabaseService } from 'src/database/database.service';
+import { FileMgt, Prisma } from '@prisma/client';
+import * as archiver from 'archiver';
+
+interface TaggingResult {
+  status: "fulfilled" | "rejected";
+  key: string;
+  error?: Error;
+}
 
 @Injectable()
 export class FileManagementService {
@@ -32,7 +42,46 @@ export class FileManagementService {
       },
     });
     this.dirtyBucket = this.configService.get<string>('DIRTY_BUCKET_NAME');
-    this.permanentBucket = this.configService.get<string>('AWS_PERMANENT_BUCKET');
+    this.permanentBucket = this.configService.get<string>('PERMANENT_BUCKET_NAME');
+  }
+  /**
+   * Checks if a file exists by its ID.
+   * @param id - The ID of the file.
+   * @returns The file record if it exists.
+   * @throws NotFoundException if the file does not exist.
+   */
+  async findFileById(id: string) {
+    const file = await this.databseService.fileMgt.findUnique({ where: { id } });
+    if (!file) {
+      throw new NotFoundException(`Specified file not found`);
+    }
+    return file;
+  }
+  /**
+   * Checks if a file exists by its ID.
+   * @param id - The ID of the file.
+   * @returns The file record if it exists.
+   * @throws NotFoundException if the file does not exist.
+   */
+  async findFolderById(id: string) {
+    const file = await this.databseService.folder.findUnique({ where: { id } });
+    if (!file) {
+      throw new NotFoundException(`Specified folder not found`);
+    }
+    return file;
+  }
+  /**
+   * Updates the name of a folder.
+   * @param id - The ID of the folder.
+   * @param folderName - The new fodler name to set.
+   * @returns Success message indicating the folder name was updated.
+   */
+  async updateFolderName(id: string, folderName: string) {
+    await this.databseService.folder.update({
+      where: { id },
+      data: { name: folderName },
+    });
+    return { message: `Folder renamed to ${folderName} successfully.` };
   }
   /**
    * Generates a presigned URL for uploading a file to the dirty bucket.
@@ -65,14 +114,8 @@ export class FileManagementService {
    * @returns A promise that resolves to true if successful, false otherwise.
   */
   async confirmAndMoveFile(fileKey: string): Promise<boolean> {
-    // Check if the file exists in the dirty bucket
-    const headResult = await this.getObjectMetadata(fileKey)
-    console.log(`File '${fileKey}' exists in '${this.dirtyBucket}'.`);
-
-    // file size in bytes
-    const fileSize = headResult.ContentLength || 0;
     // Copy the file to the permanent bucket
-    const copiedFile = await this.s3Client.send(
+    await this.s3Client.send(
       new CopyObjectCommand({
         Bucket: this.permanentBucket,
         CopySource: `${this.dirtyBucket}/${fileKey}`,
@@ -103,30 +146,6 @@ export class FileManagementService {
     return `This action returns all fileManagement`;
   }
 
-  async findOrganizationAll(organizationId: string, page: number = 1, limit: number = 10) {
-    // Ensure page and limit are positive integers
-    page = page < 1 ? 1 : page;
-    limit = limit < 1 ? 10 : limit;
-
-    const skip = (page - 1) * limit;
-
-    // Fetch files with pagination
-    const [files, total] = await Promise.all([
-      this.databseService.fileMgt.findMany({
-        where: { organizationId },
-        skip: skip,
-        take: limit,
-        orderBy: { uploadedAt: 'desc' }, // Optional: Order by upload date
-      }),
-      this.databseService.fileMgt.count({
-        where: { organizationId },
-      }),
-    ]);
-
-    const totalPages = Math.ceil(total / limit);
-    return { files, total, page, totalPages };
-  };
-
   findOne(id: number) {
     return `This action returns a #${id} fileManagement`;
   }
@@ -135,8 +154,44 @@ export class FileManagementService {
     return `This action updates a #${id} fileManagement`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} fileManagement`;
+  /**
+   * Deletes multiple files based on an array of file IDs.
+   * @param ids - Array of file IDs to delete.
+   * @param files - Array of file data to update status.
+   * @returns 
+   */
+  async softdeleteFiles(ids: string[], files: FileMgt[]) {
+    await this.databseService.fileMgt.updateMany({
+      where: { id: { in: ids } },
+      data: [files.map(file => ({
+        ...file,
+        fileStatus: 'DELETED'
+      }))]
+    });
+
+    const fileS3ObjectKeys = files.map(file => file.s3ObjectKey);
+
+    this.tagMultipleObjectsWithRollback(
+      this.permanentBucket,
+      fileS3ObjectKeys,
+      [{ Key: 'fileStatus', Value: 'DELETED' }]
+    )
+  }
+
+  /**
+  * Retrieves files based on a flexible filter.
+  * @param where - db filter criteria to apply (e.g., ID, size, name).
+  * @param select - Optional fields to select from the result.
+  * @returns Array of files matching the filter criteria.
+  */
+  async findFiles(
+    where: Prisma.FileMgtWhereInput,
+    select?: Prisma.FileMgtSelect
+  ) {
+    return this.databseService.fileMgt.findMany({
+      where,
+      select,
+    });
   }
 
   async getObjectMetadata(fileKey: string, bucket: string = this.dirtyBucket): Promise<HeadObjectCommandOutput> {
@@ -148,91 +203,132 @@ export class FileManagementService {
     );
     return headResult;
   }
-
-  async getFilesAndFolders(
-    folderId: string | null,
-    organizationId: string,
-    page: number = 1,
-    limit: number = 10
-  ) {
-    const skip = (page - 1) * limit;
-    // folderId provided, return from the specific folder
-    const files = await this.databseService.fileMgt.findMany({
+  /**
+   * Fetches active files within a specified folder for a given organization.
+   * @param folderId - ID of the folder (null for root directory).
+   * @param organizationId - ID of the organization.
+   * @param skip - Number of records to skip (for pagination).
+   * @param take - Number of records to fetch (limit).
+   * @returns Array of files with basic details.
+   */
+  async getFiles(folderId: string | null, organizationId: string, skip: number, take: number) {
+    return this.databseService.fileMgt.findMany({
       where: {
         folderId: folderId || null,
         organizationId,
-        fileStatus: 'ACTIVE', // Only active files
+        fileStatus: 'ACTIVE',
       },
-      select: {
-        id: true,
-        fileName: true,
-        fileSize: true,
-        s3ObjectKey: true,
-        uploadedAt: true,
-        folderId: true,
+      orderBy: [
+        {
+          updatedAt: 'desc'
+        },
+      ],
+      include: {
+        updater: {
+          select: {
+            firstName: true,
+            lastName: true,
+            id: true
+          }
+        }
       },
       skip,
-      take: limit
+      take,
     });
+  }
 
-    const folders = await this.databseService.folder.findMany({
+  /**
+   * Fetches folders within a specified parent folder along with counts for files and subfolders.
+   * @param folderId - ID of the parent folder (null for root).
+   * @param organizationId - ID of the organization.
+   * @param skip - Number of records to skip (for pagination).
+   * @param take - Number of records to fetch (limit).
+   * @returns Array of folders with counts for files and subfolders.
+   */
+  async getFolders(folderId: string | null, organizationId: string, skip: number, take: number) {
+    return this.databseService.folder.findMany({
       where: {
         parentId: folderId || null,
         organizationId,
       },
-      select: {
-        id: true,
-        name: true,
-        parentId: true,
-        createdAt: true,
+      include: {
+        _count: {
+          select: {
+            files: true,
+            subFolders: true,
+          },
+        },
+        updater: {
+          select: {
+            firstName: true,
+            lastName: true,
+            id: true
+          }
+        }
       },
+      orderBy: [
+        {
+          updatedAt: 'desc'
+        },
+      ],
       skip,
-      take: limit
+      take,
     });
+  }
 
-    const totalFiles = await this.databseService.fileMgt.count({
+  /**
+   * Retrieves the total count of files in a specified folder for pagination.
+   * @param folderId - ID of the folder (null for root).
+   * @param organizationId - ID of the organization.
+   * @returns Number of active files within the folder.
+   */
+  async getFileCount(folderId: string | null, organizationId: string): Promise<number> {
+    return this.databseService.fileMgt.count({
       where: {
         folderId: folderId || null,
         organizationId,
-        fileStatus: 'ACTIVE'
+        fileStatus: 'ACTIVE',
       },
     });
-    const totalFolders = await this.databseService.folder.count({
+  }
+
+  /**
+   * Retrieves the total count of folders in a specified parent folder for pagination.
+   * @param folderId - ID of the parent folder (null for root).
+   * @param organizationId - ID of the organization.
+   * @returns Number of subfolders within the parent folder.
+   */
+  async getFolderCount(folderId: string | null, organizationId: string): Promise<number> {
+    return this.databseService.folder.count({
       where: {
         parentId: folderId || null,
-        organizationId
+        organizationId,
       },
     });
-    // Combine files and folders into a single list
-    const combined = [
-      ...files.map(file => ({
-        id: file.id,
-        name: file.fileName,
-        size: file.fileSize,
-        key: file.s3ObjectKey,
-        uploadedAt: file.uploadedAt,
-        folder: false, // This is a file
-      })),
-      ...folders.map(folder => ({
-        id: folder.id,
-        name: folder.name,
-        createdAt: folder.createdAt,
-        folder: true, // This is a folder
-      })),
-    ];
+  }
 
-    const totalItems = totalFiles + totalFolders;
-    const totalPages = Math.ceil(totalItems / limit);
+  /**
+   * Recursively retrieves all ancestor folder IDs for a specified folder.
+   * @param folderId - ID of the folder.
+   * @returns Array of parent folder IDs from root to the current folder's parent.
+   */
+  async getParentFolderIds(folderId: string): Promise<string[]> {
+    const parentIds = [];
+    let currentFolderId = folderId;
 
-    return {
-      data: combined,
-      pagination: {
-        totalItems,
-        page,
-        limit,
-        totalPages,
-      },
-    };
+    while (currentFolderId) {
+      const currentFolder = await this.databseService.folder.findUnique({
+        where: { id: currentFolderId },
+        select: { parentId: true, name: true, id: true },
+      });
+
+      parentIds.unshift({ id: currentFolder.id, name: currentFolder.name });
+      currentFolderId = currentFolder.parentId;
+      if (!currentFolder?.parentId) {
+        break
+      }
+    }
+    return parentIds;
   }
   /**
    * Function to apply tags to an S3 object.
@@ -243,7 +339,7 @@ export class FileManagementService {
   async applyS3ObjectTags(
     bucketName: string,
     objectKey: string,
-    tags: { Key: string, Value: string }[]
+    tags: Tag[]
   ) {
     const command = new PutObjectTaggingCommand({
       Bucket: bucketName,
@@ -255,5 +351,131 @@ export class FileManagementService {
     const response = await this.s3Client.send(command);
     console.log('Tags applied successfully:', response);
   };
-}
 
+  /**
+ * Tags multiple objects in an S3 bucket with a specified set of tags. 
+ * Implements a transaction-like behavior: if any tagging operation fails, 
+ * all successfully tagged objects will have their tags reverted (rollback).
+ * 
+ * @param bucketName - The name of the S3 bucket.
+ * @param keys - The list of object keys to tag.
+ * @param tags - An array of tag objects to apply to each S3 object.
+ * @param roolBackTags - Tag should add when rollback
+ * 
+ * @throws Error if any tagging operation fails, with all successful taggings rolled back.
+ */
+  async tagMultipleObjectsWithRollback(
+    bucketName: string,
+    keys: string[],
+    tags: Tag[],
+    roolBackTags: Tag[] = [],
+  ): Promise<void> {
+    const taggingPromises: Promise<TaggingResult>[] = keys.map((key) => {
+      return this.applyS3ObjectTags(
+        bucketName,
+        key,
+        tags
+      )
+        .then(() => ({ status: "fulfilled", key } as TaggingResult)) // Success result
+        .catch((error) => ({ status: "rejected", key, error } as TaggingResult)); // Failure result
+    });
+
+    const results = await Promise.allSettled(taggingPromises);
+
+    // Separate fulfilled and rejected results using type narrowing
+    const failedTags = results
+      .filter((result): result is PromiseFulfilledResult<TaggingResult> => result.status === "rejected")
+      .map((result) => result.value); // Cast to TaggingResult
+
+    const successfulTags = results
+      .filter((result): result is PromiseFulfilledResult<TaggingResult> => result.status === "fulfilled")
+      .map((result) => result.value); // Cast to TaggingResult
+
+    console.log("successfulTags-->", successfulTags);
+    console.log("Tags applied to all objects successfully.");
+  }
+
+
+  /**
+   * Updates the name of a file.
+   * @param id - The ID of the file.
+   * @param newName - The new name to set.
+   * @returns Success message indicating the file name was updated.
+   */
+  async updateFileName(id: string, newName: string) {
+    await this.databseService.fileMgt.update({
+      where: { id },
+      data: { fileName: newName },
+    });
+    return { message: `File renamed to ${newName} successfully.` };
+  }
+
+  /**
+   * Creates a new folder within an organization, optionally within a parent folder.
+   * @param createFolderDto - The folder creation data.
+   * @returns The created folder record.
+   */
+  async createFolder(createFolderData: any) {
+    const { name, organizationId, parentId, path } = createFolderData;
+    // Create the new folder in the database
+    return this.databseService.folder.create({
+      data: {
+        name,
+        path,
+        organization: {
+          connect: { id: organizationId },
+        },
+        ...(parentId && {
+          parentFolder: { connect: { id: parentId } },
+        }),
+        creator: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
+        updater: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
+      },
+    });
+  }
+
+  /**
+   * Get S3 object as a readable stream for a file.
+   * @param s3ObjectKey - The S3 object key of the file.
+   * @returns The S3 object as a readable stream.
+   */
+  async getS3ObjectStream(s3ObjectKey: string): Promise<GetObjectCommandOutput> {
+    
+    const params = {
+      Bucket: this.permanentBucket, // S3 bucket name from environment variables
+      Key: s3ObjectKey, // S3 object key for the file
+    };
+    const command = new GetObjectCommand(params);
+    const response = await this.s3Client.send(command);
+    return response;
+  }
+
+  /**
+   * Recursively add folder contents to archive.
+   * @param folderId - The ID of the folder to add to the archive.
+   * @param archive - The archive object to append files and folders to.
+   */
+  async addFolderToArchive(folderId: string, archive: archiver.Archiver) {
+    // Fetch folder details, including files and subfolders
+    const folder = await this.databseService.folder.findUnique({
+      where: {
+        id: folderId
+      },
+      include: {
+        files: true,
+        subFolders: true
+      }
+    });
+
+    // Add each file in the folder to the archive
+    for (const file of folder.files) {
+      const s3ObjectStream = await this.getS3ObjectStream(file.s3ObjectKey);
+      archive.append(s3ObjectStream.Body, { name: `${folder.path}/${file.fileName}` }); // Append the file to the archive with the correct path
+    }
+
+    // Recursively add subfolders to the archive
+    for (const subFolder of folder.subFolders) {
+      await this.addFolderToArchive(subFolder.id, archive); // Recursive call for each subfolder
+    }
+  }
+}

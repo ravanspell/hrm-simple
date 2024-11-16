@@ -1,5 +1,6 @@
 import { PrismaClient, Organization, Prisma } from '@prisma/client';
 import { faker } from '@faker-js/faker';
+import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
 
@@ -240,7 +241,124 @@ async function main() {
   }
 
   console.log(`Seeded ${usersCreated} users across ${organizations.length} organizations.`);
-  console.log('Seeding finished.');
+
+  //----------- File managment --------------------- //
+
+  // Fetch a sample user for createdBy and updatedBy fields
+  const sampleUser = await prisma.user.findFirst();
+
+  const s3Keys = [
+    'file_62716cf3.zip',
+    'file_9a1eef3f.xlsx',
+    'file_c4e8b967.jpeg',
+    'file_d7e92a1c.pdf',
+    'file_f654c7c4.docx',
+  ];
+
+  // Create 60 root files to mimic pagination
+  for (let i = 1; i <= 60; i++) {
+    const s3ObjectKey = s3Keys[Math.floor(Math.random() * s3Keys.length)];
+    const fileName = `RootFile_${i}.${s3ObjectKey.split('.').pop()}`; // Meaningful file name
+
+    await prisma.fileMgt.create({
+      data: {
+        s3ObjectKey: s3ObjectKey,
+        fileName: fileName,
+        fileSize: Math.floor(Math.random() * 1_000_000) + 1_000, // Random file size between 1KB and 1MB
+        folderId: null, // Root folder
+        organizationId: organizations[0].id,
+        fileStatus: 'ACTIVE',
+        createdBy: sampleUser?.id || 'system',
+        updatedBy: sampleUser?.id || 'system',
+      },
+    });
+  }
+
+  // Create 20 root folders
+  for (let i = 1; i <= 20; i++) {
+    const folderName = `RootFolder_${i}`;
+    const path = `/${folderName}`;
+
+    await prisma.folder.create({
+      data: {
+        name: folderName,
+        parentId: null, // Root folder
+        path: path,
+        organizationId: organizations[0].id,
+        createdBy: sampleUser?.id || 'system',
+        updatedBy: sampleUser?.id || 'system',
+      },
+    });
+  }
+
+  // Fetch all root folders
+  const rootFolders = await prisma.folder.findMany({
+    where: {
+      parentId: null,
+      organizationId: organizations[0].id,
+    },
+  });
+
+  for (const rootFolder of rootFolders) {
+    // Create 5 files in each root folder
+    for (let i = 1; i <= 5; i++) {
+      const s3ObjectKey = s3Keys[Math.floor(Math.random() * s3Keys.length)];
+      const fileName = `RootFile_${i}.${s3ObjectKey.split('.').pop()}`; // Meaningful file name
+
+      await prisma.fileMgt.create({
+        data: {
+          id: `file-${rootFolder.id}-${i}`,
+          s3ObjectKey: s3ObjectKey,
+          fileName: fileName,
+          fileSize: Math.floor(Math.random() * 1_000_000) + 1_000,
+          folderId: rootFolder.id,
+          organizationId: organizations[0].id,
+          fileStatus: 'ACTIVE',
+          createdBy: sampleUser?.id || 'system',
+          updatedBy: sampleUser?.id || 'system',
+        },
+      });
+    }
+
+    // Create 2 subfolders in each root folder
+    for (let j = 1; j <= 2; j++) {
+      const subfolderName = `${rootFolder.name}_Subfolder_${j}`;
+      const path = `${rootFolder.path}/${subfolderName}`;
+
+      const subfolder = await prisma.folder.create({
+        data: {
+          id: `folder-${rootFolder.id}-${j}`,
+          name: subfolderName,
+          parentId: rootFolder.id,
+          path: path,
+          organizationId: organizations[0].id,
+          createdBy: sampleUser?.id || 'system',
+          updatedBy: sampleUser?.id || 'system',
+        },
+      });
+
+      // Create 2 files in each subfolder
+      for (let k = 1; k <= 2; k++) {
+        const s3ObjectKey = s3Keys[Math.floor(Math.random() * s3Keys.length)];
+        const fileName = `RootFile_${k}.${s3ObjectKey.split('.').pop()}`; // Meaningful file name
+
+        await prisma.fileMgt.create({
+          data: {
+            id: `file-${subfolder.id}-${k}`,
+            s3ObjectKey: s3ObjectKey,
+            fileName: fileName,
+            fileSize: Math.floor(Math.random() * 1_000_000) + 1_000,
+            folderId: subfolder.id,
+            organizationId: organizations[0].id,
+            fileStatus: 'ACTIVE',
+            createdBy: sampleUser?.id || 'system',
+            updatedBy: sampleUser?.id || 'system',
+          },
+        });
+      }
+    }
+  }
+  console.log('✅ Seed data created successfully.');
 }
 
 main()

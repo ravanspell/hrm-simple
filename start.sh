@@ -26,6 +26,10 @@ else
 fi
 
 # fill prisma seed data for dependency tables
+echo -e "${BOLD}${YELLOW}apply db migrations...${RESET}"
+#npx prisma migrate deploy
+
+# fill prisma seed data for dependency tables
 echo -e "${BOLD}${YELLOW}Start execute db seeds...${RESET}"
 # npx prisma db seed
 
