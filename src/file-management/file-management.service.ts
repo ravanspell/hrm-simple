@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DatabaseService } from 'src/database/database.service';
 import { FileMgt, Prisma } from '@prisma/client';
 import * as archiver from 'archiver';
+import { FILE_STATUSES } from './constants';
 
 interface TaggingResult {
   status: "fulfilled" | "rejected";
@@ -142,10 +143,6 @@ export class FileManagementService {
     return url;
   }
 
-  createFileRecord() {
-    return `This action returns all fileManagement`;
-  }
-
   findOne(id: number) {
     return `This action returns a #${id} fileManagement`;
   }
@@ -165,7 +162,7 @@ export class FileManagementService {
       where: { id: { in: ids } },
       data: [files.map(file => ({
         ...file,
-        fileStatus: 'DELETED'
+        fileStatus: FILE_STATUSES.DELETED
       }))]
     });
 
@@ -174,7 +171,7 @@ export class FileManagementService {
     this.tagMultipleObjectsWithRollback(
       this.permanentBucket,
       fileS3ObjectKeys,
-      [{ Key: 'fileStatus', Value: 'DELETED' }]
+      [{ Key: 'fileStatus', Value: FILE_STATUSES.DELETED }]
     )
   }
 
@@ -434,13 +431,77 @@ export class FileManagementService {
     });
   }
 
+  async confirmUpload(createFileData: any) {
+    const { fileName, organizationId, parentId, s3ObjectKey, files } = createFileData;
+
+    // Check if the file exists in the dirty bucket
+    const dirtyBucketObjMetadata = files.map((fileKey: string) => (
+      this.getObjectMetadata(fileKey)
+    ))
+
+    const fileData = await Promise.all<HeadObjectCommandOutput[]>(dirtyBucketObjMetadata);
+
+    const moveFileToPermemntStoragePromises = files.map((fileKey: string) => (
+      this.confirmAndMoveFile(fileKey)
+    ))
+    await Promise.all(moveFileToPermemntStoragePromises);
+
+    await this.createFileRecords(
+      files.map((f, index) => ({
+        fileName,
+        fileSize: fileData[index].ContentLength,
+        s3ObjectKey,
+        organizationId,
+        parentId,
+      }))
+    )
+  }
+
+  /**
+   * Creates multiple file records in the database.
+   * @param createFileData - An array of file creation data.
+   * @returns The created file records.
+   */
+  async createFileRecords(createFileData: any[]) {
+    const transactionPromises = createFileData.map(data => {
+      const { fileName, organizationId, parentId, fileSize, s3ObjectKey } = data;
+
+      return this.databseService.fileMgt.create({
+        data: {
+          fileName,
+          fileSize,
+          fileStatus: FILE_STATUSES.ACTIVE,
+          s3ObjectKey,
+          organization: {
+            connect: { id: organizationId },
+          },
+          ...(parentId && {
+            parentFolder: { connect: { id: parentId } },
+          }),
+          creator: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
+          updater: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
+        },
+      });
+    });
+
+    try {
+      // Execute all operations in a single transaction
+      await this.databseService.$transaction(transactionPromises);
+
+      console.log('All operations committed successfully.');
+    } catch (error) {
+      console.error('Transaction failed. Rolling back operations:', error);
+      throw new Error('Transaction failed. Rolled back changes.');
+    }
+  }
+
   /**
    * Get S3 object as a readable stream for a file.
    * @param s3ObjectKey - The S3 object key of the file.
    * @returns The S3 object as a readable stream.
    */
   async getS3ObjectStream(s3ObjectKey: string): Promise<GetObjectCommandOutput> {
-    
+
     const params = {
       Bucket: this.permanentBucket, // S3 bucket name from environment variables
       Key: s3ObjectKey, // S3 object key for the file

@@ -236,18 +236,6 @@ export class FileManagementController {
  */
   @Post('upload/confirm')
   async uploadConfirmation(@Body('files') files: string[]) {
-
-    // Check if the file exists in the dirty bucket
-    const dirtyBucketObjMetadata = files.map((fileKey: string) => (
-      this.fileManagementService.getObjectMetadata(fileKey)
-    ))
-
-    await Promise.all(dirtyBucketObjMetadata);
-
-    const moveFileToPermemntStoragePromises = files.map((fileKey: string) => (
-      this.fileManagementService.confirmAndMoveFile(fileKey)
-    ))
-    await Promise.all(moveFileToPermemntStoragePromises)
-    return dirtyBucketObjMetadata;
+    this.fileManagementService.confirmUpload(files)
   }
 }
