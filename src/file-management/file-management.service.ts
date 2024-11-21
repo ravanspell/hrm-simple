@@ -1,15 +1,9 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
 import {
-  CopyObjectCommand,
-  GetObjectCommand,
   GetObjectCommandOutput,
-  HeadObjectCommand,
   HeadObjectCommandOutput,
-  PutObjectCommand,
-  PutObjectTaggingCommand,
   S3Client,
   Tag,
 } from '@aws-sdk/client-s3';
@@ -18,6 +12,7 @@ import { DatabaseService } from 'src/database/database.service';
 import { FileMgt, Prisma } from '@prisma/client';
 import * as archiver from 'archiver';
 import { FILE_STATUSES } from './constants';
+import { AwsS3Service } from './aws-S3.service';
 
 interface TaggingResult {
   status: "fulfilled" | "rejected";
@@ -33,7 +28,8 @@ export class FileManagementService {
 
   constructor(
     private configService: ConfigService,
-    private databseService: DatabaseService
+    private databseService: DatabaseService,
+    private awsS3Service: AwsS3Service
   ) {
     this.s3Client = new S3Client({
       region: this.configService.get<string>('AWS_REGION'),
@@ -84,6 +80,7 @@ export class FileManagementService {
     });
     return { message: `Folder renamed to ${folderName} successfully.` };
   }
+
   /**
    * Generates a presigned URL for uploading a file to the dirty bucket.
    *
@@ -91,39 +88,30 @@ export class FileManagementService {
    * @param fileType - file extention of the file.
    * @returns upload url and key
   */
-  async getPresignedUrl(filename: string, fileType: string): Promise<{ uploadUrl: string; key: string }> {
+  async generateDirtyStorageObjectUploadUrl(filename: string, fileType: string): Promise<{ uploadUrl: string; key: string }> {
     const key = `${uuidv4()}_${filename}`;
-
-    const command = new PutObjectCommand({
-      Bucket: this.dirtyBucket,
-      Key: key,
-      ContentType: fileType,
-    });
-
-    try {
-      const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 300 }); // 5 minutes
-      return { uploadUrl, key };
-    } catch (error) {
-      console.error('Error generating pre-signed URL:', error);
-      throw new InternalServerErrorException('Could not generate upload URL');
-    }
+    const uploadUrl = await this.awsS3Service.generateUploadPreSignedUrl(
+      this.dirtyBucket,
+      key,
+      fileType
+    );
+    return { uploadUrl, key };
   }
+
   /**
    * Confirms the existence of a file in the dirty bucket, copies it to the permanent bucket,
    *
    * @param fileKey - The key (path) of the file in the S3 bucket.
    * @returns A promise that resolves to true if successful, false otherwise.
   */
-  async confirmAndMoveFile(fileKey: string): Promise<boolean> {
+  async copyFileToMainStorage(fileKey: string): Promise<boolean> {
     // Copy the file to the permanent bucket
-    await this.s3Client.send(
-      new CopyObjectCommand({
-        Bucket: this.permanentBucket,
-        CopySource: `${this.dirtyBucket}/${fileKey}`,
-        Key: fileKey,
-      })
+    const uploadUrl = await this.awsS3Service.copyObject(
+      this.dirtyBucket,
+      this.permanentBucket,
+      fileKey,
+      fileKey
     );
-
     console.log(`Copied '${fileKey}' to '${this.permanentBucket}'.`);
     return true;
   }
@@ -134,12 +122,12 @@ export class FileManagementService {
    * @param expiresIn - Time in seconds for the presigned URL to remain valid.
    * @returns Presigned URL as a string.
    */
-  async generatePresignedDownloadUrl(fileKey: string, expiresIn: number = 3600): Promise<string> {
-    const command = new GetObjectCommand({
-      Bucket: this.permanentBucket,
-      Key: fileKey,
-    });
-    const url = await getSignedUrl(this.s3Client, command, { expiresIn });
+  async generateMainStorageObjectDownloadUrl(fileKey: string, expiresIn: number = 3600): Promise<string> {
+    const url = await this.awsS3Service.generateDownloadPresignedUrl(
+      this.permanentBucket,
+      fileKey,
+      expiresIn,
+    );
     return url;
   }
 
@@ -189,16 +177,6 @@ export class FileManagementService {
       where,
       select,
     });
-  }
-
-  async getObjectMetadata(fileKey: string, bucket: string = this.dirtyBucket): Promise<HeadObjectCommandOutput> {
-    const headResult = await this.s3Client.send(
-      new HeadObjectCommand({
-        Bucket: bucket,
-        Key: fileKey,
-      })
-    );
-    return headResult;
   }
   /**
    * Fetches active files within a specified folder for a given organization.
@@ -327,40 +305,19 @@ export class FileManagementService {
     }
     return parentIds;
   }
-  /**
-   * Function to apply tags to an S3 object.
-   * @param bucketName - The name of the S3 bucket.
-   * @param objectKey - The key of the S3 object.
-   * @param tags - An array of tags to apply to the object.
-  */
-  async applyS3ObjectTags(
-    bucketName: string,
-    objectKey: string,
-    tags: Tag[]
-  ) {
-    const command = new PutObjectTaggingCommand({
-      Bucket: bucketName,
-      Key: objectKey,
-      Tagging: {
-        TagSet: tags,
-      },
-    });
-    const response = await this.s3Client.send(command);
-    console.log('Tags applied successfully:', response);
-  };
 
   /**
- * Tags multiple objects in an S3 bucket with a specified set of tags. 
- * Implements a transaction-like behavior: if any tagging operation fails, 
- * all successfully tagged objects will have their tags reverted (rollback).
- * 
- * @param bucketName - The name of the S3 bucket.
- * @param keys - The list of object keys to tag.
- * @param tags - An array of tag objects to apply to each S3 object.
- * @param roolBackTags - Tag should add when rollback
- * 
- * @throws Error if any tagging operation fails, with all successful taggings rolled back.
- */
+   * Tags multiple objects in an S3 bucket with a specified set of tags. 
+   * Implements a transaction-like behavior: if any tagging operation fails, 
+   * all successfully tagged objects will have their tags reverted (rollback).
+   * 
+   * @param bucketName - The name of the S3 bucket.
+   * @param keys - The list of object keys to tag.
+   * @param tags - An array of tag objects to apply to each S3 object.
+   * @param roolBackTags - Tag should add when rollback
+   * 
+   * @throws Error if any tagging operation fails, with all successful taggings rolled back.
+   */
   async tagMultipleObjectsWithRollback(
     bucketName: string,
     keys: string[],
@@ -368,7 +325,7 @@ export class FileManagementService {
     roolBackTags: Tag[] = [],
   ): Promise<void> {
     const taggingPromises: Promise<TaggingResult>[] = keys.map((key) => {
-      return this.applyS3ObjectTags(
+      return this.awsS3Service.applyObjectTags(
         bucketName,
         key,
         tags
@@ -391,7 +348,6 @@ export class FileManagementService {
     console.log("successfulTags-->", successfulTags);
     console.log("Tags applied to all objects successfully.");
   }
-
 
   /**
    * Updates the name of a file.
@@ -431,19 +387,28 @@ export class FileManagementService {
     });
   }
 
+  /**
+   * 
+   * @param fileKey the key to the storage
+   * @returns 
+   */
+  async getDirtyBucketObjectMetadata(fileKey: string): Promise<HeadObjectCommandOutput> {
+    return this.awsS3Service.getObjectMetadata(this.permanentBucket, fileKey)
+  }
+
   async confirmUpload(createFileData: any) {
     const { fileName, organizationId, parentId, s3ObjectKey, files } = createFileData;
 
     // Check if the file exists in the dirty bucket
     const dirtyBucketObjMetadata = files.map((fileKey: string) => (
-      this.getObjectMetadata(fileKey)
-    ))
+      this.getDirtyBucketObjectMetadata(fileKey)
+    ));
 
     const fileData = await Promise.all<HeadObjectCommandOutput[]>(dirtyBucketObjMetadata);
 
     const moveFileToPermemntStoragePromises = files.map((fileKey: string) => (
-      this.confirmAndMoveFile(fileKey)
-    ))
+      this.copyFileToMainStorage(fileKey)
+    ));
     await Promise.all(moveFileToPermemntStoragePromises);
 
     await this.createFileRecords(
@@ -494,21 +459,16 @@ export class FileManagementService {
       throw new Error('Transaction failed. Rolled back changes.');
     }
   }
-
   /**
    * Get S3 object as a readable stream for a file.
    * @param s3ObjectKey - The S3 object key of the file.
    * @returns The S3 object as a readable stream.
    */
-  async getS3ObjectStream(s3ObjectKey: string): Promise<GetObjectCommandOutput> {
-
-    const params = {
-      Bucket: this.permanentBucket, // S3 bucket name from environment variables
-      Key: s3ObjectKey, // S3 object key for the file
-    };
-    const command = new GetObjectCommand(params);
-    const response = await this.s3Client.send(command);
-    return response;
+  async getPermentStorageObjectStream(s3ObjectKey: string): Promise<GetObjectCommandOutput> {
+    return this.awsS3Service.getS3ObjectStream(
+      this.permanentBucket,
+      s3ObjectKey,
+    )
   }
 
   /**
@@ -530,7 +490,7 @@ export class FileManagementService {
 
     // Add each file in the folder to the archive
     for (const file of folder.files) {
-      const s3ObjectStream = await this.getS3ObjectStream(file.s3ObjectKey);
+      const s3ObjectStream = await this.getPermentStorageObjectStream(file.s3ObjectKey);
       archive.append(s3ObjectStream.Body, { name: `${folder.path}/${file.fileName}` }); // Append the file to the archive with the correct path
     }
 

@@ -42,7 +42,7 @@ export class FileManagementController {
     if (!fileName || !fileType) {
       throw new BadRequestException('Filename and fileType are required');
     }
-    const { uploadUrl, key } = await this.fileManagementService.getPresignedUrl(fileName, fileType);
+    const { uploadUrl, key } = await this.fileManagementService.generateDirtyStorageObjectUploadUrl(fileName, fileType);
     return { uploadUrl, key };
   }
 
@@ -210,7 +210,7 @@ export class FileManagementController {
       const file = await this.fileManagementService.findFileById(id);
 
       if (file) {
-        const s3ObjectStream = await this.fileManagementService.getS3ObjectStream(file.s3ObjectKey);
+        const s3ObjectStream = await this.fileManagementService.getPermentStorageObjectStream(file.s3ObjectKey);
         archive.append(s3ObjectStream.Body, { name: file.fileName }); // Append the file to the archive
         continue;
       }
