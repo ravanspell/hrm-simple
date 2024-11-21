@@ -8,3 +8,6 @@ export const PERMANENT_BUCKET_NAME = process.env.PERMANENT_BUCKET_NAME || 'my-hr
 export const DIRTY_BUCKET_NAME = process.env.DIRTY_BUCKET_NAME || 'my-hrm-dirty-bucket'; // Temporary HRM storage bucket
 export const IAM_ROLE_NAME = 's3-access-role';
 export const IAM_POLICY_NAME = 's3-access-policy';
+
+export const NOTIFICATION_QUEUE = process.env.NOTIFICATION_QUEUE || 'notification-queue';
+export const NOTIFICATION_DEAD_LETTER_QUEUE = process.env.NOTIFICATION_DEAD_LETTER_QUEUE || 'notification-dead-letter-queue';

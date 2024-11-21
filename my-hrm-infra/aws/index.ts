@@ -7,6 +7,7 @@ import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
 import { S3Buckets } from './s3-buckets';
 import { S3IamPolicies } from './s3-iam-policies';
 import { AWS_REGION } from './constants';
+import { SQSQueues } from './sqs-queues';
 
 export class AWSStack extends TerraformStack {
     constructor(scope: Construct, id: string) {
@@ -39,5 +40,7 @@ export class AWSStack extends TerraformStack {
         new S3Buckets(this, 'S3Buckets');
         // Instantiate S3 IAM policies Configuration
         new S3IamPolicies(this, 's3-im-policies');
+        // create notification queues
+        new SQSQueues(this, 'notificationQueues')
     }
 }
