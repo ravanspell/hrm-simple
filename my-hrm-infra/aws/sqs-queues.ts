@@ -1,12 +1,26 @@
+/**
+ * Defines AWS SQS configurations using CDKTF.
+ *
+ * It creates two SQS queues:
+ * 1. notificationSQS: A queue for processing notifications, ensuring reliable message delivery.
+ * 2. NotificationDeadLetterQueue: A dead-letter queue to capture messages that could not be processed successfully.
+ *
+ * Key Features:
+ * - notificationSQS includes default visibility timeout, message retention period, and integration with the NotificationDeadLetterQueue.
+ * - NotificationDeadLetterQueue is used to store undeliverable messages for further analysis.
+ * - Both queues are configured with server-side encryption for secure message storage.
+ *
+ * References:
+ * - AWS SQS Terraform Provider: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue
+ */
 import { Construct } from 'constructs';
 import { SqsQueue } from '@cdktf/provider-aws/lib/sqs-queue';
+import { SqsQueuePolicy } from '@cdktf/provider-aws/lib/sqs-queue-policy';
 import { NOTIFICATION_DEAD_LETTER_QUEUE, NOTIFICATION_QUEUE } from './constants';
-import { TerraformOutput } from 'cdktf';
 
 export class SQSQueues extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
-
     /**
      * Dead Letter Queue (DLQ)
      * ------------------------
@@ -41,12 +55,34 @@ export class SQSQueues extends Construct {
       }),
     });
 
-    new TerraformOutput(this, 'Notification_Dead_letter_Queue_URL', {
-      value: notificationDeadLetterQueue.url,
-    });
-
-    new TerraformOutput(this, 'Notification_Queue_URL', {
-      value: notificationQueue.url,
+    /**
+     * SQS Queue Policy for the DLQ
+     * ----------------------------
+     * 
+     * The policy grants the `sqs.amazonaws.com` service permission to perform
+     * the `sqs:SendMessage` action on the DLQ. A condition ensures that only
+     * messages from the specific source queue can be sent to the DLQ.
+     */
+    new SqsQueuePolicy(this, "NotificationDLQPolicy", {
+      queueUrl: notificationDeadLetterQueue.url, // URL of the DLQ
+      policy: JSON.stringify({
+        Version: "2012-10-17",
+        Statement: [
+          {
+            Effect: "Allow",
+            Principal: {
+              Service: "sqs.amazonaws.com",
+            },
+            Action: "sqs:SendMessage",
+            Resource: notificationDeadLetterQueue.arn,
+            Condition: {
+              ArnEquals: {
+                "aws:SourceArn": notificationQueue.arn, // Restrict to the source queue
+              },
+            },
+          },
+        ],
+      })
     });
   }
 }
