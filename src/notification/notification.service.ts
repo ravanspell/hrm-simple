@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { AwsSqsService } from './aws-sqs.service';
 import { ConfigService } from '@nestjs/config';
+import { Message } from '@aws-sdk/client-sqs';
 
 @Injectable()
 export class NotificationService {
   private readonly notificationQueueUrl: string;
+  private readonly notificationQueuePollingDelay = 20;
+  private readonly notificationMessagesBatchSize = 5;
+
+  private queuePolling = true;
 
   constructor(
     private readonly awsSqsService: AwsSqsService,
@@ -13,6 +18,48 @@ export class NotificationService {
     this.notificationQueueUrl = this.configService.get<string>('NOTIFICATION_QUEUE_URL');
   }
 
+  async onModuleInit() {
+    this.pollNotificationsQueue();
+  }
+
+  async onModuleDestroy() {
+    this.queuePolling = false;
+  }
+
+  private async pollNotificationsQueue() {
+    const poll = async () => {
+      while (this.queuePolling) {
+        try {
+          const messages = await this.awsSqsService.receiveMessages(
+            this.notificationQueueUrl,
+            this.notificationMessagesBatchSize,
+            this.notificationQueuePollingDelay,
+          );
+          console.log("messages-->", messages);
+          if (messages.length > 0) {
+            await this.sendNotifications(messages);
+          }
+        } catch (error) {
+          console.error('Error during polling:', error);
+        }
+      }
+    };
+    setImmediate(poll); // Start the initial poll immediately without delay
+  };
+
+  private async sendNotifications(messages: Message[]) {
+    await this.delay(20000);
+    console.log("message has been sent");
+    const deleteQueue = messages.map((message) => this.awsSqsService.deleteMessage(
+      this.notificationQueueUrl,
+      message.ReceiptHandle
+    ));
+    await Promise.all(deleteQueue);
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
   /**
    * Publish a notification message.
    * 
@@ -25,7 +72,7 @@ export class NotificationService {
    * @example
    * await notificationsService.publishNotification('email', { subject: 'Hello', body: 'World' });
    */
-  async publishNotification(type: string, payload: Record<string, any>): Promise<void> {
+  public async publishNotification(type: string, payload: Record<string, any>): Promise<void> {
     const messageBody = JSON.stringify({ type, payload });
 
     await this.awsSqsService.publishMessage(

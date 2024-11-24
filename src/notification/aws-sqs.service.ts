@@ -6,6 +6,7 @@ import {
   DeleteMessageCommand,
   DeleteMessageCommandOutput,
   SendMessageCommandOutput,
+  Message,
 } from '@aws-sdk/client-sqs';
 
 /**
@@ -79,7 +80,7 @@ export class AwsSqsService {
    *   20
    * );
    */
-  async receiveMessages(queueUrl: string, maxMessages = 1, waitTimeSeconds = 10): Promise<any[]> {
+  async receiveMessages(queueUrl: string, maxMessages = 1, waitTimeSeconds = 10): Promise<Message[]> {
     const command = new ReceiveMessageCommand({
       QueueUrl: queueUrl,
       MaxNumberOfMessages: maxMessages,
