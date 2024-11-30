@@ -13,7 +13,7 @@ import {
   NotFoundException,
   Res
 } from '@nestjs/common';
-import { FileManagementService } from './file-management.service';
+import { createFileData, FileManagementService } from './file-management.service';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
 import { IsString } from 'class-validator';
 import { RequestWithTenant } from 'src/coretypes';
@@ -235,7 +235,11 @@ export class FileManagementController {
  * @returns Array of parent folder IDs from root to the specified folder's parent.
  */
   @Post('upload/confirm')
-  async uploadConfirmation(@Body('files') files: string[]) {
-    this.fileManagementService.confirmUpload(files)
+  async uploadConfirmation(
+    @Body('files') files: createFileData[],
+    @Req() req: RequestWithTenant
+  ) {
+    const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d' //req.user.organizationId;
+    this.fileManagementService.confirmUpload(files, organizationId);
   }
 }
