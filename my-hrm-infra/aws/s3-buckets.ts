@@ -33,12 +33,14 @@ export class S3Buckets extends Construct {
           },
         },
       },
-      lifecycleRule: [{
-        enabled: true,
-        expiration: {
-          days: 2, // Delete objects after 2 days
+      lifecycleRule: [
+        {
+          enabled: true,
+          expiration: {
+            days: 2, // Delete objects after 2 days
+          },
         },
-      }],
+      ],
       corsRule: [
         {
           allowedHeaders: ['*'],
@@ -49,8 +51,8 @@ export class S3Buckets extends Construct {
           // This allows the browser to cache the CORS preflight response for 3000 seconds,
           // reducing the number of preflight requests and improving performance.
           maxAgeSeconds: 3000,
-        }
-      ]
+        },
+      ],
     });
 
     // Output the Dirty Bucket Name
@@ -79,24 +81,26 @@ export class S3Buckets extends Construct {
           },
         },
       },
-      lifecycleRule: [{
-        enabled: true,
-        transition: [
-          {
-            days: 30, // Can only move S3 object inot standered IA after 29 days
-            storageClass: 'STANDARD_IA', // Transition to STANDARD_IA storage class
+      lifecycleRule: [
+        {
+          enabled: true,
+          transition: [
+            {
+              days: 30, // Can only move S3 object inot standered IA after 29 days
+              storageClass: 'STANDARD_IA', // Transition to STANDARD_IA storage class
+            },
+          ],
+        },
+        {
+          enabled: true,
+          expiration: {
+            days: 120, // Delete after 4 months (approximately 120 days)
           },
-        ]
-      },
-      {
-        enabled: true,
-        expiration: {
-          days: 120, // Delete after 4 months (approximately 120 days)
+          tags: {
+            fileStatus: 'DELETED', // Objects tagged with 'fileStatus=DELETE' will be deleted after 120 days
+          },
         },
-        tags: {
-          fileStatus: 'DELETED', // Objects tagged with 'fileStatus=DELETE' will be deleted after 120 days
-        },
-      }],
+      ],
     });
 
     // Output the Permanent Bucket Name
