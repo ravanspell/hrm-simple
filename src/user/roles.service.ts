@@ -13,8 +13,8 @@ export class RolesService {
      * @param createRoleDto - DTO containing the role details
      * @returns A Promise resolving to the created role, including its associated scopes
      */
-    async createRole(createRoleDto: CreateRoleDto): Promise<any> {
-        const { name, description, organizationId, scopeIds } = createRoleDto;
+    async createRole(createRoleDto: CreateRoleDto, organizationId: string): Promise<any> {
+        const { name, description, scopeIds } = createRoleDto;
 
         return this.databaseService.role.create({
             data: {
