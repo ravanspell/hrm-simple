@@ -1,5 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Version, Req, Put } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Version,
+  Req,
+  Put,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+} from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -18,7 +35,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly loggerService: LoggerService,
-    private readonly roleService: RolesService
+    private readonly roleService: RolesService,
   ) {}
 
   /**
@@ -32,7 +49,10 @@ export class UserController {
   @ApiResponse({ status: 201, description: 'User successfully created' })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   create(@Body() createUserDto: CreateUserDto) {
-    this.loggerService.logEmployeeAction('user create req', JSON.stringify(createUserDto));
+    this.loggerService.logEmployeeAction(
+      'user create req',
+      JSON.stringify(createUserDto),
+    );
     return this.userService.create(createUserDto);
   }
 
@@ -48,7 +68,10 @@ export class UserController {
   @ApiOperation({ summary: 'Filter users' })
   @ApiResponse({ status: 200, description: 'Users successfully filtered' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  filter(@Body() filterUsersDto: FilterUsersDto[], @Req() request: RequestWithTenant) {
+  filter(
+    @Body() filterUsersDto: FilterUsersDto[],
+    @Req() request: RequestWithTenant,
+  ) {
     this.loggerService.logEmployeeAction('im first log here', 'emp id');
     const orgId = request.user.organizationId;
     return this.userService.filterUsers(filterUsersDto, orgId);
@@ -112,9 +135,9 @@ export class UserController {
   @ApiResponse({ status: 400, description: 'Bad Request' })
   createRole(
     @Body() createRoleData: CreateRoleDto,
-    @Req() requestWithTenant: RequestWithTenant
+    @Req() requestWithTenant: RequestWithTenant,
   ) {
-    const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d' // requestWithTenant.organization.id
+    const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d'; // requestWithTenant.organization.id
     return this.roleService.createRole(createRoleData, organizationId);
   }
 

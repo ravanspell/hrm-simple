@@ -15,6 +15,8 @@ export class RenameFolderDto {
   @IsString()
   @MinLength(1, { message: 'Folder name must be at least 1 character long.' })
   @MaxLength(100, { message: 'Folder name must be less than 100 characters.' })
-  @Matches(/^[^\\/:*?"<>|]+$/, { message: 'Folder name contains invalid characters.' })
+  @Matches(/^[^\\/:*?"<>|]+$/, {
+    message: 'Folder name contains invalid characters.',
+  })
   readonly folderName: string;
 }

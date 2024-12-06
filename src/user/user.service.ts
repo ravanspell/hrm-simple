@@ -7,7 +7,7 @@ import { Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly databaseService: DatabaseService) { }
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async create(createUserDto: CreateUserDto) {
     return this.databaseService.user.create({
@@ -20,26 +20,28 @@ export class UserService {
         startDate: new Date(),
         // Linking to an existing organization
         organization: {
-          connect: { id: 'wewe' },  // Assuming 1 is the ID of an existing organization
+          connect: { id: 'wewe' }, // Assuming 1 is the ID of an existing organization
         },
         // Linking to an existing employment status
         employmentStatus: {
-          connect: { id: 'wewee' },  // Assuming 1 is the ID of an existing employment status
+          connect: { id: 'wewee' }, // Assuming 1 is the ID of an existing employment status
         },
         // Linking to an existing employee level
         employeeLevel: {
-          connect: { id: 'wewewe' },  // Assuming 1 is the ID of an existing employee level
+          connect: { id: 'wewewe' }, // Assuming 1 is the ID of an existing employee level
         },
         createdBy: 'wewewxxe',
-        updatedBy: 'wewewxxe'
-      }
-    })
+        updatedBy: 'wewewxxe',
+      },
+    });
   }
 
   async filterUsers(filters: FilterUsersDto[], orgId: string) {
-    const conditions: Prisma.UserWhereInput[] = [{
-      organizationId: orgId,
-    }];
+    const conditions: Prisma.UserWhereInput[] = [
+      {
+        organizationId: orgId,
+      },
+    ];
 
     // Track whether we need to include relations like employeeLevel or employmentStatus
     let includeEmployeeLevel = false;
@@ -84,7 +86,9 @@ export class UserService {
     });
 
     // Dynamic AND/OR logic
-    const logic = filters.some((filter) => filter.logic === 'OR') ? 'OR' : 'AND';
+    const logic = filters.some((filter) => filter.logic === 'OR')
+      ? 'OR'
+      : 'AND';
     const whereClause: Prisma.UserWhereInput = {};
     if (conditions.length > 0) {
       whereClause[logic] = conditions; // Apply the logic (AND/OR) based on filters
@@ -97,18 +101,22 @@ export class UserService {
       lastName: true,
       email: true,
       gender: true,
-      employeeLevel: includeEmployeeLevel ? {
-        select: {
-          name: true,
-          description: true,
-        }
-      } : false,  // Conditionally include employeeLevel with name
-      employmentStatus: includeEmploymentStatus ? {
-        select: {
-          status: true,
-          description: true,
-        }
-      } : false,  // Conditionally include employmentStatus with status
+      employeeLevel: includeEmployeeLevel
+        ? {
+            select: {
+              name: true,
+              description: true,
+            },
+          }
+        : false, // Conditionally include employeeLevel with name
+      employmentStatus: includeEmploymentStatus
+        ? {
+            select: {
+              status: true,
+              description: true,
+            },
+          }
+        : false, // Conditionally include employmentStatus with status
     };
 
     // Build the query with optional includes (employeeLevel/employmentStatus) and dynamic where clause

@@ -5,9 +5,6 @@ import { AwsS3Service } from './aws-S3.service';
 
 @Module({
   controllers: [FileManagementController],
-  providers: [
-    FileManagementService,
-    AwsS3Service,
-  ],
+  providers: [FileManagementService, AwsS3Service],
 })
 export class FileManagementModule {}

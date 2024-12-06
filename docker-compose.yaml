@@ -11,9 +11,9 @@ services:
       - ./:/app
       - /app/node_modules
     ports:
-      - "3001:3001"
+      - '3001:3001'
       # Prisma studio port expose
-      - "5555:5555"
+      - '5555:5555'
     command: ./start.sh
     depends_on:
       - mysql
@@ -26,7 +26,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
-      - "3306:3306"
+      - '3306:3306'
 
 volumes:
   mysql_data:

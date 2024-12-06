@@ -10,14 +10,17 @@ export class EncryptionService {
 
   constructor(private configService: ConfigService) {
     // Set up encryption key and IV (Initialization Vector)
-    this.key = Buffer.from(this.configService.get<string>('ENCRYPTION_KEY'), 'hex');
+    this.key = Buffer.from(
+      this.configService.get<string>('ENCRYPTION_KEY'),
+      'hex',
+    );
     this.iv = crypto.randomBytes(16); // 16 bytes for aes-256-cbc
   }
 
   encrypt(text: string): string {
     const cipher = crypto.createCipheriv(this.algorithm, this.key, this.iv);
     let encrypted = cipher.update(text, 'utf8', 'hex');
-    return encrypted += cipher.final('hex');
+    return (encrypted += cipher.final('hex'));
   }
 
   decrypt(encryptedText: string): string {

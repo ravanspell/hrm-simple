@@ -10,16 +10,21 @@ export class EmailSettingsService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly encryptionService: EncryptionService,
-  ) { }
+  ) {}
 
   async create(createDto: CreateEmailSettingsDto) {
     // Encrypt the email authentication password
-    const encryptedPassword = this.encryptionService.encrypt(createDto.emailAuthPassword);
+    const encryptedPassword = this.encryptionService.encrypt(
+      createDto.emailAuthPassword,
+    );
     // start transaction for email setting creation
     return this.databaseService.$transaction(async (tx: PrismaClient) => {
       // If isPrimary is true, unset other primary email settings for the organization
       if (createDto.isPrimary) {
-        const currentPrimaryEmailSetting = await this.findPrimaryEmailSettings(createDto.organizationId, tx);
+        const currentPrimaryEmailSetting = await this.findPrimaryEmailSettings(
+          createDto.organizationId,
+          tx,
+        );
         if (currentPrimaryEmailSetting) {
           await this.update(currentPrimaryEmailSetting.id, {
             ...currentPrimaryEmailSetting,
@@ -43,8 +48,8 @@ export class EmailSettingsService {
         },
       };
       await tx.emailSettings.create({ data: newEmailSetting });
-      // create shalow copy of the created 
-      const emailSettings = { ...newEmailSetting }
+      // create shalow copy of the created
+      const emailSettings = { ...newEmailSetting };
       delete emailSettings.emailAuthPassword;
       delete emailSettings.organization;
       return emailSettings;
@@ -80,7 +85,10 @@ export class EmailSettingsService {
     return this.databaseService.$transaction(async (tx: PrismaClient) => {
       // If isPrimary is true, unset other primary email settings for the organization
       if (updateDto.isPrimary) {
-        const currentPrimaryEmailSetting = await this.findPrimaryEmailSettings(updateDto.organizationId, tx);
+        const currentPrimaryEmailSetting = await this.findPrimaryEmailSettings(
+          updateDto.organizationId,
+          tx,
+        );
         if (currentPrimaryEmailSetting) {
           await this.update(currentPrimaryEmailSetting.id, {
             ...currentPrimaryEmailSetting,
@@ -90,7 +98,7 @@ export class EmailSettingsService {
       }
       return tx.emailSettings.update({
         where: { id },
-        data: updateDto
+        data: updateDto,
       });
     });
   }
@@ -102,12 +110,15 @@ export class EmailSettingsService {
   }
   /**
    * Return the primary email settings of the org
-   * @param organizationId 
+   * @param organizationId
    * @param dbServiceForTransactions Prisma client for transactions!
    * @returns EmailSettings
- */
-  async findPrimaryEmailSettings(organizationId: string, dbServiceForTransactions: PrismaClient = null): Promise<EmailSettings> {
-    return await (dbServiceForTransactions).emailSettings.findFirst({
+   */
+  async findPrimaryEmailSettings(
+    organizationId: string,
+    dbServiceForTransactions: PrismaClient = null,
+  ): Promise<EmailSettings> {
+    return await dbServiceForTransactions.emailSettings.findFirst({
       where: {
         organizationId,
         isPrimary: true,
@@ -115,8 +126,11 @@ export class EmailSettingsService {
     });
   }
 
-  async getEmailSettings(organizationId: string, emailSettingId: string = null): Promise<any> {
-    const where = { organizationId }
+  async getEmailSettings(
+    organizationId: string,
+    emailSettingId: string = null,
+  ): Promise<any> {
+    const where = { organizationId };
     if (emailSettingId) {
       where['id'] = emailSettingId;
     }
@@ -126,7 +140,9 @@ export class EmailSettingsService {
 
     return {
       ...emailSettings,
-      emailAuthPassword: this.encryptionService.decrypt(emailSettings.emailAuthPassword)
-    }
+      emailAuthPassword: this.encryptionService.decrypt(
+        emailSettings.emailAuthPassword,
+      ),
+    };
   }
 }

@@ -11,7 +11,7 @@ import {
   Query,
   UnprocessableEntityException,
   NotFoundException,
-  Res
+  Res,
 } from '@nestjs/common';
 import { FileManagementService } from './file-management.service';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
@@ -31,7 +31,7 @@ class InitUploadDto {
 
 @Controller('file-management')
 export class FileManagementController {
-  constructor(private readonly fileManagementService: FileManagementService) { }
+  constructor(private readonly fileManagementService: FileManagementService) {}
 
   @Post('upload/init')
   async initUpload(@Body() initUploadDto: InitUploadDto) {
@@ -42,7 +42,11 @@ export class FileManagementController {
     if (!fileName || !fileType) {
       throw new BadRequestException('Filename and fileType are required');
     }
-    const { uploadUrl, key } = await this.fileManagementService.generateDirtyStorageObjectUploadUrl(fileName, fileType);
+    const { uploadUrl, key } =
+      await this.fileManagementService.generateDirtyStorageObjectUploadUrl(
+        fileName,
+        fileType,
+      );
     return { uploadUrl, key };
   }
 
@@ -57,7 +61,8 @@ export class FileManagementController {
     let path = `/${name}`;
     // Determine the path based on parent folder (if any)
     if (parentId) {
-      const parentFolder = await this.fileManagementService.findFolderById(parentId);
+      const parentFolder =
+        await this.fileManagementService.findFolderById(parentId);
       path = `${parentFolder.path}/${name}`;
     }
     const folderData = {
@@ -65,7 +70,7 @@ export class FileManagementController {
       parentId,
       organizationId: '69fb3a34-1bcc-477d-8a22-99c194ea468d',
       path,
-    }
+    };
     return this.fileManagementService.createFolder(folderData);
   }
   // Get combined list of files and folders with pagination
@@ -74,21 +79,31 @@ export class FileManagementController {
     @Query('folderId') folderId: string | null,
     @Query('page') page: number = 1, // Default to page 1
     @Query('limit') limit: number = 10, // Default to 10 items per page
-    @Req() req: RequestWithTenant
+    @Req() req: RequestWithTenant,
   ) {
-    const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d' //req.user.organizationId;
+    const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d'; //req.user.organizationId;
     const skip = (page - 1) * limit;
 
     // Fetch files, folders, and counts in parallel
     const [files, folders, fileCount, folderCount] = await Promise.all([
-      this.fileManagementService.getFiles(folderId, organizationId, skip, limit),
-      this.fileManagementService.getFolders(folderId, organizationId, skip, limit),
+      this.fileManagementService.getFiles(
+        folderId,
+        organizationId,
+        skip,
+        limit,
+      ),
+      this.fileManagementService.getFolders(
+        folderId,
+        organizationId,
+        skip,
+        limit,
+      ),
       this.fileManagementService.getFileCount(folderId, organizationId),
       this.fileManagementService.getFolderCount(folderId, organizationId),
     ]);
     // Combine files and folders into a single array
     const combined = [
-      ...folders.map(folder => ({
+      ...folders.map((folder) => ({
         id: folder.id,
         name: folder.name,
         updatedAt: folder.updatedAt,
@@ -96,9 +111,9 @@ export class FileManagementController {
         fileCount: folder._count.files,
         folderCount: folder._count.subFolders,
         updatedBy: `${folder.updater.firstName} ${folder.updater.lastName}`,
-        updatedById: folder.updater.id
+        updatedById: folder.updater.id,
       })),
-      ...files.map(file => ({
+      ...files.map((file) => ({
         id: file.id,
         name: file.fileName,
         size: file.fileSize,
@@ -106,7 +121,7 @@ export class FileManagementController {
         updatedAt: file.updatedAt,
         folder: false,
         updatedBy: `${file.updater.firstName} ${file.updater.lastName}`,
-        updatedById: file.updater.id
+        updatedById: file.updater.id,
       })),
     ];
 
@@ -136,10 +151,10 @@ export class FileManagementController {
     return this.fileManagementService.updateFileName(id, fileName);
   }
   /**
-  * Endpoint to rename a specified folder with validation.
-  * @param renameFolderDto - DTO containing the folder ID and the new validated name.
-  * @returns Confirmation message.
-  */
+   * Endpoint to rename a specified folder with validation.
+   * @param renameFolderDto - DTO containing the folder ID and the new validated name.
+   * @returns Confirmation message.
+   */
   @Patch('rename-folder')
   async renameFolder(@Body() renameFolderDto: RenameFolderDto) {
     const { id, folderName } = renameFolderDto;
@@ -153,28 +168,33 @@ export class FileManagementController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateFileManagementDto: UpdateFileManagementDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateFileManagementDto: UpdateFileManagementDto,
+  ) {
     return this.fileManagementService.update(+id, updateFileManagementDto);
   }
 
   /**
-    * Endpoint to delete multiple files or a single file based on file IDs.
-    * @param deleteFilesDto - DTO containing an array of file IDs to delete.
-    * @returns Confirmation message of the deletion.
-    */
+   * Endpoint to delete multiple files or a single file based on file IDs.
+   * @param deleteFilesDto - DTO containing an array of file IDs to delete.
+   * @returns Confirmation message of the deletion.
+   */
   @Delete('soft-delete-files')
   async deleteFiles(@Body() deleteFilesDto: DeleteFilesDto) {
     const { ids } = deleteFilesDto;
     const files = await this.fileManagementService.findFiles({
-      id: { in: ids }
-    },
-    );
+      id: { in: ids },
+    });
     // collect avaialbe file ids for delete
-    const availalbeFilesForDelete = files.map(file => file.id);
+    const availalbeFilesForDelete = files.map((file) => file.id);
     if (availalbeFilesForDelete.length === 0) {
       throw new UnprocessableEntityException('files not available for delete');
     }
-    return this.fileManagementService.softdeleteFiles(availalbeFilesForDelete, files);
+    return this.fileManagementService.softdeleteFiles(
+      availalbeFilesForDelete,
+      files,
+    );
   }
   /**
    * Retrieves the hierarchy of parent folder IDs for breadcrumb navigation.
@@ -183,7 +203,8 @@ export class FileManagementController {
    */
   @Get('breadcrumb/:folderId')
   async getBreadcrumb(@Param('folderId') folderId: string = null) {
-    const parentFolderIds = await this.fileManagementService.getParentFolderIds(folderId);
+    const parentFolderIds =
+      await this.fileManagementService.getParentFolderIds(folderId);
     return { parentFolderIds };
   }
 
@@ -194,9 +215,8 @@ export class FileManagementController {
    */
   @Get('download')
   async download(@Query('ids') idsString: string, @Res() res: Response) {
-    console.log("ids-->", idsString);
+    console.log('ids-->', idsString);
     const ids = idsString.split(',');
-
 
     // Set response headers to indicate a zip download
     res.setHeader('Content-Disposition', 'attachment; filename=download.zip');
@@ -210,7 +230,10 @@ export class FileManagementController {
       const file = await this.fileManagementService.findFileById(id);
 
       if (file) {
-        const s3ObjectStream = await this.fileManagementService.getPermentStorageObjectStream(file.s3ObjectKey);
+        const s3ObjectStream =
+          await this.fileManagementService.getPermentStorageObjectStream(
+            file.s3ObjectKey,
+          );
         archive.append(s3ObjectStream.Body, { name: file.fileName }); // Append the file to the archive
         continue;
       }
@@ -230,12 +253,12 @@ export class FileManagementController {
   }
 
   /**
- * Retrieves the hierarchy of parent folder IDs for breadcrumb navigation.
- * @param folderId - ID of the folder.
- * @returns Array of parent folder IDs from root to the specified folder's parent.
- */
+   * Retrieves the hierarchy of parent folder IDs for breadcrumb navigation.
+   * @param folderId - ID of the folder.
+   * @returns Array of parent folder IDs from root to the specified folder's parent.
+   */
   @Post('upload/confirm')
   async uploadConfirmation(@Body('files') files: string[]) {
-    this.fileManagementService.confirmUpload(files)
+    this.fileManagementService.confirmUpload(files);
   }
 }
