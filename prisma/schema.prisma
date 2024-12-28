@@ -115,21 +115,21 @@ model ScopeCategory {
   name       String    @unique // Name of the category (e.g., 'Leave', 'HR')
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
-  scops Scope[] // One-to-many relationship with permissions
+  scops Scope[] // One-to-many relationship with scopes
 }
 
 model Scope {
-  id             String   @id @default(uuid())
-  name           String   @unique
-  description    String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  organizationId String
-  organization Organization @relation(fields: [organizationId], references: [id])
+  id                String   @id @default(uuid())
+  name              String   @unique
+  description       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id])
   categoryId        String
   category          ScopeCategory @relation(fields: [categoryId], references: [id])
   // Implicit many-to-many relation with Role
-  roles        Role[]       @relation("RoleScopes")
+  roles           Role[]       @relation("RoleScopes")
 
   @@index([organizationId])
 }
