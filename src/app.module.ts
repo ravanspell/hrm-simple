@@ -13,6 +13,8 @@ import { AuthenticatedGuard } from './auth/guards/authenticated.guard';
 import { FileManagementModule } from './file-management/file-management.module';
 import { UtilitiesModule } from './utilities/utilities.module';
 import { EmailSettingsModule } from './email-settings/email-settings.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import dataSource from './config/datasource';
 
 @Module({
   imports: [
@@ -25,6 +27,9 @@ import { EmailSettingsModule } from './email-settings/email-settings.module';
     FileManagementModule,
     UtilitiesModule,
     EmailSettingsModule,
+    TypeOrmModule.forRootAsync({
+      useFactory: async () => dataSource.options,
+    }),
   ],
   controllers: [AppController],
   providers: [
@@ -41,4 +46,4 @@ import { EmailSettingsModule } from './email-settings/email-settings.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
