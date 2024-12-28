@@ -3,7 +3,12 @@
  * tranform the response
  * log the response
  */
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -12,8 +17,13 @@ interface Response<T> {
 }
 
 @Injectable()
-export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
-  intercept(context: ExecutionContext, next: CallHandler<T>): Observable<Response<T>> {
+export class TransformInterceptor<T>
+  implements NestInterceptor<T, Response<T>>
+{
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler<T>,
+  ): Observable<Response<T>> {
     return next.handle().pipe(
       map((data) => {
         const ctx = context.switchToHttp();
@@ -29,7 +39,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
           data,
         };
         return res;
-      })
+      }),
     );
   }
 }

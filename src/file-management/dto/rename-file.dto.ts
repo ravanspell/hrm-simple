@@ -15,6 +15,8 @@ export class RenameFileDto {
   @IsString()
   @MinLength(1, { message: 'File name must be at least 1 character long.' })
   @MaxLength(255, { message: 'File name must be less than 255 characters.' })
-  @Matches(/^[^\\/:*?"<>|]+$/, { message: 'File name contains invalid characters.' })
+  @Matches(/^[^\\/:*?"<>|]+$/, {
+    message: 'File name contains invalid characters.',
+  })
   readonly fileName: string;
 }

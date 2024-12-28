@@ -3,7 +3,7 @@ import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class TblLeaveHistoryRepository {
-    constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   create(createEmployeeLeafDto: any) {
     return `This action returns all employeeLeaves`;

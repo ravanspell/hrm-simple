@@ -6,9 +6,7 @@ import { NotificationStrategy } from './notification.strategy.interface';
 export class NotificationFactory {
   private strategies: { [key: string]: NotificationStrategy } = {};
 
-  constructor(
-    private readonly emailStrategy: EmailStrategy,
-  ) {
+  constructor(private readonly emailStrategy: EmailStrategy) {
     this.strategies['email'] = this.emailStrategy;
     // Register additional strategies here
   }

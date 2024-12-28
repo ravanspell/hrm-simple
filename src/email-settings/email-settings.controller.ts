@@ -22,7 +22,10 @@ export class EmailSettingsController {
   @Post()
   @Version('1')
   @Authentication()
-  create(@Body() createDto: CreateEmailSettingsDto, @Req() req: RequestWithTenant) {
+  create(
+    @Body() createDto: CreateEmailSettingsDto,
+    @Req() req: RequestWithTenant,
+  ) {
     const createEmailSettingsData = {
       ...createDto,
       organizationId: req.user.organizationId,
@@ -34,7 +37,9 @@ export class EmailSettingsController {
   @Version('1')
   @Authentication()
   findAllByOrganization(@Req() req: RequestWithTenant) {
-    return this.emailSettingsService.findAllByOrganization(req?.user?.organizationId);
+    return this.emailSettingsService.findAllByOrganization(
+      req?.user?.organizationId,
+    );
   }
 
   @Get('primary/organization/:orgId')

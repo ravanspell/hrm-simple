@@ -25,7 +25,9 @@ export class AwsS3Service {
       region: this.configService.get<string>('AWS_REGION'),
       credentials: {
         accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY'),
+        secretAccessKey: this.configService.get<string>(
+          'AWS_SECRET_ACCESS_KEY',
+        ),
       },
     });
   }
@@ -37,12 +39,16 @@ export class AwsS3Service {
    * @param contentType - The content type of the file.
    * @returns Pre-signed URL for uploading the file.
    */
-  async generateUploadPreSignedUrl(bucketName: string, key: string, contentType: string): Promise<string> {
+  async generateUploadPreSignedUrl(
+    bucketName: string,
+    key: string,
+    contentType: string,
+  ): Promise<string> {
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: key,
       ContentType: contentType,
-      ACL: 'private'
+      ACL: 'private',
     });
 
     try {
@@ -60,7 +66,11 @@ export class AwsS3Service {
    * @param expiresIn - Time in seconds for the pre-signed URL to remain valid.
    * @returns Pre-signed URL for downloading the file.
    */
-  async generateDownloadPresignedUrl(bucketName: string, key: string, expiresIn: number = 3600): Promise<string> {
+  async generateDownloadPresignedUrl(
+    bucketName: string,
+    key: string,
+    expiresIn: number = 3600,
+  ): Promise<string> {
     const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
     return await getSignedUrl(this.s3Client, command, { expiresIn });
   }
@@ -72,7 +82,12 @@ export class AwsS3Service {
    * @param sourceKey - The key of the source object.
    * @param destinationKey - The key for the destination object.
    */
-  async copyObject(sourceBucket: string, destinationBucket: string, sourceKey: string, destinationKey: string): Promise<CopyObjectCommandOutput> {
+  async copyObject(
+    sourceBucket: string,
+    destinationBucket: string,
+    sourceKey: string,
+    destinationKey: string,
+  ): Promise<CopyObjectCommandOutput> {
     const command = new CopyObjectCommand({
       Bucket: destinationBucket,
       CopySource: `${sourceBucket}/${sourceKey}`,
@@ -93,7 +108,10 @@ export class AwsS3Service {
    * @param key - The key of the S3 object.
    * @returns Metadata of the S3 object.
    */
-  async getObjectMetadata(bucketName: string, key: string): Promise<HeadObjectCommandOutput> {
+  async getObjectMetadata(
+    bucketName: string,
+    key: string,
+  ): Promise<HeadObjectCommandOutput> {
     const command = new HeadObjectCommand({ Bucket: bucketName, Key: key });
     try {
       return await this.s3Client.send(command);
@@ -109,7 +127,11 @@ export class AwsS3Service {
    * @param key - The key of the S3 object.
    * @param tags - An array of tags to apply to the object.
    */
-  async applyObjectTags(bucketName: string, key: string, tags: Tag[]): Promise<PutObjectTaggingCommandOutput> {
+  async applyObjectTags(
+    bucketName: string,
+    key: string,
+    tags: Tag[],
+  ): Promise<PutObjectTaggingCommandOutput> {
     const command = new PutObjectTaggingCommand({
       Bucket: bucketName,
       Key: key,
@@ -129,7 +151,10 @@ export class AwsS3Service {
    * @param s3ObjectKey - The S3 object key of the file.
    * @returns The S3 object as a readable stream.
    */
-  async getS3ObjectStream(bucket: string, s3ObjectKey: string): Promise<GetObjectCommandOutput> {
+  async getS3ObjectStream(
+    bucket: string,
+    s3ObjectKey: string,
+  ): Promise<GetObjectCommandOutput> {
     const params: GetObjectCommandInput = {
       Bucket: bucket,
       Key: s3ObjectKey, // S3 object key for the file
