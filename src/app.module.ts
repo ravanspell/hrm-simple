@@ -14,7 +14,8 @@ import { FileManagementModule } from './file-management/file-management.module';
 import { UtilitiesModule } from './utilities/utilities.module';
 import { EmailSettingsModule } from './email-settings/email-settings.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import dataSource from './config/datasource';
+import { OrganizationModule } from './organization/organization.module';
+import AppDataSource from './config/datasource';
 
 @Module({
   imports: [
@@ -28,8 +29,9 @@ import dataSource from './config/datasource';
     UtilitiesModule,
     EmailSettingsModule,
     TypeOrmModule.forRootAsync({
-      useFactory: async () => dataSource.options,
+      useFactory: async () => AppDataSource.options,
     }),
+    OrganizationModule,
   ],
   controllers: [AppController],
   providers: [

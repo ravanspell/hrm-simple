@@ -7,11 +7,9 @@ import * as passport from 'passport';
 import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 import { PrismaClient } from '@prisma/client';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { initializeTransactionalContext } from 'typeorm-transactional';
+import "reflect-metadata";
 
 async function bootstrap() {
-  initializeTransactionalContext();
-  
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
