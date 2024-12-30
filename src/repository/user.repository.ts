@@ -3,11 +3,11 @@
  * It extends the TypeORM Repository class and provides additional
  * methods for querying the User entity.
  */
+import { Injectable } from '@nestjs/common';
 import { User } from 'src/user/entities/user.entity';
 import { Repository, DataSource } from 'typeorm';
 
-export const USER_REPOSITORY = 'UserRepository';
-
+@Injectable() 
 export class UserRepository extends Repository<User> {
     constructor(dataSource: DataSource) {
         super(User, dataSource.createEntityManager());
@@ -18,17 +18,6 @@ export class UserRepository extends Repository<User> {
      * @returns A promise that resolves to the found User entity.
      */
     findUser(email: string): Promise<User> {
-        return this.findOne({ where: { email }, relations: ['organization'] });
+        return this.findOne({ where: { email } });
     }
 }
-
-/**
- * UserRepositoryProvider is a provider for the UserRepository.
- * It uses a factory function to create an instance of UserRepository
- * and injects the DataSource dependency.
- */
-export const UserRepositoryProvider = {
-    provide: USER_REPOSITORY,
-    useFactory: (dataSource: DataSource) => new UserRepository(dataSource),
-    inject: [DataSource],
-};

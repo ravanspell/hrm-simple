@@ -6,12 +6,12 @@ import { ScopesService } from './scops.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Organization } from 'src/entities/organization.entity';
-import { UserRepositoryProvider } from 'src/repository/user.repository';
+import { UserRepository } from 'src/repository/user.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Organization])],
   controllers: [UserController],
-  providers: [UserService, ScopesService, RolesService, UserRepositoryProvider],
+  providers: [UserService, ScopesService, RolesService, UserRepository],
   exports: [UserService],
 })
 export class UserModule {}
