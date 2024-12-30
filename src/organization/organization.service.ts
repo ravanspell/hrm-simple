@@ -5,9 +5,7 @@ import { OrganizationRepository } from 'src/repository/organization.repository';
 
 @Injectable()
 export class OrganizationService {
-  constructor(
-    private organizationRepository: OrganizationRepository,
-  ) { }
+  constructor(private organizationRepository: OrganizationRepository) {}
 
   @Transactional()
   async create(data: Partial<Organization>) {

@@ -46,4 +46,4 @@ import { DBModule } from './config/database.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

@@ -4,10 +4,13 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { TransformInterceptor } from './interceptor/responseTransform.interceptor';
 import * as session from 'express-session';
 import * as passport from 'passport';
-import { DataSource } from "typeorm";
+import { DataSource } from 'typeorm';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import "reflect-metadata";
-import { initializeTransactionalContext, StorageDriver } from 'typeorm-transactional';
+import 'reflect-metadata';
+import {
+  initializeTransactionalContext,
+  StorageDriver,
+} from 'typeorm-transactional';
 import { TypeormStore } from 'connect-typeorm';
 import { Session } from './auth/entities/session.entity';
 
@@ -39,7 +42,7 @@ async function bootstrap() {
   const sessionStore = new TypeormStore({
     cleanupLimit: 2,
     limitSubquery: false, // If using MariaDB.
-    ttl: 86400
+    ttl: 86400,
   }).connect(sessionRepository);
 
   app.enableCors();

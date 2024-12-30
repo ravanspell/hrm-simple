@@ -12,13 +12,12 @@ import { UserRepository } from 'src/repository/user.repository';
 
 @Injectable()
 export class UserService {
-
   constructor(
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
     private readonly userRepository: UserRepository,
-    private readonly databaseService: DatabaseService
-  ) { }
+    private readonly databaseService: DatabaseService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     // Fetch related entities (Organization, EmploymentStatus, EmployeeLevel)
@@ -116,19 +115,19 @@ export class UserService {
       gender: true,
       employeeLevel: includeEmployeeLevel
         ? {
-          select: {
-            name: true,
-            description: true,
-          },
-        }
+            select: {
+              name: true,
+              description: true,
+            },
+          }
         : false, // Conditionally include employeeLevel with name
       employmentStatus: includeEmploymentStatus
         ? {
-          select: {
-            status: true,
-            description: true,
-          },
-        }
+            select: {
+              status: true,
+              description: true,
+            },
+          }
         : false, // Conditionally include employmentStatus with status
     };
 
@@ -142,7 +141,7 @@ export class UserService {
 
   async findOne(email: string): Promise<User> {
     const user = await this.userRepository.findUser(email);
-    
+
     if (!user) {
       throw new NotFoundException(`User with email ${email} not found`);
     }

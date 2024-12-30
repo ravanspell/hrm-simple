@@ -1,4 +1,3 @@
-
 export const SESSION_TABLE = 'Session';
 export const USER_TABLE = 'User';
 export const ORGANIZATION_TABLE = 'Organization';
@@ -16,3 +15,4 @@ export const SESSION_HISTORY_TABLE = 'SessionHistory';
 export const EMPLOYEE_STATUS = 'EmployeeStatus';
 export const EMPLOYEE_LEVEL = 'EmployeeLevel';
 export const EMPLOYMENT_STATUS = 'EmploymentStatus';
+export const EMAIL_SETTINGS_TABLE = 'EmailSettings';

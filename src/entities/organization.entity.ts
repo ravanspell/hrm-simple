@@ -1,26 +1,37 @@
+import { EmailSettings } from 'src/email-settings/entities/email-setting.entity';
 import { User } from 'src/user/entities/user.entity';
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
 
 @Entity()
 export class Organization {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column()
-    name: string;
+  @Column()
+  name: string;
 
-    @Column({ nullable: true })
-    description?: string;
+  @Column({ nullable: true })
+  description?: string;
 
-    @Column({ nullable: true })
-    logo?: string;
+  @Column({ nullable: true })
+  logo?: string;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 
-    @OneToMany(() => User, (user) => user.organization)
-    users: User[];
+  @OneToMany(() => User, (user) => user.organization)
+  users: User[];
+
+  @OneToMany(() => EmailSettings, (emailSettings) => emailSettings.organization)
+  emailSettings: EmailSettings[];
 }
