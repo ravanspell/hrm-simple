@@ -8,8 +8,12 @@ import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 import { PrismaClient } from '@prisma/client';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import "reflect-metadata";
+import { initializeTransactionalContext, StorageDriver } from 'typeorm-transactional';
 
 async function bootstrap() {
+  // initialize transactional context to handle transactions
+  initializeTransactionalContext({ storageDriver: StorageDriver.AUTO });
+
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()

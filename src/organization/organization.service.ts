@@ -1,21 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { OrganizationRepository } from '../repositories/organization.repository';
 import { Organization } from '../entities/organization.entity';
 import { Transactional } from 'typeorm-transactional';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class OrganizationService {
-  constructor(private readonly organizationRepository: OrganizationRepository) { }
+  constructor(
+    @InjectRepository(Organization)
+    private organizationRepository: Repository<Organization>,
+  ) {}
 
   @Transactional()
   async create(data: Partial<Organization>) {
-    const k = await this.organizationRepository.createAndSave(data);
-    // throw new Error('this is a test');
-    return k;
+    const newOrganization =  this.organizationRepository.create(data);
+    const org = await this.organizationRepository.save(newOrganization);
+    // throw new Error('This is a test error');
+    return org;
   }
 
   findAll() {
-    return this.organizationRepository.findAll();
+    return this.organizationRepository.find();
   }
 
   // findOne(id: number) {

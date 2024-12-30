@@ -13,13 +13,14 @@ import { AuthenticatedGuard } from './auth/guards/authenticated.guard';
 import { FileManagementModule } from './file-management/file-management.module';
 import { UtilitiesModule } from './utilities/utilities.module';
 import { EmailSettingsModule } from './email-settings/email-settings.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrganizationModule } from './organization/organization.module';
-import AppDataSource from './config/datasource';
+import { DBModule } from './config/database.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // TODO: rename DBModule to DatabaseModule
+    DBModule,
     DatabaseModule,
     UserModule,
     LoggerModule,
@@ -28,9 +29,6 @@ import AppDataSource from './config/datasource';
     FileManagementModule,
     UtilitiesModule,
     EmailSettingsModule,
-    TypeOrmModule.forRootAsync({
-      useFactory: async () => AppDataSource.options,
-    }),
     OrganizationModule,
   ],
   controllers: [AppController],
