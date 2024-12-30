@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
@@ -15,7 +16,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 @ApiTags('organizations')
 @Controller('organization')
 export class OrganizationController {
-  constructor(private readonly organizationService: OrganizationService) {}
+  constructor(private readonly organizationService: OrganizationService) { }
 
   /**
    * Create a new organization.
@@ -42,8 +43,11 @@ export class OrganizationController {
   @ApiOperation({ summary: 'Get all organizations' })
   @ApiResponse({ status: 200, description: 'Return all organizations.' })
   @Get()
-  findAll() {
-    return this.organizationService.findAll();
+  async findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10
+  ) {
+    return await this.organizationService.getAllOrganizations(page, limit);
   }
 
   /**

@@ -14,8 +14,8 @@ export class OrganizationService {
     return org;
   }
 
-  findAll() {
-    return this.organizationRepository.find();
+  async getAllOrganizations(page: number = 1, limit: number = 10) {
+    return this.organizationRepository.getOrganizations(page, limit);
   }
 
   // findOne(id: number) {

@@ -1,3 +1,4 @@
+import { ORGANIZATION_TABLE } from 'src/constants/dbTables';
 import { EmailSettings } from 'src/email-settings/entities/email-setting.entity';
 import { User } from 'src/user/entities/user.entity';
 import {
@@ -9,7 +10,7 @@ import {
   OneToMany,
 } from 'typeorm';
 
-@Entity()
+@Entity(ORGANIZATION_TABLE)
 export class Organization {
   @PrimaryGeneratedColumn('uuid')
   id: string;
