@@ -3,37 +3,50 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DatabaseService } from 'src/database/database.service';
 import { FilterUsersDto, Gender } from './dto/filter-user.dto';
-import { Prisma, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Organization } from 'src/entities/organization.entity';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(createUserDto: CreateUserDto) {
-    return this.databaseService.user.create({
-      data: {
-        firstName: createUserDto.firstName,
-        lastName: createUserDto.lastName,
-        email: createUserDto.email,
-        gender: createUserDto.gender,
-        dateOfBirth: new Date(createUserDto.dateOfBirth),
-        startDate: new Date(),
-        // Linking to an existing organization
-        organization: {
-          connect: { id: 'wewe' }, // Assuming 1 is the ID of an existing organization
-        },
-        // Linking to an existing employment status
-        employmentStatus: {
-          connect: { id: 'wewee' }, // Assuming 1 is the ID of an existing employment status
-        },
-        // Linking to an existing employee level
-        employeeLevel: {
-          connect: { id: 'wewewe' }, // Assuming 1 is the ID of an existing employee level
-        },
-        createdBy: 'wewewxxe',
-        updatedBy: 'wewewxxe',
-      },
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    @InjectRepository(Organization)
+    private organizationRepository: Repository<Organization>,
+    private readonly databaseService: DatabaseService
+  ) { }
+
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    // Fetch related entities (Organization, EmploymentStatus, EmployeeLevel)
+    const organization = await this.organizationRepository.findOne({
+      where: { id: 'wewe' },
     });
+
+    if (!organization) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    // Create the user instance
+    const user = this.userRepository.create({
+      firstName: createUserDto.firstName,
+      lastName: createUserDto.lastName,
+      email: createUserDto.email,
+      gender: createUserDto.gender,
+      dateOfBirth: new Date(createUserDto.dateOfBirth),
+      startDate: new Date(),
+      organization: organization, // Link to the fetched organization
+      employmentStatusId: 'wewee', // Direct assignment (assuming foreign keys)
+      employeeLevelId: 'wewewe', // Direct assignment (assuming foreign keys)
+      createdBy: 'wewewxxe',
+      updatedBy: 'wewewxxe',
+    });
+
+    // Save the user in the database
+    return await this.userRepository.save(user);
   }
 
   async filterUsers(filters: FilterUsersDto[], orgId: string) {
@@ -103,19 +116,19 @@ export class UserService {
       gender: true,
       employeeLevel: includeEmployeeLevel
         ? {
-            select: {
-              name: true,
-              description: true,
-            },
-          }
+          select: {
+            name: true,
+            description: true,
+          },
+        }
         : false, // Conditionally include employeeLevel with name
       employmentStatus: includeEmploymentStatus
         ? {
-            select: {
-              status: true,
-              description: true,
-            },
-          }
+          select: {
+            status: true,
+            description: true,
+          },
+        }
         : false, // Conditionally include employmentStatus with status
     };
 
@@ -128,7 +141,7 @@ export class UserService {
   }
 
   async findOne(email: string): Promise<User> {
-    const user = await this.databaseService.user.findUnique({
+    const user = await this.userRepository.findOne({
       where: { email },
     });
 
