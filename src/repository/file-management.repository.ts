@@ -1,6 +1,6 @@
 import { DataSource, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { FileMgt } from 'src/file-management/entities/file-management.entity';
+import { FileMgt, FileStatus } from 'src/file-management/entities/file-management.entity';
 
 @Injectable()
 export class FileMgtRepository extends Repository<FileMgt> {
@@ -61,5 +61,18 @@ export class FileMgtRepository extends Repository<FileMgt> {
      */
     async getFileById(id: string): Promise<FileMgt> {
         return this.findOne({ where: { id } });
+    }
+
+    /**
+     * Soft deletes multiple files by updating their status to DELETED.
+     * @param ids - Array of file IDs to be soft deleted.
+     * @returns The result of the update operation.
+     */
+    async softDeleteFiles(fileIds: string[]) {
+        return this.createQueryBuilder()
+            .update(FileMgt)
+            .set({ fileStatus: FileStatus.DELETED })
+            .where('id IN (:...fileIds)', { fileIds })
+            .execute();
     }
 }

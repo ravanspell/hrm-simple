@@ -14,6 +14,7 @@ import { FILE_STATUSES } from './constants';
 import { AwsS3Service } from './aws-S3.service';
 import { FileMgtRepository } from 'src/repository/file-management.repository';
 import { FolderRepository } from 'src/repository/folder.repository';
+import { Transactional } from 'typeorm-transactional';
 
 interface TaggingResult {
   status: 'fulfilled' | 'rejected';
@@ -148,19 +149,16 @@ export class FileManagementService {
    * @param files - Array of file data to update status.
    * @returns
    */
+  @Transactional()
   async softdeleteFiles(ids: string[], files: FileMgt[]) {
-    await this.databseService.fileMgt.updateMany({
-      where: { id: { in: ids } },
-      data: [
-        files.map((file) => ({
-          ...file,
-          fileStatus: FILE_STATUSES.DELETED,
-        })),
-      ],
-    });
+    const  fileIds = files.map((file) => file.id);
+    await this.fileMgtRepository.softDeleteFiles(fileIds);
 
     const fileS3ObjectKeys = files.map((file) => file.s3ObjectKey);
 
+    // tag to be deleted the file object in the storage
+    // Laveraging the AWS S3 lifecycle methods to delete after some time taged 
+    // objects we 'DELETED'
     this.tagMultipleObjectsWithRollback(
       this.permanentBucket,
       fileS3ObjectKeys,
