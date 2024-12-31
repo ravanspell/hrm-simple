@@ -49,7 +49,6 @@ export class FileMgtRepository extends Repository<FileMgt> {
       ])
       .skip(skip)
       .take(take);
-    console.log('this is the folderId', folderId);
 
     if (folderId) {
       getFileQuery.where('file.folderId = :folderId', { folderId });
