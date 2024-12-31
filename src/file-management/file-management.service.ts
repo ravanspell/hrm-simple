@@ -59,7 +59,7 @@ export class FileManagementService {
    * @throws NotFoundException if the file does not exist.
    */
   async findFolderById(id: string) {
-    const file = await this.databseService.folder.findUnique({ where: { id } });
+    const file = await this.folderRepository.getFolderById(id);
     if (!file) {
       throw new NotFoundException(`Specified folder not found`);
     }
@@ -72,10 +72,11 @@ export class FileManagementService {
    * @returns Success message indicating the folder name was updated.
    */
   async updateFolderName(id: string, folderName: string) {
-    await this.databseService.folder.update({
-      where: { id },
-      data: { name: folderName },
-    });
+    const folder = this.folderRepository.getFolderById(id);
+    if (!folder) {
+      throw new NotFoundException(`Specified folder not found`);
+    }
+    await this.folderRepository.updateFolder(id, { name: folderName });
     return { message: `Folder renamed to ${folderName} successfully.` };
   }
 
@@ -151,13 +152,13 @@ export class FileManagementService {
    */
   @Transactional()
   async softdeleteFiles(ids: string[], files: FileMgt[]) {
-    const  fileIds = files.map((file) => file.id);
+    const fileIds = files.map((file) => file.id);
     await this.fileMgtRepository.softDeleteFiles(fileIds);
 
     const fileS3ObjectKeys = files.map((file) => file.s3ObjectKey);
 
     // tag to be deleted the file object in the storage
-    // Laveraging the AWS S3 lifecycle methods to delete after some time taged 
+    // Laveraging the AWS S3 lifecycle methods to delete after some time taged
     // objects we 'DELETED'
     this.tagMultipleObjectsWithRollback(
       this.permanentBucket,
@@ -195,7 +196,12 @@ export class FileManagementService {
     skip: number,
     take: number,
   ) {
-    return await this.fileMgtRepository.getFiles(folderId, organizationId, skip, take);
+    return await this.fileMgtRepository.getFiles(
+      folderId,
+      organizationId,
+      skip,
+      take,
+    );
   }
 
   /**
@@ -212,7 +218,12 @@ export class FileManagementService {
     skip: number,
     take: number,
   ) {
-    return this.folderRepository.getFolders(folderId, organizationId, skip, take);
+    return this.folderRepository.getFolders(
+      folderId,
+      organizationId,
+      skip,
+      take,
+    );
   }
   /**
    * Recursively retrieves all ancestor folder IDs for a specified folder.

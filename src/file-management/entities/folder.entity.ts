@@ -1,9 +1,18 @@
-import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { FileMgt } from "./file-management.entity";
-import { FOLDER_TABLE } from "src/constants/dbTables";
-import { Organization } from "src/entities/organization.entity";
-import { User } from "src/user/entities/user.entity";
-
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { FileMgt } from './file-management.entity';
+import { FOLDER_TABLE } from 'src/constants/dbTables';
+import { Organization } from 'src/entities/organization.entity';
+import { User } from 'src/user/entities/user.entity';
 
 @Entity(FOLDER_TABLE)
 export class Folder {
@@ -38,7 +47,10 @@ export class Folder {
   @JoinColumn({ name: 'organizationId' })
   organization: Organization;
 
-  @ManyToOne(() => Folder, (folder) => folder.subFolders, { nullable: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => Folder, (folder) => folder.subFolders, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'parentId' })
   parentFolder: Folder;
 
@@ -60,4 +72,3 @@ export class Folder {
   fileCount?: number; // Virtual property for the count of files
   subFolderCount?: number; // Virtual property for the count of subfolders
 }
-

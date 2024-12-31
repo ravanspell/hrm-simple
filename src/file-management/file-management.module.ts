@@ -7,6 +7,11 @@ import { FolderRepository } from 'src/repository/folder.repository';
 
 @Module({
   controllers: [FileManagementController],
-  providers: [FileManagementService, AwsS3Service, FileMgtRepository, FolderRepository],
+  providers: [
+    FileManagementService,
+    AwsS3Service,
+    FileMgtRepository,
+    FolderRepository,
+  ],
 })
 export class FileManagementModule {}
