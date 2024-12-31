@@ -4,7 +4,6 @@ import { ConfigService } from '@nestjs/config';
 import {
   GetObjectCommandOutput,
   HeadObjectCommandOutput,
-  S3Client,
   Tag,
 } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,6 +12,8 @@ import { FileMgt, Prisma } from '@prisma/client';
 import * as archiver from 'archiver';
 import { FILE_STATUSES } from './constants';
 import { AwsS3Service } from './aws-S3.service';
+import { FileMgtRepository } from 'src/repository/file-management.repository';
+import { FolderRepository } from 'src/repository/folder.repository';
 
 interface TaggingResult {
   status: 'fulfilled' | 'rejected';
@@ -22,24 +23,16 @@ interface TaggingResult {
 
 @Injectable()
 export class FileManagementService {
-  private s3Client: S3Client;
   private dirtyBucket: string;
   private permanentBucket: string;
 
   constructor(
-    private configService: ConfigService,
+    private readonly configService: ConfigService,
     private databseService: DatabaseService,
-    private awsS3Service: AwsS3Service,
+    private readonly awsS3Service: AwsS3Service,
+    private readonly fileMgtRepository: FileMgtRepository,
+    private readonly folderRepository: FolderRepository,
   ) {
-    this.s3Client = new S3Client({
-      region: this.configService.get<string>('AWS_REGION'),
-      credentials: {
-        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.get<string>(
-          'AWS_SECRET_ACCESS_KEY',
-        ),
-      },
-    });
     this.dirtyBucket = this.configService.get<string>('DIRTY_BUCKET_NAME');
     this.permanentBucket = this.configService.get<string>(
       'PERMANENT_BUCKET_NAME',
@@ -52,9 +45,7 @@ export class FileManagementService {
    * @throws NotFoundException if the file does not exist.
    */
   async findFileById(id: string) {
-    const file = await this.databseService.fileMgt.findUnique({
-      where: { id },
-    });
+    const file = await this.fileMgtRepository.getFileById(id);
     if (!file) {
       throw new NotFoundException(`Specified file not found`);
     }
@@ -206,29 +197,7 @@ export class FileManagementService {
     skip: number,
     take: number,
   ) {
-    return this.databseService.fileMgt.findMany({
-      where: {
-        folderId: folderId || null,
-        organizationId,
-        fileStatus: 'ACTIVE',
-      },
-      orderBy: [
-        {
-          updatedAt: 'desc',
-        },
-      ],
-      include: {
-        updater: {
-          select: {
-            firstName: true,
-            lastName: true,
-            id: true,
-          },
-        },
-      },
-      skip,
-      take,
-    });
+    return await this.fileMgtRepository.getFiles(folderId, organizationId, skip, take);
   }
 
   /**
@@ -245,73 +214,8 @@ export class FileManagementService {
     skip: number,
     take: number,
   ) {
-    return this.databseService.folder.findMany({
-      where: {
-        parentId: folderId || null,
-        organizationId,
-      },
-      include: {
-        _count: {
-          select: {
-            files: true,
-            subFolders: true,
-          },
-        },
-        updater: {
-          select: {
-            firstName: true,
-            lastName: true,
-            id: true,
-          },
-        },
-      },
-      orderBy: [
-        {
-          updatedAt: 'desc',
-        },
-      ],
-      skip,
-      take,
-    });
+    return this.folderRepository.getFolders(folderId, organizationId, skip, take);
   }
-
-  /**
-   * Retrieves the total count of files in a specified folder for pagination.
-   * @param folderId - ID of the folder (null for root).
-   * @param organizationId - ID of the organization.
-   * @returns Number of active files within the folder.
-   */
-  async getFileCount(
-    folderId: string | null,
-    organizationId: string,
-  ): Promise<number> {
-    return this.databseService.fileMgt.count({
-      where: {
-        folderId: folderId || null,
-        organizationId,
-        fileStatus: 'ACTIVE',
-      },
-    });
-  }
-
-  /**
-   * Retrieves the total count of folders in a specified parent folder for pagination.
-   * @param folderId - ID of the parent folder (null for root).
-   * @param organizationId - ID of the organization.
-   * @returns Number of subfolders within the parent folder.
-   */
-  async getFolderCount(
-    folderId: string | null,
-    organizationId: string,
-  ): Promise<number> {
-    return this.databseService.folder.count({
-      where: {
-        parentId: folderId || null,
-        organizationId,
-      },
-    });
-  }
-
   /**
    * Recursively retrieves all ancestor folder IDs for a specified folder.
    * @param folderId - ID of the folder.

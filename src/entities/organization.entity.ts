@@ -1,5 +1,7 @@
 import { ORGANIZATION_TABLE } from 'src/constants/dbTables';
 import { EmailSettings } from 'src/email-settings/entities/email-setting.entity';
+import { FileMgt } from 'src/file-management/entities/file-management.entity';
+import { Folder } from 'src/file-management/entities/folder.entity';
 import { User } from 'src/user/entities/user.entity';
 import {
   Entity,
@@ -35,4 +37,10 @@ export class Organization {
 
   @OneToMany(() => EmailSettings, (emailSettings) => emailSettings.organization)
   emailSettings: EmailSettings[];
+
+  @OneToMany(() => FileMgt, (file) => file.organization)
+  files: FileMgt[];
+
+  @OneToMany(() => Folder, (folder) => folder.organization)
+  folders: Folder[];
 }

@@ -83,9 +83,8 @@ export class FileManagementController {
   ) {
     const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d'; //req.user.organizationId;
     const skip = (page - 1) * limit;
-
     // Fetch files, folders, and counts in parallel
-    const [files, folders, fileCount, folderCount] = await Promise.all([
+    const [filesWithCount, foldersWithCount] = await Promise.all([
       this.fileManagementService.getFiles(
         folderId,
         organizationId,
@@ -98,9 +97,10 @@ export class FileManagementController {
         skip,
         limit,
       ),
-      this.fileManagementService.getFileCount(folderId, organizationId),
-      this.fileManagementService.getFolderCount(folderId, organizationId),
     ]);
+    const [files, fileCount] = filesWithCount;
+    const [folders, folderCount] = foldersWithCount;
+
     // Combine files and folders into a single array
     const combined = [
       ...folders.map((folder) => ({
@@ -108,8 +108,8 @@ export class FileManagementController {
         name: folder.name,
         updatedAt: folder.updatedAt,
         folder: true,
-        fileCount: folder._count.files,
-        folderCount: folder._count.subFolders,
+        fileCount: folder.fileCount,
+        folderCount: folder.subFolderCount,
         updatedBy: `${folder.updater.firstName} ${folder.updater.lastName}`,
         updatedById: folder.updater.id,
       })),

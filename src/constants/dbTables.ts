@@ -16,3 +16,5 @@ export const EMPLOYEE_STATUS = 'EmployeeStatus';
 export const EMPLOYEE_LEVEL = 'EmployeeLevel';
 export const EMPLOYMENT_STATUS = 'EmploymentStatus';
 export const EMAIL_SETTINGS_TABLE = 'EmailSettings';
+export const FILE_MGT_TABLE = 'FileMgt';
+export const FOLDER_TABLE = 'Folder';
