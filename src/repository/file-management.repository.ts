@@ -18,13 +18,13 @@ export class FileMgtRepository extends Repository<FileMgt> {
    */
   async createFileRecords(
     createFileData: Partial<FileMgt[]>,
+    organizationId: string,
   ): Promise<FileMgt[]> {
     const files = createFileData.map((data: Partial<FileMgt>) => {
       const {
         fileName,
         fileSize,
         s3ObjectKey,
-        organizationId,
         folderId,
         createdBy,
         updatedBy,

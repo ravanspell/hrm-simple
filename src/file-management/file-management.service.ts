@@ -328,9 +328,8 @@ export class FileManagementService {
   }
 
   @Transactional()
-  async confirmUpload(createFileData: any) {
-    const { fileName, organizationId, parentId, s3ObjectKey, files } =
-      createFileData;
+  async confirmUpload(createFileData: any, orgnizationId: string) {
+    const { fileName, parentId, s3ObjectKey, files } = createFileData;
 
     // Check if the file exists in the dirty bucket
     const dirtyBucketObjMetadata = createFileData.map(
@@ -344,7 +343,7 @@ export class FileManagementService {
       fileSize: fileData[index].ContentLength,
     }));
 
-    await this.createFileRecords(fileRecordData);
+    await this.createFileRecords(fileRecordData, orgnizationId);
 
     const moveFileToPermemntStoragePromises = files.map((fileKey: string) =>
       this.copyFileToMainStorage(fileKey),
@@ -357,8 +356,11 @@ export class FileManagementService {
    * @param createFileData - An array of file creation data.
    * @returns The created file records.
    */
-  async createFileRecords(createFileData: any[]) {
-    return this.fileMgtRepository.createFileRecords(createFileData);
+  async createFileRecords(createFileData: any[], orgnizationId: string) {
+    return this.fileMgtRepository.createFileRecords(
+      createFileData,
+      orgnizationId,
+    );
   }
   /**
    * Get S3 object as a readable stream for a file.
