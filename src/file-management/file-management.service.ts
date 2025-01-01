@@ -20,6 +20,13 @@ interface TaggingResult {
   error?: Error;
 }
 
+export interface createFileData {
+  fileName: string
+  parentId: string
+  s3ObjectKey: string
+  fileSize: number
+}
+
 @Injectable()
 export class FileManagementService {
   private s3Client: S3Client;
@@ -433,33 +440,26 @@ export class FileManagementService {
     return this.awsS3Service.getObjectMetadata(this.permanentBucket, fileKey);
   }
 
-  async confirmUpload(createFileData: any) {
-    const { fileName, organizationId, parentId, s3ObjectKey, files } =
-      createFileData;
+
+  async confirmUpload(createFileData: createFileData[], organizationId: string) {
 
     // Check if the file exists in the dirty bucket
-    const dirtyBucketObjMetadata = files.map((fileKey: string) =>
-      this.getDirtyBucketObjectMetadata(fileKey),
-    );
+    const dirtyBucketObjMetadata = createFileData.map(({ s3ObjectKey: fileKey }) => (
+      this.getDirtyBucketObjectMetadata(fileKey)
+    ));
 
-    const fileData = await Promise.all<HeadObjectCommandOutput[]>(
-      dirtyBucketObjMetadata,
-    );
+    const fileData = await Promise.all(dirtyBucketObjMetadata);
 
-    const moveFileToPermemntStoragePromises = files.map((fileKey: string) =>
-      this.copyFileToMainStorage(fileKey),
-    );
+    const moveFileToPermemntStoragePromises = createFileData.map(({ s3ObjectKey: fileKey }) => (
+      this.copyFileToMainStorage(fileKey)
+    ));
     await Promise.all(moveFileToPermemntStoragePromises);
 
-    await this.createFileRecords(
-      files.map((f, index) => ({
-        fileName,
-        fileSize: fileData[index].ContentLength,
-        s3ObjectKey,
-        organizationId,
-        parentId,
-      })),
-    );
+    const fileRecordData = createFileData.map((file, index) => ({
+      ...file,
+      fileSize: fileData[index].ContentLength,
+    }));
+    await this.createFileRecords(fileRecordData, organizationId)
   }
 
   /**
@@ -467,10 +467,9 @@ export class FileManagementService {
    * @param createFileData - An array of file creation data.
    * @returns The created file records.
    */
-  async createFileRecords(createFileData: any[]) {
-    const transactionPromises = createFileData.map((data) => {
-      const { fileName, organizationId, parentId, fileSize, s3ObjectKey } =
-        data;
+  async createFileRecords(createFileData: createFileData[], organizationId: string) {
+    const transactionPromises = createFileData.map(data => {
+      const { fileName, parentId, fileSize, s3ObjectKey } = data;
 
       return this.databseService.fileMgt.create({
         data: {

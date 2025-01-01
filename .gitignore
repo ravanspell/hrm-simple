@@ -56,3 +56,5 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 ./my-hrm-infra/node_modules
+
+docker-compose.override.yml
