@@ -7,4 +7,4 @@ import { AwsSqsService } from './aws-sqs-service/aws-sqs.service';
   providers: [EncryptionService, CacheService, AwsSqsService, AwsS3Service],
   exports: [EncryptionService, CacheService, AwsSqsService, AwsS3Service],
 })
-export class UtilitiesModule { }
+export class UtilitiesModule {}

@@ -23,10 +23,10 @@ interface TaggingResult {
 }
 
 export interface createFileData {
-  fileName: string
-  parentId: string
-  s3ObjectKey: string
-  fileSize: number
+  fileName: string;
+  parentId: string;
+  s3ObjectKey: string;
+  fileSize: number;
 }
 
 @Injectable()
@@ -333,9 +333,9 @@ export class FileManagementService {
       createFileData;
 
     // Check if the file exists in the dirty bucket
-    const dirtyBucketObjMetadata = createFileData.map(({ s3ObjectKey: fileKey }) => (
-      this.getDirtyBucketObjectMetadata(fileKey)
-    ));
+    const dirtyBucketObjMetadata = createFileData.map(
+      ({ s3ObjectKey: fileKey }) => this.getDirtyBucketObjectMetadata(fileKey),
+    );
 
     const fileData = await Promise.all(dirtyBucketObjMetadata);
 
