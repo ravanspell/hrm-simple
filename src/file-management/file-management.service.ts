@@ -22,6 +22,13 @@ interface TaggingResult {
   error?: Error;
 }
 
+export interface createFileData {
+  fileName: string
+  parentId: string
+  s3ObjectKey: string
+  fileSize: number
+}
+
 @Injectable()
 export class FileManagementService {
   private dirtyBucket: string;
@@ -326,23 +333,18 @@ export class FileManagementService {
       createFileData;
 
     // Check if the file exists in the dirty bucket
-    const dirtyBucketObjMetadata = files.map((fileKey: string) =>
-      this.getDirtyBucketObjectMetadata(fileKey),
-    );
+    const dirtyBucketObjMetadata = createFileData.map(({ s3ObjectKey: fileKey }) => (
+      this.getDirtyBucketObjectMetadata(fileKey)
+    ));
 
-    const fileData = await Promise.all<HeadObjectCommandOutput[]>(
-      dirtyBucketObjMetadata,
-    );
+    const fileData = await Promise.all(dirtyBucketObjMetadata);
 
-    await this.createFileRecords(
-      files.map((f, index) => ({
-        fileName,
-        fileSize: fileData[index].ContentLength,
-        s3ObjectKey,
-        organizationId,
-        parentId,
-      })),
-    );
+    const fileRecordData = createFileData.map((file, index) => ({
+      ...file,
+      fileSize: fileData[index].ContentLength,
+    }));
+
+    await this.createFileRecords(fileRecordData);
 
     const moveFileToPermemntStoragePromises = files.map((fileKey: string) =>
       this.copyFileToMainStorage(fileKey),

@@ -1,0 +1,29 @@
+# putting mysql container into overrides
+# to be used only in the dev environment.
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db-myhrm-app-v1
+    env_file:
+      - .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  myhrm-app:
+    environment:
+      DATABASE_URL: mysql://user:password@mysql-db-myhrm-app-v1:3306/myhrm
+    depends_on:
+      - mysql
+
+  worker:
+    environment:
+      DATABASE_URL: mysql://user:password@mysql-db-myhrm-app-v1:3306/myhrm
+    depends_on:
+      - mysql
+
+volumes:
+  mysql_data:
+    driver: local

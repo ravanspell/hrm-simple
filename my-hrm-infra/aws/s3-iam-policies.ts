@@ -21,13 +21,14 @@ export class S3IamPolicies extends Construct {
 
     /**
      * IAM Policy for my-hrm-dirty-bucket
+     * ----------------------------------
      *
      * Permissions:
      * - s3:PutObject
      * - s3:GetObject
      * - s3:ListBucket
      *
-     * Purpose: Allow applications or users to upload, retrieve, and list objects in the dirty bucket.
+     * - Purpose: Allow applications or users to upload, retrieve, and list objects in the dirty bucket.
      */
     this.dirtyBucketPolicy = new IamPolicy(this, 'DirtyBucketPolicy', {
       name: 'DirtyBucketPolicy',
@@ -49,6 +50,7 @@ export class S3IamPolicies extends Construct {
 
     /**
      * IAM Policy for my-hrm-permanent-bucket
+     * --------------------------------------
      *
      * Permissions:
      * - s3:PutObject
@@ -58,7 +60,7 @@ export class S3IamPolicies extends Construct {
      * - s3:ListBucketVersions
      * - s3:GetBucketVersioning
      *
-     * Purpose: Allow applications or users to manage objects and versions in the permanent bucket.
+     * - Purpose: Allow applications or users to manage objects and versions in the permanent bucket.
      */
     this.permanentBucketPolicy = new IamPolicy(this, 'PermanentBucketPolicy', {
       name: 'PermanentBucketPolicy',

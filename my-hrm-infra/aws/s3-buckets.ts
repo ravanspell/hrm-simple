@@ -17,8 +17,10 @@ import { PERMANENT_BUCKET_NAME, DIRTY_BUCKET_NAME } from './constants';
 export class S3Buckets extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
+    
     /**
      * Create S3 Bucket: my-hrm-dirty-bucket
+     * -------------------------------------
      *
      * - Purpose: Temporary storage for HRM files.
      * - Lifecycle Rule: Automatically delete objects after 2 days.
@@ -62,6 +64,7 @@ export class S3Buckets extends Construct {
 
     /**
      * Create S3 Bucket: my-hrm-permanent-bucket
+     * -----------------------------------------
      *
      * - Purpose: Permanent storage for HRM files.
      * - Versioning: Enabled.
