@@ -10,8 +10,8 @@ import { AWS_REGION } from './constants';
 import { SQSQueues } from './sqs-queues';
 
 export class AWSStack extends TerraformStack {
-    constructor(scope: Construct, id: string) {
-        super(scope, id);
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
 
         new AwsProvider(this, 'AWS', {
             region: AWS_REGION,

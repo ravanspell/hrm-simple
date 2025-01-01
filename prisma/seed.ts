@@ -109,7 +109,7 @@ async function main() {
         employeeLevels,
         leaveTypes,
       };
-    })
+    }),
   );
 
   // Step 6: Create Users
@@ -126,11 +126,18 @@ async function main() {
       const email = faker.internet.email({ firstName, lastName }).toLowerCase();
 
       // Ensure email uniqueness by appending a unique number if necessary
-      const uniqueEmail = `${firstName}.${lastName}.${faker.string.uuid()}@example.com`.toLowerCase();
+      const uniqueEmail =
+        `${firstName}.${lastName}.${faker.string.uuid()}@example.com`.toLowerCase();
 
       const gender = faker.helpers.arrayElement(['Male', 'Female', 'Other']);
-      const dateOfBirth = faker.date.between({ from: '1960-01-01', to: '2000-12-31' });
-      const startDate = faker.date.between({ from: '2010-01-01', to: '2023-12-31' });
+      const dateOfBirth = faker.date.between({
+        from: '1960-01-01',
+        to: '2000-12-31',
+      });
+      const startDate = faker.date.between({
+        from: '2010-01-01',
+        to: '2023-12-31',
+      });
       const endDate = faker.helpers.arrayElement([null, faker.date.future()]);
 
       const employmentStatus = faker.helpers.arrayElement(employmentStatuses);
@@ -191,11 +198,18 @@ async function main() {
     for (let i = 0; i < remainingUsers; i++) {
       const firstName = faker.name.firstName();
       const lastName = faker.name.lastName();
-      const uniqueEmail = `${firstName}.${lastName}.${faker.string.uuid()}@example.com`.toLowerCase();
+      const uniqueEmail =
+        `${firstName}.${lastName}.${faker.string.uuid()}@example.com`.toLowerCase();
 
       const gender = faker.helpers.arrayElement(['Male', 'Female', 'Other']);
-      const dateOfBirth = faker.date.between({ from: '1960-01-01', to: '2000-12-31' });
-      const startDate = faker.date.between({ from: '2010-01-01', to: '2023-12-31' });
+      const dateOfBirth = faker.date.between({
+        from: '1960-01-01',
+        to: '2000-12-31',
+      });
+      const startDate = faker.date.between({
+        from: '2010-01-01',
+        to: '2023-12-31',
+      });
       const endDate = faker.helpers.arrayElement([null, faker.date.future()]);
 
       const employmentStatus = faker.helpers.arrayElement(employmentStatuses);
@@ -240,7 +254,9 @@ async function main() {
     }
   }
 
-  console.log(`Seeded ${usersCreated} users across ${organizations.length} organizations.`);
+  console.log(
+    `Seeded ${usersCreated} users across ${organizations.length} organizations.`,
+  );
 
   //----------- File managment --------------------- //
 

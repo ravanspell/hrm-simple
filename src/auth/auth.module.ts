@@ -7,11 +7,8 @@ import { PassportModule } from '@nestjs/passport';
 import { SessionSerializer } from './session.serializer';
 
 @Module({
-  imports: [
-    UserModule,
-    PassportModule.register({ session: true }),
-  ],
+  imports: [UserModule, PassportModule.register({ session: true })],
   providers: [AuthService, LocalStrategy, SessionSerializer],
-  controllers: [AuthController]
+  controllers: [AuthController],
 })
-export class AuthModule { }
+export class AuthModule {}

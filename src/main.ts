@@ -6,9 +6,20 @@ import * as session from 'express-session';
 import * as passport from 'passport';
 import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 import { PrismaClient } from '@prisma/client';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const config = new DocumentBuilder()
+    .setTitle('Cats example')
+    .setDescription('The cats API description')
+    .setVersion('1.0')
+    .addTag('cats')
+    .build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, documentFactory, {});
+
   app.enableVersioning({
     type: VersioningType.URI,
   });
@@ -16,13 +27,11 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   // session store is a mysql db table where user session data
   // is being stored. Typically Redis would be a ideal solution here.
-  const sessionStore = new PrismaSessionStore(new PrismaClient(),
-    {
-      checkPeriod: 2 * 60 * 1000,  //ms
-      dbRecordIdIsSessionId: true,
-      dbRecordIdFunction: undefined,
-    }
-  );
+  const sessionStore = new PrismaSessionStore(new PrismaClient(), {
+    checkPeriod: 2 * 60 * 1000, //ms
+    dbRecordIdIsSessionId: true,
+    dbRecordIdFunction: undefined,
+  });
   app.enableCors();
   app.use(
     session({
@@ -42,10 +51,12 @@ async function bootstrap() {
   app.use(passport.session());
 
   app.useGlobalInterceptors(new TransformInterceptor());
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
   await app.listen(3001);
 }

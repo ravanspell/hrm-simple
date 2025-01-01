@@ -1,4 +1,3 @@
-
 /**
  * Defines IAM policies for AWS S3 buckets using CDKTF.
  *
@@ -39,17 +38,13 @@ export class S3IamPolicies extends Construct {
         Statement: [
           {
             Effect: 'Allow',
-            Action: [
-              's3:PutObject',
-              's3:GetObject',
-              's3:ListBucket'
-            ],
+            Action: ['s3:PutObject', 's3:GetObject', 's3:ListBucket'],
             Resource: [
               `arn:aws:s3:::${DIRTY_BUCKET_NAME}`,
-              `arn:aws:s3:::${DIRTY_BUCKET_NAME}/*`
-            ]
-          }
-        ]
+              `arn:aws:s3:::${DIRTY_BUCKET_NAME}/*`,
+            ],
+          },
+        ],
       }),
     });
 
@@ -81,14 +76,14 @@ export class S3IamPolicies extends Construct {
               's3:DeleteObject',
               's3:ListBucket',
               's3:ListBucketVersions',
-              's3:GetBucketVersioning'
+              's3:GetBucketVersioning',
             ],
             Resource: [
               `arn:aws:s3:::${PERMANENT_BUCKET_NAME}`,
-              `arn:aws:s3:::${PERMANENT_BUCKET_NAME}/*`
-            ]
-          }
-        ]
+              `arn:aws:s3:::${PERMANENT_BUCKET_NAME}/*`,
+            ],
+          },
+        ],
       }),
     });
   }

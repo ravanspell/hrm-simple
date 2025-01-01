@@ -16,12 +16,12 @@ datasource db {
 model Session {
   id        String   @id
   sid       String   @unique
-  data      String   @db.MediumText  // MediumText may be needed for MySql
-  expiresAt   DateTime
+  data      String   @db.MediumText // MediumText may be needed for MySql
+  expiresAt DateTime
 }
 
 model Organization {
-  id          String      @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
   logo        String?
@@ -36,54 +36,57 @@ model Organization {
   EmailSettings      EmailSettings[]
   files              FileMgt[]
   folders            Folder[]
+  roles              Role[]
+  scopes             Scope[]
 }
 
 model EmailSettings {
-  id                     String      @id @default(uuid())
-  emailHost              String
-  emailPort              Int
-  displayName            String
-  defaultFromEmail       String
-  emailHostUsername      String
-  emailAuthPassword      String
-  useTLS                 Boolean     @default(false)
-  useSSL                 Boolean     @default(false)
-  isPrimary              Boolean     @default(false)
-  emailSendTimeout       Int         @default(30000)
-  organizationId         String
-  organization           Organization @relation(fields: [organizationId], references: [id])
+  id                String       @id @default(uuid())
+  emailHost         String
+  emailPort         Int
+  displayName       String
+  defaultFromEmail  String
+  emailHostUsername String
+  emailAuthPassword String
+  useTLS            Boolean      @default(false)
+  useSSL            Boolean      @default(false)
+  isPrimary         Boolean      @default(false)
+  emailSendTimeout  Int          @default(30000)
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId])
 }
 
 model User {
-  id               String      @id @default(uuid())
-  organizationId   String
-  firstName        String
-  lastName         String
-  password         String?
-  email            String     @unique
-  gender           String     
-  dateOfBirth      DateTime
+  id                 String    @id @default(uuid())
+  organizationId     String
+  firstName          String
+  lastName           String
+  password           String?
+  email              String    @unique
+  gender             String
+  dateOfBirth        DateTime
   employmentStatusId String
-  employeeLevelId  String
-  startDate        DateTime
-  endDate          DateTime?
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-  createdBy        String
-  updatedBy        String
+  employeeLevelId    String
+  startDate          DateTime
+  endDate            DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  createdBy          String
+  updatedBy          String
 
-  organization     Organization @relation(fields: [organizationId], references: [id])
-  employmentStatus EmploymentStatus @relation(fields: [employmentStatusId], references: [id])
-  employeeLevel    EmployeeLevel    @relation(fields: [employeeLevelId], references: [id])
+  organization      Organization      @relation(fields: [organizationId], references: [id])
+  employmentStatus  EmploymentStatus  @relation(fields: [employmentStatusId], references: [id])
+  employeeLevel     EmployeeLevel     @relation(fields: [employeeLevelId], references: [id])
   empLeaveHistories EmpLeaveHistory[]
-  leaveBalances    LeaveBalance[]
+  leaveBalances     LeaveBalance[]
+  roles             UserRole[]
   // Relations with FileMgt and Folder tables
-  filesCreated      FileMgt[]    @relation("FileCreatedBy")  // Files created by the user
-  filesUpdated      FileMgt[]    @relation("FileUpdatedBy")  // Files last updated by the user
-  foldersCreated    Folder[]     @relation("FolderCreatedBy") // Folders created by the user
-  foldersUpdated    Folder[]     @relation("FolderUpdatedBy") // Folders last updated by the user
+  filesCreated      FileMgt[]         @relation("FileCreatedBy") // Files created by the user
+  filesUpdated      FileMgt[]         @relation("FileUpdatedBy") // Files last updated by the user
+  foldersCreated    Folder[]          @relation("FolderCreatedBy") // Folders created by the user
+  foldersUpdated    Folder[]          @relation("FolderUpdatedBy") // Folders last updated by the user
 
   @@index([organizationId])
   @@index([employmentStatusId])
@@ -91,43 +94,93 @@ model User {
   @@index([email])
 }
 
-model EmploymentStatus {
-  id              String      @id @default(uuid())
-  status          String
-  description     String?
-  organizationId  String
+model Role {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organizationId String
 
-  organization    Organization @relation(fields: [organizationId], references: [id])
-  users           User[]
+  organization Organization @relation(fields: [organizationId], references: [id])
+  // Implicit many-to-many relation with Scope
+  scopes       Scope[]      @relation("RoleScopes")
+
+  @@index([organizationId])
+  UserRole UserRole[]
+}
+
+model ScopeCategory {
+  id         String    @id @default(uuid())
+  name       String    @unique // Name of the category (e.g., 'Leave', 'HR')
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  scops Scope[] // One-to-many relationship with scopes
+}
+
+model Scope {
+  id                String   @id @default(uuid())
+  name              String   @unique
+  description       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  categoryId        String
+  category          ScopeCategory @relation(fields: [categoryId], references: [id])
+  // Implicit many-to-many relation with Role
+  roles           Role[]       @relation("RoleScopes")
+
+  @@index([organizationId])
+}
+
+model UserRole {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+}
+
+model EmploymentStatus {
+  id             String  @id @default(uuid())
+  status         String
+  description    String?
+  organizationId String
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  users        User[]
 
   @@index([organizationId])
 }
 
 model EmployeeLevel {
-  id              String      @id @default(uuid())
-  name            String
-  description     String?
-  organizationId  String
+  id             String  @id @default(uuid())
+  name           String
+  description    String?
+  organizationId String
 
-  organization    Organization @relation(fields: [organizationId], references: [id])
-  users           User[]
+  organization     Organization      @relation(fields: [organizationId], references: [id])
+  users            User[]
   leaveAllocations LeaveAllocation[]
 
   @@index([organizationId])
 }
 
 model LeaveType {
-  id              String      @id @default(uuid())
-  name            String
-  description     String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  createdBy       String
-  updatedBy       String
-  organizationId  String
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  createdBy      String
+  updatedBy      String
+  organizationId String
 
-  organization    Organization @relation(fields: [organizationId], references: [id])
-  empLeaveHistories   EmpLeaveHistory[]
+  organization      Organization      @relation(fields: [organizationId], references: [id])
+  empLeaveHistories EmpLeaveHistory[]
   leaveAllocations  LeaveAllocation[]
   leaveBalances     LeaveBalance[]
 
@@ -135,81 +188,81 @@ model LeaveType {
 }
 
 model LeaveAllocation {
-  id               String      @id @default(uuid())
-  employeeLevelId  String
-  leaveTypeId      String
-  totalLeaveHours  Int
-  organizationId   String
+  id              String @id @default(uuid())
+  employeeLevelId String
+  leaveTypeId     String
+  totalLeaveHours Int
+  organizationId  String
 
-  employeeLevel  EmployeeLevel @relation(fields: [employeeLevelId], references: [id])
-  leaveType      LeaveType     @relation(fields: [leaveTypeId], references: [id])
-  organization   Organization  @relation(fields: [organizationId], references: [id])
+  employeeLevel EmployeeLevel @relation(fields: [employeeLevelId], references: [id])
+  leaveType     LeaveType     @relation(fields: [leaveTypeId], references: [id])
+  organization  Organization  @relation(fields: [organizationId], references: [id])
 
   @@index([employeeLevelId, leaveTypeId])
   @@index([organizationId])
 }
 
 model EmpLeaveHistory {
-  id                String      @id @default(uuid())
-  organizationId    String
-  employeeId        String
-  leaveTypeId       String
-  leaveHours        Int
-  status            String       
-  approvedBy        Int
-  comments          String?
+  id             String  @id @default(uuid())
+  organizationId String
+  employeeId     String
+  leaveTypeId    String
+  leaveHours     Int
+  status         String
+  approvedBy     Int
+  comments       String?
 
-  employee          User           @relation(fields: [employeeId], references: [id])
-  leaveType         LeaveType      @relation(fields: [leaveTypeId], references: [id])
-  organization      Organization   @relation(fields: [organizationId], references: [id])
+  employee     User         @relation(fields: [employeeId], references: [id])
+  leaveType    LeaveType    @relation(fields: [leaveTypeId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
 
   @@index([employeeId, leaveTypeId, status, approvedBy])
   @@index([organizationId])
 }
 
 model LeaveBalance {
-  id                  String      @id @default(uuid())
+  id                  String   @id @default(uuid())
   leaveTypeId         String
   employeeId          String
   usedLeaveHours      Int
   leaveAllocatedHours Int
-  lastUpdated         DateTime   @default(now())
+  lastUpdated         DateTime @default(now())
   createdBy           String
   updatedBy           String
   organizationId      String
 
-  employee            User        @relation(fields: [employeeId], references: [id])
-  leaveType           LeaveType   @relation(fields: [leaveTypeId], references: [id])
-  organization        Organization @relation(fields: [organizationId], references: [id])
+  employee     User         @relation(fields: [employeeId], references: [id])
+  leaveType    LeaveType    @relation(fields: [leaveTypeId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
 
   @@index([leaveTypeId, employeeId])
   @@index([organizationId])
 }
 
 model FileMgt {
-  id              String          @id @default(uuid())
-  s3ObjectKey     String          // @unique
-  fileName        String
-  fileSize        Int
-  folderId        String?
-  organizationId  String
-  uploadedAt      DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  fileStatus      FileStatus      @default(ACTIVE)  // New column for file status
-  deletionTime    DateTime?       // Optional, used for soft-deletes with TTL
+  id             String     @id @default(uuid())
+  s3ObjectKey    String // @unique
+  fileName       String
+  fileSize       Int
+  folderId       String?
+  organizationId String
+  uploadedAt     DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  fileStatus     FileStatus @default(ACTIVE) // New column for file status
+  deletionTime   DateTime? // Optional, used for soft-deletes with TTL
 
-  createdBy       String      // User ID of the creator
-  updatedBy       String      // User ID of the last updater
+  createdBy String // User ID of the creator
+  updatedBy String // User ID of the last updater
 
-  organization    Organization @relation(fields: [organizationId], references: [id])
-  folder          Folder?      @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  creator         User         @relation("FileCreatedBy", fields: [createdBy], references: [id])
-  updater         User         @relation("FileUpdatedBy", fields: [updatedBy], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  folder       Folder?      @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  creator      User         @relation("FileCreatedBy", fields: [createdBy], references: [id])
+  updater      User         @relation("FileUpdatedBy", fields: [updatedBy], references: [id])
 
-  @@index([organizationId])  // Index for organization-wide queries
-  @@index([folderId])        // Index for querying files by folder
-  @@index([fileStatus])      // Index for querying active/deleted files
-  @@index([uploadedAt])      // Index to optimize queries based on upload date
+  @@index([organizationId]) // Index for organization-wide queries
+  @@index([folderId]) // Index for querying files by folder
+  @@index([fileStatus]) // Index for querying active/deleted files
+  @@index([uploadedAt]) // Index to optimize queries based on upload date
 }
 
 enum FileStatus {
@@ -218,24 +271,24 @@ enum FileStatus {
 }
 
 model Folder {
-  id              String          @id @default(uuid())
-  name            String
-  parentId        String?         // For nested folders, NULL if it's a root folder
-  path            String          // Full folder path (e.g., "/documents/contracts")
-  organizationId  String          // Reference to the tenant
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  createdBy       String          // User ID of the creator
-  updatedBy       String          // User ID of the last updater
+  id             String   @id @default(uuid())
+  name           String
+  parentId       String? // For nested folders, NULL if it's a root folder
+  path           String // Full folder path (e.g., "/documents/contracts")
+  organizationId String // Reference to the tenant
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  createdBy      String // User ID of the creator
+  updatedBy      String // User ID of the last updater
 
-  organization    Organization    @relation(fields: [organizationId], references: [id])
-  parentFolder    Folder?         @relation("FolderParent", fields: [parentId], references: [id])
-  subFolders      Folder[]        @relation("FolderParent")
-  files           FileMgt[]       // Files inside this folder
-  creator         User            @relation("FolderCreatedBy", fields: [createdBy], references: [id])
-  updater         User            @relation("FolderUpdatedBy", fields: [updatedBy], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+  parentFolder Folder?      @relation("FolderParent", fields: [parentId], references: [id])
+  subFolders   Folder[]     @relation("FolderParent")
+  files        FileMgt[] // Files inside this folder
+  creator      User         @relation("FolderCreatedBy", fields: [createdBy], references: [id])
+  updater      User         @relation("FolderUpdatedBy", fields: [updatedBy], references: [id])
 
-  @@index([organizationId])       // Index for organization-wide queries
-  @@index([parentId])             // Index to quickly retrieve subfolders
-  @@index([path])                 // Index on path to optimize path-based queries
+  @@index([organizationId]) // Index for organization-wide queries
+  @@index([parentId]) // Index to quickly retrieve subfolders
+  @@index([path]) // Index on path to optimize path-based queries
 }

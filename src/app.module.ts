@@ -24,7 +24,7 @@ import { EmailSettingsModule } from './email-settings/email-settings.module';
     AuthModule,
     FileManagementModule,
     UtilitiesModule,
-    EmailSettingsModule
+    EmailSettingsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -41,4 +41,4 @@ import { EmailSettingsModule } from './email-settings/email-settings.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
