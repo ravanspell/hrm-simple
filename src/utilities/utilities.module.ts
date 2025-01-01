@@ -6,11 +6,11 @@ import { AwsSqsService } from './aws-sqs-service/aws-sqs.service';
 import { MemoryCacheService } from './cache/memory-cache.service';
 @Module({
   providers: [
-    MemoryCacheService,
     EncryptionService,
     CacheService,
     AwsSqsService,
     AwsS3Service,
+    MemoryCacheService,
   ],
   exports: [EncryptionService, CacheService, AwsSqsService, AwsS3Service],
 })

@@ -6,7 +6,7 @@
  * needs in small to medium-sized applications.
  */
 import { Injectable } from '@nestjs/common';
-import NodeCache from 'node-cache';
+import * as NodeCache from 'node-cache';
 import { Cache } from './cache.interface';
 
 @Injectable()
@@ -18,6 +18,7 @@ export class MemoryCacheService implements Cache {
      * Initialize NodeCache instance with default settings.
      * - `stdTTL`: Default time-to-live for all cache entries (in seconds).
      */
+    // this.c = new NodeCache.NodeCache({ stdTTL: 0 });
     this.cache = new NodeCache({ stdTTL: 0 });
   }
 
