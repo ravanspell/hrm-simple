@@ -23,6 +23,7 @@ import { CreateFolderDto } from './dto/create-folder.dto';
 import { DeleteFilesDto } from './dto/delete-files.dto';
 import { Response } from 'express';
 import * as archiver from 'archiver';
+import { Folder } from './entities/folder.entity';
 
 class InitUploadDto {
   @IsString()
@@ -65,11 +66,13 @@ export class FileManagementController {
         await this.fileManagementService.findFolderById(parentId);
       path = `${parentFolder.path}/${name}`;
     }
-    const folderData = {
+    const folderData: Partial<Folder> = {
       name,
       parentId,
       organizationId: '69fb3a34-1bcc-477d-8a22-99c194ea468d',
       path,
+      createdBy: '69fb3a34-1bcc-477d-8a22-99c194ea468d',
+      updatedBy: '69fb3a34-1bcc-477d-8a22-99c194ea468d',
     };
     return this.fileManagementService.createFolder(folderData);
   }
@@ -183,9 +186,10 @@ export class FileManagementController {
   @Delete('soft-delete-files')
   async deleteFiles(@Body() deleteFilesDto: DeleteFilesDto) {
     const { ids } = deleteFilesDto;
-    const files = await this.fileManagementService.findFiles({
-      id: { in: ids },
-    });
+    const files = await this.fileManagementService.findFiles(
+      'file.id IN (:...ids)',
+      { ids: ids },
+    );
     // collect avaialbe file ids for delete
     const availalbeFilesForDelete = files.map((file) => file.id);
     if (availalbeFilesForDelete.length === 0) {
@@ -196,6 +200,7 @@ export class FileManagementController {
       files,
     );
   }
+
   /**
    * Retrieves the hierarchy of parent folder IDs for breadcrumb navigation.
    * @param folderId - ID of the folder.

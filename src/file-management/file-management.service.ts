@@ -7,14 +7,14 @@ import {
   Tag,
 } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
-import { DatabaseService } from 'src/database/database.service';
-import { FileMgt, Prisma } from '@prisma/client';
 import * as archiver from 'archiver';
 import { FILE_STATUSES } from './constants';
 import { AwsS3Service } from './aws-S3.service';
 import { FileMgtRepository } from 'src/repository/file-management.repository';
 import { FolderRepository } from 'src/repository/folder.repository';
 import { Transactional } from 'typeorm-transactional';
+import { Folder } from './entities/folder.entity';
+import { FileMgt } from './entities/file-management.entity';
 
 interface TaggingResult {
   status: 'fulfilled' | 'rejected';
@@ -29,7 +29,6 @@ export class FileManagementService {
 
   constructor(
     private readonly configService: ConfigService,
-    private databseService: DatabaseService,
     private readonly awsS3Service: AwsS3Service,
     private readonly fileMgtRepository: FileMgtRepository,
     private readonly folderRepository: FolderRepository,
@@ -72,10 +71,8 @@ export class FileManagementService {
    * @returns Success message indicating the folder name was updated.
    */
   async updateFolderName(id: string, folderName: string) {
-    const folder = this.folderRepository.getFolderById(id);
-    if (!folder) {
-      throw new NotFoundException(`Specified folder not found`);
-    }
+    // check for the folder existence
+    await this.findFolderById(id);
     await this.folderRepository.updateFolder(id, { name: folderName });
     return { message: `Folder renamed to ${folderName} successfully.` };
   }
@@ -168,20 +165,15 @@ export class FileManagementService {
   }
 
   /**
-   * Retrieves files based on a flexible filter.
+   * Retrieves files based on a flexible filter. warapper service method for repository
    * @param where - db filter criteria to apply (e.g., ID, size, name).
    * @param select - Optional fields to select from the result.
    * @returns Array of files matching the filter criteria.
    */
-  async findFiles(
-    where: Prisma.FileMgtWhereInput,
-    select?: Prisma.FileMgtSelect,
-  ) {
-    return this.databseService.fileMgt.findMany({
-      where,
-      select,
-    });
+  async findFiles(where: string, whereParams: any, select?: (keyof FileMgt)[]) {
+    return this.fileMgtRepository.findFiles(where, whereParams, select);
   }
+
   /**
    * Fetches active files within a specified folder for a given organization.
    * @param folderId - ID of the folder (null for root directory).
@@ -235,10 +227,8 @@ export class FileManagementService {
     let currentFolderId = folderId;
 
     while (currentFolderId) {
-      const currentFolder = await this.databseService.folder.findUnique({
-        where: { id: currentFolderId },
-        select: { parentId: true, name: true, id: true },
-      });
+      // get the current folder if not throw not found error
+      const currentFolder = await this.findFolderById(currentFolderId);
 
       parentIds.unshift({ id: currentFolder.id, name: currentFolder.name });
       currentFolderId = currentFolder.parentId;
@@ -304,10 +294,9 @@ export class FileManagementService {
    * @returns Success message indicating the file name was updated.
    */
   async updateFileName(id: string, newName: string) {
-    await this.databseService.fileMgt.update({
-      where: { id },
-      data: { fileName: newName },
-    });
+    // check for the file existence
+    await this.findFileById(id);
+    await this.fileMgtRepository.updateFile(id, { fileName: newName });
     return { message: `File renamed to ${newName} successfully.` };
   }
 
@@ -316,23 +305,8 @@ export class FileManagementService {
    * @param createFolderDto - The folder creation data.
    * @returns The created folder record.
    */
-  async createFolder(createFolderData: any) {
-    const { name, organizationId, parentId, path } = createFolderData;
-    // Create the new folder in the database
-    return this.databseService.folder.create({
-      data: {
-        name,
-        path,
-        organization: {
-          connect: { id: organizationId },
-        },
-        ...(parentId && {
-          parentFolder: { connect: { id: parentId } },
-        }),
-        creator: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
-        updater: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
-      },
-    });
+  async createFolder(createFolderData: Partial<Folder>) {
+    return this.folderRepository.createFolder(createFolderData);
   }
 
   /**
@@ -346,6 +320,7 @@ export class FileManagementService {
     return this.awsS3Service.getObjectMetadata(this.permanentBucket, fileKey);
   }
 
+  @Transactional()
   async confirmUpload(createFileData: any) {
     const { fileName, organizationId, parentId, s3ObjectKey, files } =
       createFileData;
@@ -359,11 +334,6 @@ export class FileManagementService {
       dirtyBucketObjMetadata,
     );
 
-    const moveFileToPermemntStoragePromises = files.map((fileKey: string) =>
-      this.copyFileToMainStorage(fileKey),
-    );
-    await Promise.all(moveFileToPermemntStoragePromises);
-
     await this.createFileRecords(
       files.map((f, index) => ({
         fileName,
@@ -373,6 +343,11 @@ export class FileManagementService {
         parentId,
       })),
     );
+
+    const moveFileToPermemntStoragePromises = files.map((fileKey: string) =>
+      this.copyFileToMainStorage(fileKey),
+    );
+    await Promise.all(moveFileToPermemntStoragePromises);
   }
 
   /**
@@ -381,37 +356,7 @@ export class FileManagementService {
    * @returns The created file records.
    */
   async createFileRecords(createFileData: any[]) {
-    const transactionPromises = createFileData.map((data) => {
-      const { fileName, organizationId, parentId, fileSize, s3ObjectKey } =
-        data;
-
-      return this.databseService.fileMgt.create({
-        data: {
-          fileName,
-          fileSize,
-          fileStatus: FILE_STATUSES.ACTIVE,
-          s3ObjectKey,
-          organization: {
-            connect: { id: organizationId },
-          },
-          ...(parentId && {
-            parentFolder: { connect: { id: parentId } },
-          }),
-          creator: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
-          updater: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
-        },
-      });
-    });
-
-    try {
-      // Execute all operations in a single transaction
-      await this.databseService.$transaction(transactionPromises);
-
-      console.log('All operations committed successfully.');
-    } catch (error) {
-      console.error('Transaction failed. Rolling back operations:', error);
-      throw new Error('Transaction failed. Rolled back changes.');
-    }
+    return this.fileMgtRepository.createFileRecords(createFileData);
   }
   /**
    * Get S3 object as a readable stream for a file.
@@ -434,16 +379,7 @@ export class FileManagementService {
    */
   async addFolderToArchive(folderId: string, archive: archiver.Archiver) {
     // Fetch folder details, including files and subfolders
-    const folder = await this.databseService.folder.findUnique({
-      where: {
-        id: folderId,
-      },
-      include: {
-        files: true,
-        subFolders: true,
-      },
-    });
-
+    const folder = await this.folderRepository.getFolderWithRelations(folderId);
     // Add each file in the folder to the archive
     for (const file of folder.files) {
       const s3ObjectStream = await this.getPermentStorageObjectStream(
