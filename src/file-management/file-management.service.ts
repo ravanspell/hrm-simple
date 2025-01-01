@@ -9,7 +9,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import * as archiver from 'archiver';
 import { FILE_STATUSES } from './constants';
-import { AwsS3Service } from './aws-S3.service';
+import { AwsS3Service } from '../utilities/aws-s3-service/aws-S3.service';
 import { FileMgtRepository } from 'src/repository/file-management.repository';
 import { FolderRepository } from 'src/repository/folder.repository';
 import { Transactional } from 'typeorm-transactional';
