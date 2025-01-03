@@ -5,9 +5,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { User } from '@prisma/client';
 import { Observable } from 'rxjs';
 import { PERMISSIONS_KEY } from 'src/decorators/permissions.decorator';
+import { UserWithScopes } from '@/user/user.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -16,10 +16,10 @@ export class PermissionsGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    const currentUser = context.switchToHttp().getRequest().user as User;
-    console.log('currentUser-->', currentUser);
-
-    const userPermissions = ['can:filter'];
+    const currentUser = context.switchToHttp().getRequest()
+      .user as UserWithScopes;
+    // get current user scops
+    const userPermissions = currentUser?.scopes || [];
     const requiredPermissions =
       this.reflector.get<string[]>(PERMISSIONS_KEY, context.getHandler()) || [];
     // ignore permission check if no permissions defined

@@ -33,6 +33,7 @@ import { CreateScopeDto } from './dto/create-scope.dto';
 import { ScopesService } from './scops.service';
 import { UpdateScopeDto } from './dto/update-scope.dto';
 import { UpdateUserRolesDto } from './dto/update-user-role.dto';
+import { EDIT_ROLE } from '@/constants/permissions';
 
 @ApiTags('user')
 @Controller('user')
@@ -256,6 +257,8 @@ export class UserController {
     description: 'User roles successfully updated.',
   })
   @ApiResponse({ status: 404, description: 'User or Role(s) not found.' })
+  @Authentication()
+  @Permissions(EDIT_ROLE)
   async updateUserRoles(
     @Param('userId') userId: string,
     @Body() updateUserRolesDto: UpdateUserRolesDto,
