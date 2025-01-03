@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
-import { DatabaseModule } from './database/database.module';
 import { LoggerModule } from './logger/logger.module';
 import { EmployeeLeavesModule } from './employee-leaves/employee-leaves.module';
 import { AuthModule } from './auth/auth.module';
@@ -21,7 +20,6 @@ import { DBModule } from './config/database.module';
     ConfigModule.forRoot({ isGlobal: true }),
     // TODO: rename DBModule to DatabaseModule
     DBModule,
-    DatabaseModule,
     UserModule,
     LoggerModule,
     EmployeeLeavesModule,

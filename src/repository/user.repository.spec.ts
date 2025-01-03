@@ -13,7 +13,6 @@ jest.mock('typeorm', () => ({
   })),
 }));
 
-
 describe('UserRepository', () => {
   let userRepository: UserRepository;
   let dataSourceMock: Partial<DataSource>;

@@ -108,6 +108,8 @@ export class EmailSettingsController {
   })
   @ApiResponse({ status: 404, description: 'Email settings not found.' })
   remove(@Param('id') id: string) {
-    return this.emailSettingsService.remove(id);
+    return '';
+
+    //this.emailSettingsService.remove(id);
   }
 }

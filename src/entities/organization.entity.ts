@@ -1,8 +1,3 @@
-import { ORGANIZATION_TABLE } from 'src/constants/dbTables';
-import { EmailSettings } from 'src/email-settings/entities/email-setting.entity';
-import { FileMgt } from 'src/file-management/entities/file-management.entity';
-import { Folder } from 'src/file-management/entities/folder.entity';
-import { User } from 'src/user/entities/user.entity';
 import {
   Entity,
   Column,
@@ -11,6 +6,13 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
+import { Role } from '@/user/entities/role.entity';
+import { Scope } from '@/user/entities/scope.entity';
+import { ORGANIZATION_TABLE } from 'src/constants/dbTables';
+import { EmailSettings } from 'src/email-settings/entities/email-setting.entity';
+import { FileMgt } from 'src/file-management/entities/file-management.entity';
+import { Folder } from 'src/file-management/entities/folder.entity';
+import { User } from 'src/user/entities/user.entity';
 
 @Entity(ORGANIZATION_TABLE)
 export class Organization {
@@ -34,6 +36,12 @@ export class Organization {
 
   @OneToMany(() => User, (user) => user.organization)
   users: User[];
+
+  @OneToMany(() => Role, (role) => role.organization)
+  roles: Role[];
+
+  @OneToMany(() => Scope, (scope) => scope.organization)
+  scopes: Scope[];
 
   @OneToMany(() => EmailSettings, (emailSettings) => emailSettings.organization)
   emailSettings: EmailSettings[];

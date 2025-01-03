@@ -8,17 +8,18 @@ import {
   JoinColumn,
   Index,
   OneToMany,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { Organization } from 'src/entities/organization.entity';
 import { USER_TABLE } from 'src/constants/dbTables';
 import { FileMgt } from 'src/file-management/entities/file-management.entity';
 import { Folder } from 'src/file-management/entities/folder.entity';
+import { Role } from './role.entity';
+import { Scope } from './scope.entity';
+import { UserScope } from './user-scope.entity';
 
 @Entity(USER_TABLE)
-@Index(['organizationId'])
-@Index(['employmentStatusId'])
-@Index(['employeeLevelId'])
-@Index(['email'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -37,7 +38,6 @@ export class User {
   password: string | null;
 
   @Column({ unique: true })
-  @Index()
   email: string;
 
   @Column()
@@ -89,4 +89,15 @@ export class User {
 
   @OneToMany(() => Folder, (folder) => folder.updater)
   updatedFolders: Folder[];
+
+  @ManyToMany(() => Role, (role) => role.users)
+  @JoinTable()
+  roles: Role[];
+
+  @ManyToMany(() => Scope, (scope) => scope.users)
+  @JoinTable()
+  scopes: Scope[];
+
+  @OneToMany(() => UserScope, (userScope) => userScope.user)
+  customScopes: UserScope[];
 }

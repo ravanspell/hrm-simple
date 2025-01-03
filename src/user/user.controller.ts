@@ -32,6 +32,7 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { CreateScopeDto } from './dto/create-scope.dto';
 import { ScopesService } from './scops.service';
 import { UpdateScopeDto } from './dto/update-scope.dto';
+import { UpdateUserRolesDto } from './dto/update-user-role.dto';
 
 @ApiTags('user')
 @Controller('user')
@@ -79,7 +80,8 @@ export class UserController {
   ) {
     this.loggerService.logEmployeeAction('im first log here', 'emp id');
     const orgId = request.user.organizationId;
-    return this.userService.filterUsers(filterUsersDto, orgId);
+    return '';
+    // this.userService.filterUsers(filterUsersDto, orgId);
   }
 
   /**
@@ -143,7 +145,8 @@ export class UserController {
     @Req() requestWithTenant: RequestWithTenant,
   ) {
     const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d'; // requestWithTenant.organization.id
-    return this.roleService.createRole(createRoleData, organizationId);
+    return '';
+    // this.roleService.createRole(createRoleData, organizationId);
   }
 
   /**
@@ -159,7 +162,8 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Role successfully updated' })
   @ApiResponse({ status: 404, description: 'Role not found' })
   updateRole(@Param('id') id: string, @Body() updateRoleData: UpdateRoleDto) {
-    return this.roleService.updateRole(id, updateRoleData);
+    return;
+    // this.roleService.updateRole(id, updateRoleData);
   }
 
   //------------- scopes ----------------------------
@@ -181,7 +185,8 @@ export class UserController {
     @Res() requestWithTenant: RequestWithTenant,
   ): Promise<any> {
     const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d'; // requestWithTenant
-    return this.scopeService.createScope(createScopeDto, organizationId);
+    return;
+    // this.scopeService.createScope(createScopeDto, organizationId);
   }
 
   /**
@@ -202,7 +207,9 @@ export class UserController {
     @Param('id') scopeId: string,
     @Body() updateScopeDto: UpdateScopeDto,
   ): Promise<any> {
-    return this.scopeService.updateScope(scopeId, updateScopeDto);
+    return;
+
+    // this.scopeService.updateScope(scopeId, updateScopeDto);
   }
 
   /**
@@ -216,7 +223,9 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'The requested scope.' })
   @ApiResponse({ status: 404, description: 'Scope not found.' })
   async findScopeById(@Param('id') scopeId: string): Promise<any> {
-    return this.scopeService.findById(scopeId);
+    return;
+
+    // this.scopeService.findById(scopeId);
   }
 
   /**
@@ -233,6 +242,24 @@ export class UserController {
   })
   @ApiResponse({ status: 404, description: 'Scope not found.' })
   async deleteScope(@Param('id') scopeId: string): Promise<any> {
-    return this.scopeService.deleteScope(scopeId);
+    return '';
+
+    //this.scopeService.deleteScope(scopeId);
+  }
+
+  @Post(':userId/roles')
+  @ApiOperation({ summary: 'Update roles for a user' })
+  @ApiParam({ name: 'userId', description: 'The ID of the user', type: String })
+  @ApiBody({ type: UpdateUserRolesDto })
+  @ApiResponse({
+    status: 200,
+    description: 'User roles successfully updated.',
+  })
+  @ApiResponse({ status: 404, description: 'User or Role(s) not found.' })
+  async updateUserRoles(
+    @Param('userId') userId: string,
+    @Body() updateUserRolesDto: UpdateUserRolesDto,
+  ) {
+    return this.userService.updateUserRoles(userId, updateUserRolesDto.roleIds);
   }
 }

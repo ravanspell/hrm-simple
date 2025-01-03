@@ -8,6 +8,9 @@ export class AuthService {
 
   async verifyUser(email: string, password: string) {
     const user = await this.userService.findOne(email);
+    const userScopes = await this.userService.findUserWithScopes(user.id);
+    console.log('userScopes--->', userScopes);
+
     if (!user) {
       return null;
     }
@@ -18,6 +21,9 @@ export class AuthService {
     if (!authenticated) {
       return null;
     }
-    return user;
+    return {
+      ...user,
+      // scopes: userScopes.scopes,
+    };
   }
 }

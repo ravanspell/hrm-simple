@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { DatabaseService } from 'src/database/database.service';
 import { CreateEmailSettingsDto } from './dto/create-email-setting.dto';
 import { UpdateEmailSettingDto } from './dto/update-email-setting.dto';
 import { EncryptionService } from 'src/utilities/encryption/encryption.service';
@@ -10,7 +9,6 @@ import { Transactional } from 'typeorm-transactional';
 @Injectable()
 export class EmailSettingsService {
   constructor(
-    private readonly databaseService: DatabaseService,
     private readonly emailSettingsRepository: EmailSettingsRepository,
     private readonly encryptionService: EncryptionService,
   ) {}
@@ -91,11 +89,11 @@ export class EmailSettingsService {
     return this.emailSettingsRepository.updateEmailSettings(id, updateDto);
   }
 
-  async remove(id: string) {
-    return this.databaseService.emailSettings.delete({
-      where: { id },
-    });
-  }
+  // async remove(id: string) {
+  //   return this.databaseService.emailSettings.delete({
+  //     where: { id },
+  //   });
+  // }
 
   async getEmailSettings(
     organizationId: string,

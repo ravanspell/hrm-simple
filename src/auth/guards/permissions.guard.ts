@@ -17,6 +17,8 @@ export class PermissionsGuard implements CanActivate {
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     const currentUser = context.switchToHttp().getRequest().user as User;
+    console.log('currentUser-->', currentUser);
+
     const userPermissions = ['can:filter'];
     const requiredPermissions =
       this.reflector.get<string[]>(PERMISSIONS_KEY, context.getHandler()) || [];
