@@ -13,13 +13,12 @@ import { FileManagementModule } from './file-management/file-management.module';
 import { UtilitiesModule } from './utilities/utilities.module';
 import { EmailSettingsModule } from './email-settings/email-settings.module';
 import { OrganizationModule } from './organization/organization.module';
-import { DBModule } from './config/database.module';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    // TODO: rename DBModule to DatabaseModule
-    DBModule,
+    DatabaseModule,
     UserModule,
     LoggerModule,
     EmployeeLeavesModule,

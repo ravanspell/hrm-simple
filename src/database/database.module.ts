@@ -42,11 +42,11 @@ import { DataSource, DataSourceOptions } from 'typeorm';
         addTransactionalDataSource(dataSource);
         // initialize the DataSource to connect to the database
         await dataSource.initialize();
-        await dataSource.synchronize();
+        // await dataSource.synchronize();
         console.log('Data Source has been initialized!!');
         return dataSource;
       },
     }),
   ],
 })
-export class DBModule {}
+export class DatabaseModule {}
