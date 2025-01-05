@@ -1,37 +1,37 @@
-#My HRM System Architecture#
+*My HRM System Architecture*
 
 
  1.[Introduction](https://#1-introduction)
 
- • [Overview](https://#overview)
+  • [Overview](https://#overview)
 
- • [Purpose of the Documentation](https://#purpose-of-the-documentation)
+  • [Purpose of the Documentation](https://#purpose-of-the-documentation)
 
  2.[Architecture](https://#2-architecture)
 
- • [Route 53 (DNS Service)](https://#21-route-53-dns-service)
+  • [Route 53 (DNS Service)](https://#21-route-53-dns-service)
 
- • [API Gateway](https://#22-api-gateway)
+  • [API Gateway](https://#22-api-gateway)
 
- • [VPC and Subnets](https://#23-vpc-and-subnets)
+  • [VPC and Subnets](https://#23-vpc-and-subnets)
 
- • [EC2 Instances (Compute Layer)](https://#24-ec2-instances-compute-layer)
+  • [EC2 Instances (Compute Layer)](https://#24-ec2-instances-compute-layer)
 
- • [S3 (Storage Layer)](https://#25-s3-storage-layer)
+  • [S3 (Storage Layer)](https://#25-s3-storage-layer)
 
- • [SQS (Notifications and Queuing)](https://#26-sqs-notifications-and-queuing)
+  • [SQS (Notifications and Queuing)](https://#26-sqs-notifications-and-queuing)
 
  3.[Security](https://#3-security)
 
- • [Network Security](https://#31-network-security)
+  • [Network Security](https://#31-network-security)
 
- • [Data Security](https://#32-data-security)
+  • [Data Security](https://#32-data-security)
 
- • [Identity and Access Management (IAM)](https://#33-identity-and-access-management-iam)
+  • [Identity and Access Management (IAM)](https://#33-identity-and-access-management-iam)
 
- • [Compliance with GDPR and ISO/IEC 27001](https://#35-compliance-with-gdpr-and-isoiec-27001)
+  • [Compliance with GDPR and ISO/IEC 27001](https://#35-compliance-with-gdpr-and-isoiec-27001)
 
- • [Further Enhancements](https://#36-further-enhancements)
+  • [Further Enhancements](https://#36-further-enhancements)
 
 
 
