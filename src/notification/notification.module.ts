@@ -6,11 +6,7 @@ import { AwsSqsService } from '../utilities/aws-sqs-service/aws-sqs.service';
 
 @Module({
   imports: [EmailSettingsModule],
-  providers: [
-    AwsSqsService,
-    NotificationService, 
-    NotificationFactory,
-  ],
+  providers: [AwsSqsService, NotificationService, NotificationFactory],
   exports: [NotificationService],
 })
 export class NotificationModule {}

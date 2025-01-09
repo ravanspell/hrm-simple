@@ -15,7 +15,9 @@ export class NotificationService {
     private readonly awsSqsService: AwsSqsService,
     private readonly configService: ConfigService,
   ) {
-    this.notificationQueueUrl = this.configService.get<string>('NOTIFICATION_QUEUE_URL');
+    this.notificationQueueUrl = this.configService.get<string>(
+      'NOTIFICATION_QUEUE_URL',
+    );
   }
 
   async onModuleInit() {
@@ -35,7 +37,7 @@ export class NotificationService {
             this.notificationMessagesBatchSize,
             this.notificationQueuePollingDelay,
           );
-          console.log("messages-->", messages);
+          console.log('messages-->', messages);
           if (messages.length > 0) {
             await this.sendNotifications(messages);
           }
@@ -45,15 +47,17 @@ export class NotificationService {
       }
     };
     setImmediate(poll); // Start the initial poll immediately without delay
-  };
+  }
 
   private async sendNotifications(messages: Message[]) {
     await this.delay(20000);
-    console.log("message has been sent");
-    const deleteQueue = messages.map((message) => this.awsSqsService.deleteMessage(
-      this.notificationQueueUrl,
-      message.ReceiptHandle
-    ));
+    console.log('message has been sent');
+    const deleteQueue = messages.map((message) =>
+      this.awsSqsService.deleteMessage(
+        this.notificationQueueUrl,
+        message.ReceiptHandle,
+      ),
+    );
     await Promise.all(deleteQueue);
   }
 
@@ -62,23 +66,26 @@ export class NotificationService {
   }
   /**
    * Publish a notification message.
-   * 
+   *
    * This wrapper method centralizes the logic for publishing messages to the SQS queue.
    * It ensures that other modules don't need direct access to AwsSqsService, providing better encapsulation.
-   * 
+   *
    * @param type - The type of notification (e.g., 'email', 'notification', etc.).
    * @param payload - The message content to be sent.
-   * 
+   *
    * @example
    * await notificationsService.publishNotification('email', { subject: 'Hello', body: 'World' });
    */
-  public async publishNotification(type: string, payload: Record<string, any>): Promise<void> {
+  public async publishNotification(
+    type: string,
+    payload: Record<string, any>,
+  ): Promise<void> {
     const messageBody = JSON.stringify({ type, payload });
 
     await this.awsSqsService.publishMessage(
       this.notificationQueueUrl,
       messageBody,
-      { Type: type } // Add attributes for filtering or categorization
+      { Type: type }, // Add attributes for filtering or categorization
     );
 
     console.log(`Notification of type "${type}" published to the queue.`);

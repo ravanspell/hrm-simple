@@ -4,15 +4,17 @@ import { ConfigService } from '@nestjs/config';
 import {
   GetObjectCommandOutput,
   HeadObjectCommandOutput,
-  S3Client,
   Tag,
 } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
-import { DatabaseService } from 'src/database/database.service';
-import { FileMgt, Prisma } from '@prisma/client';
 import * as archiver from 'archiver';
 import { FILE_STATUSES } from './constants';
-import { AwsS3Service } from './aws-S3.service';
+import { AwsS3Service } from '../utilities/aws-s3-service/aws-S3.service';
+import { FileMgtRepository } from 'src/repository/file-management.repository';
+import { FolderRepository } from 'src/repository/folder.repository';
+import { Transactional } from 'typeorm-transactional';
+import { Folder } from './entities/folder.entity';
+import { FileMgt } from './entities/file-management.entity';
 
 interface TaggingResult {
   status: 'fulfilled' | 'rejected';
@@ -21,32 +23,23 @@ interface TaggingResult {
 }
 
 export interface createFileData {
-  fileName: string
-  parentId: string
-  s3ObjectKey: string
-  fileSize: number
+  fileName: string;
+  parentId: string;
+  s3ObjectKey: string;
+  fileSize: number;
 }
 
 @Injectable()
 export class FileManagementService {
-  private s3Client: S3Client;
   private dirtyBucket: string;
   private permanentBucket: string;
 
   constructor(
-    private configService: ConfigService,
-    private databseService: DatabaseService,
-    private awsS3Service: AwsS3Service,
+    private readonly configService: ConfigService,
+    private readonly awsS3Service: AwsS3Service,
+    private readonly fileMgtRepository: FileMgtRepository,
+    private readonly folderRepository: FolderRepository,
   ) {
-    this.s3Client = new S3Client({
-      region: this.configService.get<string>('AWS_REGION'),
-      credentials: {
-        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
-        secretAccessKey: this.configService.get<string>(
-          'AWS_SECRET_ACCESS_KEY',
-        ),
-      },
-    });
     this.dirtyBucket = this.configService.get<string>('DIRTY_BUCKET_NAME');
     this.permanentBucket = this.configService.get<string>(
       'PERMANENT_BUCKET_NAME',
@@ -59,9 +52,7 @@ export class FileManagementService {
    * @throws NotFoundException if the file does not exist.
    */
   async findFileById(id: string) {
-    const file = await this.databseService.fileMgt.findUnique({
-      where: { id },
-    });
+    const file = await this.fileMgtRepository.getFileById(id);
     if (!file) {
       throw new NotFoundException(`Specified file not found`);
     }
@@ -74,7 +65,7 @@ export class FileManagementService {
    * @throws NotFoundException if the file does not exist.
    */
   async findFolderById(id: string) {
-    const file = await this.databseService.folder.findUnique({ where: { id } });
+    const file = await this.folderRepository.getFolderById(id);
     if (!file) {
       throw new NotFoundException(`Specified folder not found`);
     }
@@ -87,10 +78,9 @@ export class FileManagementService {
    * @returns Success message indicating the folder name was updated.
    */
   async updateFolderName(id: string, folderName: string) {
-    await this.databseService.folder.update({
-      where: { id },
-      data: { name: folderName },
-    });
+    // check for the folder existence
+    await this.findFolderById(id);
+    await this.folderRepository.updateFolder(id, { name: folderName });
     return { message: `Folder renamed to ${folderName} successfully.` };
   }
 
@@ -164,19 +154,16 @@ export class FileManagementService {
    * @param files - Array of file data to update status.
    * @returns
    */
+  @Transactional()
   async softdeleteFiles(ids: string[], files: FileMgt[]) {
-    await this.databseService.fileMgt.updateMany({
-      where: { id: { in: ids } },
-      data: [
-        files.map((file) => ({
-          ...file,
-          fileStatus: FILE_STATUSES.DELETED,
-        })),
-      ],
-    });
+    const fileIds = files.map((file) => file.id);
+    await this.fileMgtRepository.softDeleteFiles(fileIds);
 
     const fileS3ObjectKeys = files.map((file) => file.s3ObjectKey);
 
+    // tag to be deleted the file object in the storage
+    // Laveraging the AWS S3 lifecycle methods to delete after some time taged
+    // objects we 'DELETED'
     this.tagMultipleObjectsWithRollback(
       this.permanentBucket,
       fileS3ObjectKeys,
@@ -185,20 +172,15 @@ export class FileManagementService {
   }
 
   /**
-   * Retrieves files based on a flexible filter.
+   * Retrieves files based on a flexible filter. warapper service method for repository
    * @param where - db filter criteria to apply (e.g., ID, size, name).
    * @param select - Optional fields to select from the result.
    * @returns Array of files matching the filter criteria.
    */
-  async findFiles(
-    where: Prisma.FileMgtWhereInput,
-    select?: Prisma.FileMgtSelect,
-  ) {
-    return this.databseService.fileMgt.findMany({
-      where,
-      select,
-    });
+  async findFiles(where: string, whereParams: any, select?: (keyof FileMgt)[]) {
+    return this.fileMgtRepository.findFiles(where, whereParams, select);
   }
+
   /**
    * Fetches active files within a specified folder for a given organization.
    * @param folderId - ID of the folder (null for root directory).
@@ -213,29 +195,12 @@ export class FileManagementService {
     skip: number,
     take: number,
   ) {
-    return this.databseService.fileMgt.findMany({
-      where: {
-        folderId: folderId || null,
-        organizationId,
-        fileStatus: 'ACTIVE',
-      },
-      orderBy: [
-        {
-          updatedAt: 'desc',
-        },
-      ],
-      include: {
-        updater: {
-          select: {
-            firstName: true,
-            lastName: true,
-            id: true,
-          },
-        },
-      },
+    return await this.fileMgtRepository.getFiles(
+      folderId,
+      organizationId,
       skip,
       take,
-    });
+    );
   }
 
   /**
@@ -252,73 +217,13 @@ export class FileManagementService {
     skip: number,
     take: number,
   ) {
-    return this.databseService.folder.findMany({
-      where: {
-        parentId: folderId || null,
-        organizationId,
-      },
-      include: {
-        _count: {
-          select: {
-            files: true,
-            subFolders: true,
-          },
-        },
-        updater: {
-          select: {
-            firstName: true,
-            lastName: true,
-            id: true,
-          },
-        },
-      },
-      orderBy: [
-        {
-          updatedAt: 'desc',
-        },
-      ],
+    return this.folderRepository.getFolders(
+      folderId,
+      organizationId,
       skip,
       take,
-    });
+    );
   }
-
-  /**
-   * Retrieves the total count of files in a specified folder for pagination.
-   * @param folderId - ID of the folder (null for root).
-   * @param organizationId - ID of the organization.
-   * @returns Number of active files within the folder.
-   */
-  async getFileCount(
-    folderId: string | null,
-    organizationId: string,
-  ): Promise<number> {
-    return this.databseService.fileMgt.count({
-      where: {
-        folderId: folderId || null,
-        organizationId,
-        fileStatus: 'ACTIVE',
-      },
-    });
-  }
-
-  /**
-   * Retrieves the total count of folders in a specified parent folder for pagination.
-   * @param folderId - ID of the parent folder (null for root).
-   * @param organizationId - ID of the organization.
-   * @returns Number of subfolders within the parent folder.
-   */
-  async getFolderCount(
-    folderId: string | null,
-    organizationId: string,
-  ): Promise<number> {
-    return this.databseService.folder.count({
-      where: {
-        parentId: folderId || null,
-        organizationId,
-      },
-    });
-  }
-
   /**
    * Recursively retrieves all ancestor folder IDs for a specified folder.
    * @param folderId - ID of the folder.
@@ -329,10 +234,8 @@ export class FileManagementService {
     let currentFolderId = folderId;
 
     while (currentFolderId) {
-      const currentFolder = await this.databseService.folder.findUnique({
-        where: { id: currentFolderId },
-        select: { parentId: true, name: true, id: true },
-      });
+      // get the current folder if not throw not found error
+      const currentFolder = await this.findFolderById(currentFolderId);
 
       parentIds.unshift({ id: currentFolder.id, name: currentFolder.name });
       currentFolderId = currentFolder.parentId;
@@ -398,10 +301,9 @@ export class FileManagementService {
    * @returns Success message indicating the file name was updated.
    */
   async updateFileName(id: string, newName: string) {
-    await this.databseService.fileMgt.update({
-      where: { id },
-      data: { fileName: newName },
-    });
+    // check for the file existence
+    await this.findFileById(id);
+    await this.fileMgtRepository.updateFile(id, { fileName: newName });
     return { message: `File renamed to ${newName} successfully.` };
   }
 
@@ -410,23 +312,8 @@ export class FileManagementService {
    * @param createFolderDto - The folder creation data.
    * @returns The created folder record.
    */
-  async createFolder(createFolderData: any) {
-    const { name, organizationId, parentId, path } = createFolderData;
-    // Create the new folder in the database
-    return this.databseService.folder.create({
-      data: {
-        name,
-        path,
-        organization: {
-          connect: { id: organizationId },
-        },
-        ...(parentId && {
-          parentFolder: { connect: { id: parentId } },
-        }),
-        creator: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
-        updater: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
-      },
-    });
+  async createFolder(createFolderData: Partial<Folder>) {
+    return this.folderRepository.createFolder(createFolderData);
   }
 
   /**
@@ -440,26 +327,28 @@ export class FileManagementService {
     return this.awsS3Service.getObjectMetadata(this.permanentBucket, fileKey);
   }
 
-
-  async confirmUpload(createFileData: createFileData[], organizationId: string) {
+  @Transactional()
+  async confirmUpload(createFileData: any, orgnizationId: string) {
+    const { fileName, parentId, s3ObjectKey, files } = createFileData;
 
     // Check if the file exists in the dirty bucket
-    const dirtyBucketObjMetadata = createFileData.map(({ s3ObjectKey: fileKey }) => (
-      this.getDirtyBucketObjectMetadata(fileKey)
-    ));
+    const dirtyBucketObjMetadata = createFileData.map(
+      ({ s3ObjectKey: fileKey }) => this.getDirtyBucketObjectMetadata(fileKey),
+    );
 
     const fileData = await Promise.all(dirtyBucketObjMetadata);
-
-    const moveFileToPermemntStoragePromises = createFileData.map(({ s3ObjectKey: fileKey }) => (
-      this.copyFileToMainStorage(fileKey)
-    ));
-    await Promise.all(moveFileToPermemntStoragePromises);
 
     const fileRecordData = createFileData.map((file, index) => ({
       ...file,
       fileSize: fileData[index].ContentLength,
     }));
-    await this.createFileRecords(fileRecordData, organizationId)
+
+    await this.createFileRecords(fileRecordData, orgnizationId);
+
+    const moveFileToPermemntStoragePromises = files.map((fileKey: string) =>
+      this.copyFileToMainStorage(fileKey),
+    );
+    await Promise.all(moveFileToPermemntStoragePromises);
   }
 
   /**
@@ -467,37 +356,11 @@ export class FileManagementService {
    * @param createFileData - An array of file creation data.
    * @returns The created file records.
    */
-  async createFileRecords(createFileData: createFileData[], organizationId: string) {
-    const transactionPromises = createFileData.map(data => {
-      const { fileName, parentId, fileSize, s3ObjectKey } = data;
-
-      return this.databseService.fileMgt.create({
-        data: {
-          fileName,
-          fileSize,
-          fileStatus: FILE_STATUSES.ACTIVE,
-          s3ObjectKey,
-          organization: {
-            connect: { id: organizationId },
-          },
-          ...(parentId && {
-            parentFolder: { connect: { id: parentId } },
-          }),
-          creator: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
-          updater: { connect: { id: '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730' } },
-        },
-      });
-    });
-
-    try {
-      // Execute all operations in a single transaction
-      await this.databseService.$transaction(transactionPromises);
-
-      console.log('All operations committed successfully.');
-    } catch (error) {
-      console.error('Transaction failed. Rolling back operations:', error);
-      throw new Error('Transaction failed. Rolled back changes.');
-    }
+  async createFileRecords(createFileData: any[], orgnizationId: string) {
+    return this.fileMgtRepository.createFileRecords(
+      createFileData,
+      orgnizationId,
+    );
   }
   /**
    * Get S3 object as a readable stream for a file.
@@ -520,16 +383,7 @@ export class FileManagementService {
    */
   async addFolderToArchive(folderId: string, archive: archiver.Archiver) {
     // Fetch folder details, including files and subfolders
-    const folder = await this.databseService.folder.findUnique({
-      where: {
-        id: folderId,
-      },
-      include: {
-        files: true,
-        subFolders: true,
-      },
-    });
-
+    const folder = await this.folderRepository.getFolderWithRelations(folderId);
     // Add each file in the folder to the archive
     for (const file of folder.files) {
       const s3ObjectStream = await this.getPermentStorageObjectStream(

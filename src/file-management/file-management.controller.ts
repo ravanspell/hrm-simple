@@ -13,7 +13,10 @@ import {
   NotFoundException,
   Res,
 } from '@nestjs/common';
-import { createFileData, FileManagementService } from './file-management.service';
+import {
+  createFileData,
+  FileManagementService,
+} from './file-management.service';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
 import { IsString } from 'class-validator';
 import { RequestWithTenant } from 'src/coretypes';
@@ -23,6 +26,7 @@ import { CreateFolderDto } from './dto/create-folder.dto';
 import { DeleteFilesDto } from './dto/delete-files.dto';
 import { Response } from 'express';
 import * as archiver from 'archiver';
+import { Folder } from './entities/folder.entity';
 
 class InitUploadDto {
   @IsString()
@@ -65,11 +69,13 @@ export class FileManagementController {
         await this.fileManagementService.findFolderById(parentId);
       path = `${parentFolder.path}/${name}`;
     }
-    const folderData = {
+    const folderData: Partial<Folder> = {
       name,
       parentId,
       organizationId: '69fb3a34-1bcc-477d-8a22-99c194ea468d',
       path,
+      createdBy: '69fb3a34-1bcc-477d-8a22-99c194ea468d',
+      updatedBy: '69fb3a34-1bcc-477d-8a22-99c194ea468d',
     };
     return this.fileManagementService.createFolder(folderData);
   }
@@ -83,9 +89,8 @@ export class FileManagementController {
   ) {
     const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d'; //req.user.organizationId;
     const skip = (page - 1) * limit;
-
     // Fetch files, folders, and counts in parallel
-    const [files, folders, fileCount, folderCount] = await Promise.all([
+    const [filesWithCount, foldersWithCount] = await Promise.all([
       this.fileManagementService.getFiles(
         folderId,
         organizationId,
@@ -98,9 +103,10 @@ export class FileManagementController {
         skip,
         limit,
       ),
-      this.fileManagementService.getFileCount(folderId, organizationId),
-      this.fileManagementService.getFolderCount(folderId, organizationId),
     ]);
+    const [files, fileCount] = filesWithCount;
+    const [folders, folderCount] = foldersWithCount;
+
     // Combine files and folders into a single array
     const combined = [
       ...folders.map((folder) => ({
@@ -108,8 +114,8 @@ export class FileManagementController {
         name: folder.name,
         updatedAt: folder.updatedAt,
         folder: true,
-        fileCount: folder._count.files,
-        folderCount: folder._count.subFolders,
+        fileCount: folder.fileCount,
+        folderCount: folder.subFolderCount,
         updatedBy: `${folder.updater.firstName} ${folder.updater.lastName}`,
         updatedById: folder.updater.id,
       })),
@@ -183,9 +189,10 @@ export class FileManagementController {
   @Delete('soft-delete-files')
   async deleteFiles(@Body() deleteFilesDto: DeleteFilesDto) {
     const { ids } = deleteFilesDto;
-    const files = await this.fileManagementService.findFiles({
-      id: { in: ids },
-    });
+    const files = await this.fileManagementService.findFiles(
+      'file.id IN (:...ids)',
+      { ids: ids },
+    );
     // collect avaialbe file ids for delete
     const availalbeFilesForDelete = files.map((file) => file.id);
     if (availalbeFilesForDelete.length === 0) {
@@ -196,6 +203,7 @@ export class FileManagementController {
       files,
     );
   }
+
   /**
    * Retrieves the hierarchy of parent folder IDs for breadcrumb navigation.
    * @param folderId - ID of the folder.
@@ -260,9 +268,9 @@ export class FileManagementController {
   @Post('upload/confirm')
   async uploadConfirmation(
     @Body('files') files: createFileData[],
-    @Req() req: RequestWithTenant
+    @Req() req: RequestWithTenant,
   ) {
-    const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d' //req.user.organizationId;
+    const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d'; //req.user.organizationId;
     this.fileManagementService.confirmUpload(files, organizationId);
   }
 }

@@ -5,11 +5,12 @@ import { EmailSettingsService } from 'src/email-settings/email-settings.service'
 
 @Injectable()
 export class EmailStrategy implements NotificationStrategy {
-  constructor(private readonly emailSettingsService: EmailSettingsService) { }
+  constructor(private readonly emailSettingsService: EmailSettingsService) {}
 
   async send(to: string, data: any): Promise<void> {
     // Fetch primary email settings for the organization
-    const emailSettings = await this.emailSettingsService.getEmailSettings('orgId');
+    const emailSettings =
+      await this.emailSettingsService.getEmailSettings('orgId');
     if (!emailSettings) {
       throw new NotFoundException(`Email settings not found for organization`);
     }

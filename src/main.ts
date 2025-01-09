@@ -4,11 +4,20 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { TransformInterceptor } from './interceptor/responseTransform.interceptor';
 import * as session from 'express-session';
 import * as passport from 'passport';
-import { PrismaSessionStore } from '@quixo3/prisma-session-store';
-import { PrismaClient } from '@prisma/client';
+import { DataSource } from 'typeorm';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import 'reflect-metadata';
+import {
+  initializeTransactionalContext,
+  StorageDriver,
+} from 'typeorm-transactional';
+import { TypeormStore } from 'connect-typeorm';
+import { Session } from './auth/entities/session.entity';
 
 async function bootstrap() {
+  // initialize transactional context to handle transactions
+  initializeTransactionalContext({ storageDriver: StorageDriver.AUTO });
+
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
@@ -27,11 +36,15 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   // session store is a mysql db table where user session data
   // is being stored. Typically Redis would be a ideal solution here.
-  const sessionStore = new PrismaSessionStore(new PrismaClient(), {
-    checkPeriod: 2 * 60 * 1000, //ms
-    dbRecordIdIsSessionId: true,
-    dbRecordIdFunction: undefined,
-  });
+  const dataSource = app.get(DataSource); // Get the DataSource instance
+  const sessionRepository = dataSource.getRepository(Session);
+
+  const sessionStore = new TypeormStore({
+    cleanupLimit: 2,
+    limitSubquery: false, // If using MariaDB.
+    ttl: 86400,
+  }).connect(sessionRepository);
+
   app.enableCors();
   app.use(
     session({

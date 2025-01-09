@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
-import { DatabaseModule } from './database/database.module';
 import { LoggerModule } from './logger/logger.module';
 import { EmployeeLeavesModule } from './employee-leaves/employee-leaves.module';
 import { AuthModule } from './auth/auth.module';
@@ -13,6 +12,8 @@ import { AuthenticatedGuard } from './auth/guards/authenticated.guard';
 import { FileManagementModule } from './file-management/file-management.module';
 import { UtilitiesModule } from './utilities/utilities.module';
 import { EmailSettingsModule } from './email-settings/email-settings.module';
+import { OrganizationModule } from './organization/organization.module';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { EmailSettingsModule } from './email-settings/email-settings.module';
     FileManagementModule,
     UtilitiesModule,
     EmailSettingsModule,
+    OrganizationModule,
   ],
   controllers: [AppController],
   providers: [
