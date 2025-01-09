@@ -9,6 +9,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource, DataSourceOptions } from 'typeorm';
 
+const isDevelopment = process.env.ENV === 'dev';
+
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -25,7 +27,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
         database: configService.get('PRIMARY_DATABASE'), // Replace with your MySQL database name
         timezone: 'Z', // Timezone
         synchronize: false, // Auto synchronize schema with database
-        logging: true, // Enable query logging
+        logging: isDevelopment, // Enable query logging for development only
         maxQueryExecutionTime: 1000, // Log queries that take longer than 1000 ms (1 second)
         extra: {
           connectionLimit: +configService.get(
@@ -42,11 +44,14 @@ import { DataSource, DataSourceOptions } from 'typeorm';
         addTransactionalDataSource(dataSource);
         // initialize the DataSource to connect to the database
         await dataSource.initialize();
-        // await dataSource.synchronize();
+        // sync with change into the database when changes made
+        if (isDevelopment) {
+          await dataSource.synchronize();
+        }
         console.log('Data Source has been initialized!!');
         return dataSource;
       },
     }),
   ],
 })
-export class DatabaseModule {}
+export class DatabaseModule { }
