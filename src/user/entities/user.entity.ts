@@ -11,7 +11,7 @@ import {
   ManyToMany,
   JoinTable,
 } from 'typeorm';
-import { Organization } from 'src/entities/organization.entity';
+import { Organization } from '@/organization/entities/organization.entity';
 import { USER_TABLE } from 'src/constants/dbTables';
 import { FileMgt } from 'src/file-management/entities/file-management.entity';
 import { Folder } from 'src/file-management/entities/folder.entity';

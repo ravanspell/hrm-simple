@@ -1,12 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
-import { FilterUsersDto, Gender } from './dto/filter-user.dto';
-import { Prisma } from '@prisma/client';
+// import { FilterUsersDto, Gender } from './dto/filter-user.dto';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Organization } from 'src/entities/organization.entity';
+import { Organization } from '@/organization/entities/organization.entity';
 import { UserRepository } from 'src/repository/user.repository';
 import { RoleRepository } from '@/repository/role.repository';
 import { RolesService } from './roles.service';

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Organization } from '../entities/organization.entity';
+import { Organization } from './entities/organization.entity';
 import { Transactional } from 'typeorm-transactional';
 import { OrganizationRepository } from 'src/repository/organization.repository';
 

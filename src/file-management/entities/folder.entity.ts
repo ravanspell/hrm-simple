@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { FileMgt } from './file-management.entity';
 import { FOLDER_TABLE } from 'src/constants/dbTables';
-import { Organization } from 'src/entities/organization.entity';
+import { Organization } from '@/organization/entities/organization.entity';
 import { User } from 'src/user/entities/user.entity';
 
 @Entity(FOLDER_TABLE)

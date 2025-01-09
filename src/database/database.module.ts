@@ -54,4 +54,4 @@ const isDevelopment = process.env.ENV === 'dev';
     }),
   ],
 })
-export class DatabaseModule { }
+export class DatabaseModule {}

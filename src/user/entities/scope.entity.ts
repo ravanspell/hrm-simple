@@ -9,7 +9,7 @@ import {
 import { Role } from './role.entity';
 import { User } from './user.entity';
 import { ScopeCategory } from './scope-category.entity';
-import { Organization } from '@/entities/organization.entity';
+import { Organization } from '@/organization/entities/organization.entity';
 import { SCOPE_TABLE } from '@/constants/dbTables';
 import { UserScope } from './user-scope.entity';
 

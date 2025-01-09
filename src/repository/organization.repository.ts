@@ -4,7 +4,7 @@
  * methods for creating and querying the Organization entity.
  */
 import { Injectable } from '@nestjs/common';
-import { Organization } from 'src/entities/organization.entity';
+import { Organization } from '@/organization/entities/organization.entity';
 import { Repository, DataSource } from 'typeorm';
 
 @Injectable()

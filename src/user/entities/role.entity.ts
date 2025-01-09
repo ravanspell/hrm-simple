@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Scope } from './scope.entity';
 import { User } from './user.entity';
-import { Organization } from '@/entities/organization.entity';
+import { Organization } from '@/organization/entities/organization.entity';
 import { ROLE_TABLE } from '@/constants/dbTables';
 
 @Entity(ROLE_TABLE)

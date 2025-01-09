@@ -1,5 +1,5 @@
 import { EMAIL_SETTINGS_TABLE } from 'src/constants/dbTables';
-import { Organization } from 'src/entities/organization.entity';
+import { Organization } from '@/organization/entities/organization.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
