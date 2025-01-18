@@ -5,7 +5,7 @@ import { EmailSettingsService } from 'src/email-settings/email-settings.service'
 
 @Injectable()
 export class EmailStrategy implements NotificationStrategy {
-  readonly type: string  = 'email';
+  readonly type: string = 'email';
 
   constructor(private readonly emailSettingsService: EmailSettingsService) {}
 

@@ -11,19 +11,24 @@ import { Session } from '@/auth/entities/session.entity';
 
 @Module({
   imports: [EmailSettingsModule, TypeOrmModule.forFeature([Session])],
-  providers: [AwsSqsService, NotificationPublisherService, NotificationConsumerService, EmailStrategy, WebPushNotificationStrategy, SessionService],
+  providers: [
+    AwsSqsService,
+    NotificationPublisherService,
+    NotificationConsumerService,
+    EmailStrategy,
+    WebPushNotificationStrategy,
+    SessionService,
+  ],
   exports: [NotificationPublisherService],
 })
-
 export class NotificationModule implements OnModuleInit {
-
   constructor(
     private readonly notificationConsumerService: NotificationConsumerService,
     private readonly emailStrategy: EmailStrategy,
     private readonly webPushStrategy: WebPushNotificationStrategy,
   ) {}
 
-  onModuleInit() { 
+  onModuleInit() {
     this.notificationConsumerService.registerStrategy(this.emailStrategy);
     this.notificationConsumerService.registerStrategy(this.webPushStrategy);
   }
