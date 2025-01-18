@@ -45,7 +45,10 @@ async function bootstrap() {
     ttl: 86400,
   }).connect(sessionRepository);
 
-  app.enableCors();
+  app.enableCors({
+    origin: 'http://localhost:3000',
+    credentials: true, // Allow cookies or authorization headers
+  });
   app.use(
     session({
       secret: process.env.SESSION_TOKEN_SECRET,
