@@ -4,7 +4,6 @@ import { ConfigService } from '@nestjs/config';
 import { Message } from '@aws-sdk/client-sqs';
 import { NotificationStrategy } from './notification.strategy.interface';
 
-
 @Injectable()
 export class NotificationConsumerService implements OnModuleInit, OnModuleDestroy {
     private readonly notificationQueueUrl: string;
@@ -23,23 +22,45 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
         );
     }
 
-    async onModuleInit() {
+    /**
+     * Initializes the notification polling process when the module starts.
+     */
+    async onModuleInit(): Promise<void> {
         this.pollNotificationsQueue();
     }
 
-    async onModuleDestroy() {
+    /**
+     * Stops the notification polling process when the module is destroyed.
+     */
+    async onModuleDestroy(): Promise<void> {
         this.queuePolling = false;
     }
 
-    registerStrategy(strategy: NotificationStrategy) {
+    /**
+     * Registers a notification strategy for handling specific types of notifications.
+     *
+     * @param strategy - The notification strategy to register.
+     */
+    registerStrategy(strategy: NotificationStrategy): void {
         this.strategies.set(strategy.type, strategy);
     }
 
+    /**
+     * Retrieves a registered notification strategy by its type.
+     *
+     * @param type - The type of notification strategy to retrieve.
+     * @returns The notification strategy or undefined if not found.
+     */
     getStrategy(type: string): NotificationStrategy | undefined {
         return this.strategies.get(type);
     }
 
-    private async pollNotificationsQueue() {
+    /**
+     * Continuously polls the SQS queue for messages.
+     *
+     * Processes each message using the corresponding notification strategy.
+     */
+    private async pollNotificationsQueue(): Promise<void> {
         const poll = async () => {
             while (this.queuePolling) {
                 try {
@@ -56,7 +77,6 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
                             messages.map((message) => this.sendNotifications(message))
                         );
 
-                        // Log the results
                         results.forEach((result, index) => {
                             if (result.status === 'fulfilled') {
                                 console.log(`Message ${index + 1} processed successfully`);
@@ -70,29 +90,31 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
                 }
             }
         };
-        setImmediate(poll); // Start the initial poll immediately without delay
+        setImmediate(poll);
     }
 
-    private async sendNotifications(message: Message) {
-        await this.delay(20000);
+    /**
+     * Processes a single notification message using the appropriate strategy.
+     *
+     * @param message - The message to process.
+     */
+    private async sendNotifications(message: Message): Promise<void> {
         console.log('message has been sent', message);
-        const notificationPayLoad = JSON.parse(message?.Body);
-        console.log("notificationType--->", notificationPayLoad);
-        console.log("strategies", this.strategies);
-        const notificationStategyType =  notificationPayLoad.type;
-        const notificationStrategy = this.getStrategy(notificationStategyType);
+        const notificationPayload = JSON.parse(message?.Body);
+        console.log('notificationType--->', notificationPayload);
+
+        const notificationStrategyType = notificationPayload.type;
+        const notificationStrategy = this.getStrategy(notificationStrategyType);
+
         if (!notificationStrategy) {
-            throw new Error(`Strategy not found: ${notificationStategyType}`);
+            throw new Error(`Strategy not found: ${notificationStrategyType}`);
         }
-        await notificationStrategy.send('001d9ff0-80f3-40ba-8ffe-48e1b7dc9730', notificationPayLoad)
+
+        await notificationStrategy.send('001d9ff0-80f3-40ba-8ffe-48e1b7dc9730', notificationPayload);
 
         await this.awsSqsService.deleteMessage(
             this.notificationQueueUrl,
             message.ReceiptHandle,
-        )
-    }
-
-    private delay(ms: number): Promise<void> {
-        return new Promise((resolve) => setTimeout(resolve, ms));
+        );
     }
 }

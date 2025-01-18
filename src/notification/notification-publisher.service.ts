@@ -31,18 +31,17 @@ export class NotificationPublisherService {
     }
 
     /**
-     * Publish a notification message.
+     * Publishes a notification message to the SQS queue.
      *
      * This wrapper method centralizes the logic for publishing messages to the SQS queue.
      * It ensures that other modules don't need direct access to AwsSqsService, providing better encapsulation.
      *
-     * @param type - The type of notification (e.g., 'email', 'notification', etc.).
+     * @param type - The type of notification (e.g., 'email', 'webPush').
      * @param payload - The message content to be sent.
      *
      * @example
      * await notificationsService.publishNotification('email', { subject: 'Hello', body: 'World' });
      */
-
     async publishNotification<T extends keyof NotificationTypePayloads>(
         type: T,
         payload: NotificationTypePayloads[T],
@@ -52,7 +51,7 @@ export class NotificationPublisherService {
         await this.awsSqsService.publishMessage(
             this.notificationQueueUrl,
             messageBody,
-            { Type: type, id: uuidv4() }, // Add attributes for filtering or categorization
+            { Type: type, id: uuidv4() },
         );
         console.log(`Notification of type "${type}" published to the queue.`);
     }
