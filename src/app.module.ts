@@ -14,6 +14,7 @@ import { UtilitiesModule } from './utilities/utilities.module';
 import { EmailSettingsModule } from './email-settings/email-settings.module';
 import { OrganizationModule } from './organization/organization.module';
 import { DatabaseModule } from './database/database.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { DatabaseModule } from './database/database.module';
     UtilitiesModule,
     EmailSettingsModule,
     OrganizationModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [
