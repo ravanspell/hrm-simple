@@ -15,11 +15,15 @@ import { UpdateEmailSettingDto } from './dto/update-email-setting.dto';
 import { Authentication } from 'src/decorators/auth.decorator';
 import { RequestWithTenant } from 'src/coretypes';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { NotificationPublisherService } from '@/notification/notification-publisher.service';
 
 @ApiTags('email-settings')
 @Controller('email-settings')
 export class EmailSettingsController {
-  constructor(private readonly emailSettingsService: EmailSettingsService) {}
+  constructor(
+    private readonly emailSettingsService: EmailSettingsService,
+    private readonly notificationService: NotificationPublisherService,
+  ) {}
 
   /**
    * Creates new email settings.
@@ -56,7 +60,21 @@ export class EmailSettingsController {
   @Get()
   @Version('1')
   @Authentication()
-  findAllByOrganization(@Req() req: RequestWithTenant) {
+  async findAllByOrganization(@Req() req: RequestWithTenant) {
+    const webPush = {
+      userId: '',
+      subject: 'this is test notification',
+      body: '',
+    };
+    const email = {
+      body: '',
+      templateId: '',
+      subject: '',
+      userId: '',
+    };
+    console.log('req?.user?.organizationId--->', req?.user);
+
+    await this.notificationService.publishNotification('webPush', webPush);
     return this.emailSettingsService.findAllByOrganization(
       req?.user?.organizationId,
     );
