@@ -37,7 +37,8 @@ export class FirebaseService implements OnModuleInit {
         }),
       });
     } catch (error) {
-      throw new Error(`Firebase initialization failed: ${error.message}`);
+      // throw new Error();
+      console.log(`Firebase initialization failed: ${error.message}`);
     }
   }
   /**

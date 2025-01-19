@@ -23,7 +23,7 @@ export class OrganizationController {
   constructor(
     private readonly organizationService: OrganizationService,
     private readonly generalSettingsService: GeneralSettingsService,
-  ) { }
+  ) {}
 
   /**
    * Create a new organization.
@@ -112,7 +112,6 @@ export class OrganizationController {
   /**
    * Retrieves general settings for a specific organization.
    *
-   * @param id - The ID of the organization.
    * @returns The GeneralSettings entity.
    */
   @Get('/settings')
@@ -130,7 +129,6 @@ export class OrganizationController {
   /**
    * Creates general settings for a specific organization.
    *
-   * @param id - The ID of the organization.
    * @param generalSettingsDto - The data to create or update general settings.
    * @returns The created GeneralSettings entity.
    */
@@ -154,7 +152,6 @@ export class OrganizationController {
   /**
    * Updates general settings for a specific organization.
    *
-   * @param id - The ID of the organization.
    * @param generalSettingsDto - The data to update general settings.
    * @returns The updated GeneralSettings entity.
    */
