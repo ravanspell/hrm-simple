@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { AwsSqsService } from '../utilities/aws-sqs-service/aws-sqs.service';
+import { AwsSqsService } from '@/utilities/aws-sqs-service/aws-sqs.service';
 import { ConfigService } from '@nestjs/config';
 import { Message } from '@aws-sdk/client-sqs';
 import { NotificationStrategy } from './notification.strategy.interface';

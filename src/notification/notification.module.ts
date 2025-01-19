@@ -1,25 +1,25 @@
 import { Module, OnModuleInit } from '@nestjs/common';
-import { EmailSettingsModule } from 'src/email-settings/email-settings.module';
-import { AwsSqsService } from '../utilities/aws-sqs-service/aws-sqs.service';
+import { EmailSettingsModule } from '@/email-settings/email-settings.module';
+import { AwsSqsService } from '@/utilities/aws-sqs-service/aws-sqs.service';
 import { EmailStrategy } from './strategies/email/email.strategy';
 import { WebPushNotificationStrategy } from './strategies/webPushNotification/webPushNotification.strategy';
 import { NotificationConsumerService } from './notification-consumer.service';
 import { NotificationPublisherService } from './notification-publisher.service';
-import { SessionService } from '@/auth/session.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Session } from '@/auth/entities/session.entity';
+import { NotificationTokenRepository } from '@/repository/notification-token.repository';
+import { FirebaseService } from '@/utilities/firebase-admin-service/firebase-admin.service';
 
 @Module({
-  imports: [EmailSettingsModule, TypeOrmModule.forFeature([Session])],
+  imports: [EmailSettingsModule],
   providers: [
     AwsSqsService,
     NotificationPublisherService,
     NotificationConsumerService,
     EmailStrategy,
     WebPushNotificationStrategy,
-    SessionService,
+    NotificationTokenRepository,
+    FirebaseService
   ],
-  exports: [NotificationPublisherService],
+  exports: [NotificationPublisherService, NotificationTokenRepository],
 })
 export class NotificationModule implements OnModuleInit {
   constructor(
