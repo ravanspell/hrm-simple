@@ -4,7 +4,7 @@ import { AwsSqsService } from '@/utilities/aws-sqs-service/aws-sqs.service';
 import { EmailStrategy } from './strategies/email/email.strategy';
 import { WebPushNotificationStrategy } from './strategies/webPushNotification/webPushNotification.strategy';
 import { NotificationConsumerService } from './notification-consumer.service';
-import { NotificationPublisherService } from './notification-publisher.service';
+import { NotificationService } from './notification.service';
 import { NotificationTokenRepository } from '@/repository/notification-token.repository';
 import { FirebaseService } from '@/utilities/firebase-admin-service/firebase-admin.service';
 
@@ -12,14 +12,14 @@ import { FirebaseService } from '@/utilities/firebase-admin-service/firebase-adm
   imports: [EmailSettingsModule],
   providers: [
     AwsSqsService,
-    NotificationPublisherService,
+    NotificationService,
     NotificationConsumerService,
     EmailStrategy,
     WebPushNotificationStrategy,
     NotificationTokenRepository,
     FirebaseService
   ],
-  exports: [NotificationPublisherService, NotificationTokenRepository],
+  exports: [NotificationService, NotificationTokenRepository],
 })
 export class NotificationModule implements OnModuleInit {
   constructor(

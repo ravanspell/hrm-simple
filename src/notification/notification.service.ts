@@ -18,7 +18,7 @@ type NotificationTypePayloads = {
 };
 
 @Injectable()
-export class NotificationPublisherService {
+export class NotificationService {
   private readonly notificationQueueUrl: string;
 
   constructor(
