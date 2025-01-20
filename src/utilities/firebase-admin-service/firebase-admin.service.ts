@@ -36,6 +36,7 @@ export class FirebaseService implements OnModuleInit {
           clientEmail: this.configService.get<string>('FIREBASE_CLIENT_EMAIL'),
         }),
       });
+      console.log('Firebase initialization success');
     } catch (error) {
       // throw new Error();
       console.log(`Firebase initialization failed: ${error.message}`);
