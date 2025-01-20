@@ -12,7 +12,7 @@ import {
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { GeneralSettings } from './entities/general-settings.entity';
 import { GeneralSettingsService } from './general-settings.service';
 import { GeneralSettingsDto } from './dto/general-settings.dto';
@@ -112,50 +112,39 @@ export class OrganizationController {
   /**
    * Retrieves general settings for a specific organization.
    *
-   * @param id - The ID of the organization.
    * @returns The GeneralSettings entity.
    */
-  @Get(':id/settings')
+  @Get('/settings')
   @ApiOperation({ summary: 'Get general settings for an organization' })
-  @ApiParam({
-    name: 'id',
-    description: 'The ID of the organization',
-    example: 'b1234567-e89b-12d3-a456-426614174000',
-  })
   @ApiResponse({
     status: 200,
     description: 'General settings retrieved successfully.',
     type: GeneralSettings,
   })
-  async getGeneralSettings(@Param('id') id: string): Promise<GeneralSettings> {
-    return this.generalSettingsService.getGeneralSettings(id);
+  async getGeneralSettings(): Promise<GeneralSettings> {
+    const organizationId = '';
+    return this.generalSettingsService.getGeneralSettings(organizationId);
   }
 
   /**
    * Creates general settings for a specific organization.
    *
-   * @param id - The ID of the organization.
    * @param generalSettingsDto - The data to create or update general settings.
    * @returns The created GeneralSettings entity.
    */
-  @Post(':id/settings')
+  @Post('/settings')
   @ApiOperation({ summary: 'Create general settings for an organization' })
-  @ApiParam({
-    name: 'id',
-    description: 'The ID of the organization',
-    example: 'b1234567-e89b-12d3-a456-426614174000',
-  })
   @ApiResponse({
     status: 201,
     description: 'General settings created successfully.',
     type: GeneralSettings,
   })
   async createGeneralSettings(
-    @Param('id') id: string,
     @Body() generalSettingsDto: GeneralSettingsDto,
   ): Promise<GeneralSettings> {
+    const organizationId = '';
     return this.generalSettingsService.createGeneralSettings(
-      id,
+      organizationId,
       generalSettingsDto,
     );
   }
@@ -163,28 +152,22 @@ export class OrganizationController {
   /**
    * Updates general settings for a specific organization.
    *
-   * @param id - The ID of the organization.
    * @param generalSettingsDto - The data to update general settings.
    * @returns The updated GeneralSettings entity.
    */
-  @Put(':id/settings')
+  @Put('/settings')
   @ApiOperation({ summary: 'Update general settings for an organization' })
-  @ApiParam({
-    name: 'id',
-    description: 'The ID of the organization',
-    example: 'b1234567-e89b-12d3-a456-426614174000',
-  })
   @ApiResponse({
     status: 200,
     description: 'General settings updated successfully.',
     type: GeneralSettings,
   })
   async updateGeneralSettings(
-    @Param('id') id: string,
     @Body() generalSettingsDto: GeneralSettingsDto,
   ): Promise<GeneralSettings> {
+    const organizationId = '';
     return this.generalSettingsService.updateGeneralSettings(
-      id,
+      organizationId,
       generalSettingsDto,
     );
   }

@@ -23,3 +23,4 @@ export const SCOPE_TABLE = 'scope';
 export const USER_ROLE_TABLE = 'user_role';
 export const SCOPE_CATEGORY_TABLE = 'scope_category';
 export const USER_SCOPE_TABLE = 'user_scope';
+export const NOTIFICATION_TOKENS_TABLE = 'notification_tokens';
