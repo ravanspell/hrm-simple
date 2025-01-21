@@ -19,6 +19,7 @@ import { Role } from './role.entity';
 import { Scope } from './scope.entity';
 import { UserScope } from './user-scope.entity';
 import { NotificationToken } from '@/notification/entities/notification-token.entity';
+import { Notification } from '@/notification/entities/notification.entity';
 
 @Entity(USER_TABLE)
 export class User {
@@ -107,4 +108,7 @@ export class User {
     (notificationToken) => notificationToken.user,
   )
   notificationTokens: NotificationToken[];
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  notifications: Notification[];
 }
