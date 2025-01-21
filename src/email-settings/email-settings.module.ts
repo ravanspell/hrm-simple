@@ -3,7 +3,6 @@ import { EmailSettingsService } from './email-settings.service';
 import { EmailSettingsController } from './email-settings.controller';
 import { UtilitiesModule } from 'src/utilities/utilities.module';
 import { EmailSettingsRepository } from 'src/repository/email-settings.repository';
-import { NotificationService } from '@/notification/notification.service';
 
 @Module({
   imports: [UtilitiesModule],
@@ -11,7 +10,6 @@ import { NotificationService } from '@/notification/notification.service';
   providers: [
     EmailSettingsService,
     EmailSettingsRepository,
-    NotificationService,
   ],
   exports: [EmailSettingsService],
 })
