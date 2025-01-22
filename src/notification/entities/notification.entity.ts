@@ -5,7 +5,6 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     ManyToOne,
-    JoinColumn,
     Index,
 } from 'typeorm';
 import { User } from '@/user/entities/user.entity';
@@ -17,11 +16,9 @@ export class Notification {
     id: string;
 
     @Column()
-    @Index()
     organizationId: string;
 
     @Column()
-    @Index()
     userId: string;
 
     @Column({ length: 255 })
@@ -43,12 +40,10 @@ export class Notification {
     updatedAt: Date;
 
     @ManyToOne(() => Organization, (organization) => organization.notifications, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'organizationId' })
     @Index()
     organization: Organization;
 
     @ManyToOne(() => User, (user) => user.notifications, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'userId' })
     @Index()
     user: User;
 }
