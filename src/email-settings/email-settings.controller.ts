@@ -62,7 +62,7 @@ export class EmailSettingsController {
   @Authentication()
   async findAllByOrganization(@Req() req: RequestWithTenant) {
     const webPush = {
-      userId: '',
+      userId: req?.user.id,
       subject: 'this is test notification',
       body: '',
     };
