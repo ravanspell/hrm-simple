@@ -18,7 +18,7 @@ import { Folder } from 'src/file-management/entities/folder.entity';
 import { Role } from './role.entity';
 import { Scope } from './scope.entity';
 import { UserScope } from './user-scope.entity';
-import { NotificationToken } from '@/notification/entities/notification-token.entity';
+import { PushNotificationToken } from '@/notification/entities/push-notification-token.entity';
 import { Notification } from '@/notification/entities/notification.entity';
 
 @Entity(USER_TABLE)
@@ -104,10 +104,10 @@ export class User {
   customScopes: UserScope[];
 
   @OneToMany(
-    () => NotificationToken,
-    (notificationToken) => notificationToken.user,
+    () => PushNotificationToken,
+    (pushNotificationToken) => pushNotificationToken.user,
   )
-  notificationTokens: NotificationToken[];
+  pushNotificationTokens: PushNotificationToken[];
 
   @OneToMany(() => Notification, (notification) => notification.user)
   notifications: Notification[];

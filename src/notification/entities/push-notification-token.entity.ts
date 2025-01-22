@@ -11,7 +11,7 @@ import { User } from '@/user/entities/user.entity';
 import { PUSH_NOTIFICATION_TOKENS_TABLE } from '@/constants/dbTables';
 
 @Entity(PUSH_NOTIFICATION_TOKENS_TABLE)
-export class NotificationToken {
+export class PushNotificationToken {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -34,7 +34,7 @@ export class NotificationToken {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.notificationTokens, {
+  @ManyToOne(() => User, (user) => user.pushNotificationTokens, {
     onDelete: 'CASCADE',
   })
   user: User;

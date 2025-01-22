@@ -1,11 +1,11 @@
-import { NotificationToken } from '@/notification/entities/push-notification-token.entity';
+import { PushNotificationToken } from '@/notification/entities/push-notification-token.entity';
 import { Injectable } from '@nestjs/common';
 import { DataSource, DeleteResult, In, LessThan, Repository } from 'typeorm';
 
 @Injectable()
-export class PushNotificationTokenRepository extends Repository<NotificationToken> {
+export class PushNotificationTokenRepository extends Repository<PushNotificationToken> {
   constructor(private dataSource: DataSource) {
-    super(NotificationToken, dataSource.createEntityManager());
+    super(PushNotificationToken, dataSource.createEntityManager());
   }
 
   /**
@@ -17,7 +17,7 @@ export class PushNotificationTokenRepository extends Repository<NotificationToke
   async upsertToken(
     userId: string,
     fcmToken: string,
-  ): Promise<NotificationToken> {
+  ): Promise<PushNotificationToken> {
     const token = await this.findOne({
       where: { fcmToken },
     });
@@ -46,7 +46,7 @@ export class PushNotificationTokenRepository extends Repository<NotificationToke
    * @param userId - The user ID
    * @returns Promise<NotificationToken[]>
    */
-  async getActiveTokensForUser(userId: string): Promise<NotificationToken[]> {
+  async getActiveTokensForUser(userId: string): Promise<PushNotificationToken[]> {
     return this.find({
       where: {
         userId,

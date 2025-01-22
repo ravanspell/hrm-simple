@@ -5,7 +5,7 @@ import { EmailStrategy } from './strategies/email/email.strategy';
 import { WebPushNotificationStrategy } from './strategies/webPushNotification/webPushNotification.strategy';
 import { NotificationConsumerService } from './notification-consumer.service';
 import { NotificationService } from './notification.service';
-import { NotificationTokenRepository } from '@/repository/notification-token.repository';
+import { PushNotificationTokenRepository } from '@/repository/push-notification-token.repository';
 import { FirebaseService } from '@/utilities/firebase-admin-service/firebase-admin.service';
 import { NotificationRepository } from '@/repository/notification.repository';
 
@@ -22,11 +22,11 @@ import { NotificationRepository } from '@/repository/notification.repository';
     NotificationConsumerService,
     EmailStrategy,
     WebPushNotificationStrategy,
-    NotificationTokenRepository,
+    PushNotificationTokenRepository,
     NotificationRepository,
     FirebaseService
   ],
-  exports: [NotificationService, NotificationTokenRepository],
+  exports: [NotificationService, PushNotificationTokenRepository],
 })
 export class NotificationModule implements OnModuleInit {
   constructor(
