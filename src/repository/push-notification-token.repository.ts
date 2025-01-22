@@ -1,9 +1,9 @@
-import { NotificationToken } from '@/notification/entities/notification-token.entity';
+import { NotificationToken } from '@/notification/entities/push-notification-token.entity';
 import { Injectable } from '@nestjs/common';
 import { DataSource, DeleteResult, In, LessThan, Repository } from 'typeorm';
 
 @Injectable()
-export class NotificationTokenRepository extends Repository<NotificationToken> {
+export class PushNotificationTokenRepository extends Repository<NotificationToken> {
   constructor(private dataSource: DataSource) {
     super(NotificationToken, dataSource.createEntityManager());
   }

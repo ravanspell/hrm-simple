@@ -7,7 +7,7 @@ import { PassportModule } from '@nestjs/passport';
 import { SessionSerializer } from './session.serializer';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Session } from './entities/session.entity';
-import { NotificationTokenRepository } from '@/repository/notification-token.repository';
+import { PushNotificationTokenRepository } from '@/repository/push-notification-token.repository';
 
 @Module({
   imports: [
@@ -16,7 +16,7 @@ import { NotificationTokenRepository } from '@/repository/notification-token.rep
     TypeOrmModule.forFeature([Session]),
   ],
   exports: [],
-  providers: [AuthService, LocalStrategy, SessionSerializer, NotificationTokenRepository],
+  providers: [AuthService, LocalStrategy, SessionSerializer, PushNotificationTokenRepository],
   controllers: [AuthController],
 })
 export class AuthModule {}
