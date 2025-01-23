@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationStrategy } from '../../notification.strategy.interface';
-import { NotificationTokenRepository } from '@/repository/notification-token.repository';
+import { PushNotificationTokenRepository } from '@/repository/push-notification-token.repository';
 import {
   FCMResponse,
   FirebaseService,
@@ -11,13 +11,13 @@ export class WebPushNotificationStrategy implements NotificationStrategy {
   readonly type: string = 'webPush';
 
   constructor(
-    private readonly NotificationTokenRepository: NotificationTokenRepository,
+    private readonly pushNotificationTokenRepository: PushNotificationTokenRepository,
     private readonly firebaseService: FirebaseService,
   ) {}
 
   async send(to: string, data: any): Promise<void> {
-    console.log('excuted--->');
-    const userId = 'userId';
+    console.log('the notification payload--->', data?.payload);
+    const userId = data?.payload?.userId;
     const tokens = await this.getActiveTokensForUser(userId);
     if (tokens.length > 0) {
       const response = await this.sendNotificationToTokens(tokens, data);
@@ -33,7 +33,7 @@ export class WebPushNotificationStrategy implements NotificationStrategy {
    */
   private async getActiveTokensForUser(userId: string): Promise<string[]> {
     const activeTokens =
-      await this.NotificationTokenRepository.getActiveTokensForUser(userId);
+      await this.pushNotificationTokenRepository.getActiveTokensForUser(userId);
     if (!activeTokens.length) {
       throw new Error('No active devices found for the user.');
     }
@@ -51,7 +51,7 @@ export class WebPushNotificationStrategy implements NotificationStrategy {
     payload: any,
   ): Promise<FCMResponse> {
     return this.firebaseService.sendNotification(tokens, {
-      title: payload.title,
+      title: payload?.title || 'test notification',
       body: payload.body,
       imageUrl: payload.imageUrl,
       data: payload.data,
@@ -68,7 +68,7 @@ export class WebPushNotificationStrategy implements NotificationStrategy {
   ): Promise<void> {
     // Deactivate failed tokens
     if (response.failedTokens?.length) {
-      await this.NotificationTokenRepository.deleteTokens(
+      await this.pushNotificationTokenRepository.deleteTokens(
         response.failedTokens,
       );
     }

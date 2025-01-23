@@ -15,14 +15,14 @@ import { UpdateEmailSettingDto } from './dto/update-email-setting.dto';
 import { Authentication } from 'src/decorators/auth.decorator';
 import { RequestWithTenant } from 'src/coretypes';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { NotificationPublisherService } from '@/notification/notification-publisher.service';
+import { NotificationService } from '@/notification/notification.service';
 
 @ApiTags('email-settings')
 @Controller('email-settings')
 export class EmailSettingsController {
   constructor(
     private readonly emailSettingsService: EmailSettingsService,
-    private readonly notificationService: NotificationPublisherService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -62,7 +62,7 @@ export class EmailSettingsController {
   @Authentication()
   async findAllByOrganization(@Req() req: RequestWithTenant) {
     const webPush = {
-      userId: '',
+      userId: req?.user.id,
       subject: 'this is test notification',
       body: '',
     };

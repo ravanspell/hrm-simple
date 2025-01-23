@@ -16,6 +16,7 @@ import { FileMgt } from 'src/file-management/entities/file-management.entity';
 import { Folder } from 'src/file-management/entities/folder.entity';
 import { User } from 'src/user/entities/user.entity';
 import { GeneralSettings } from './general-settings.entity';
+import { Notification } from '@/notification/entities/notification.entity';
 
 @Entity(ORGANIZATION_TABLE)
 export class Organization {
@@ -62,4 +63,7 @@ export class Organization {
   )
   @JoinColumn({ name: 'general_settings_id' })
   generalSettings: GeneralSettings;
+
+  @OneToMany(() => Notification, (notification) => notification.organization)
+  notifications: Notification[];
 }
