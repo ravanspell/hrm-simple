@@ -16,7 +16,12 @@ import { PushNotificationTokenRepository } from '@/repository/push-notification-
     TypeOrmModule.forFeature([Session]),
   ],
   exports: [],
-  providers: [AuthService, LocalStrategy, SessionSerializer, PushNotificationTokenRepository],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    SessionSerializer,
+    PushNotificationTokenRepository,
+  ],
   controllers: [AuthController],
 })
 export class AuthModule {}
