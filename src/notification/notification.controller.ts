@@ -6,7 +6,7 @@ import { NotificationResponseDto } from './dto/notification-response.dto';
 @ApiTags('Notifications')
 @Controller('notifications')
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) { }
+  constructor(private readonly notificationService: NotificationService) {}
 
   /**
    * Retrieves all notifications for a specific user.
@@ -20,8 +20,11 @@ export class NotificationController {
     description: 'Array of user notifications',
     type: [NotificationResponseDto],
   })
-  async getUserNotifications(@Param('userId') userId: string): Promise<NotificationResponseDto[]> {
-    const notifications = await this.notificationService.getUserNotifications(userId);
+  async getUserNotifications(
+    @Param('userId') userId: string,
+  ): Promise<NotificationResponseDto[]> {
+    const notifications =
+      await this.notificationService.getUserNotifications(userId);
     return notifications.map((n) => ({
       id: n.id,
       title: n.title,
@@ -37,9 +40,14 @@ export class NotificationController {
    * @param notificationId - The notification ID.
    */
   @Patch(':notificationId')
-  @ApiParam({ name: 'notificationId', description: 'The ID of the notification to mark as read' })
+  @ApiParam({
+    name: 'notificationId',
+    description: 'The ID of the notification to mark as read',
+  })
   @ApiResponse({ status: 204, description: 'Notification marked as read' })
-  async markAsRead(@Param('notificationId') notificationId: string): Promise<void> {
+  async markAsRead(
+    @Param('notificationId') notificationId: string,
+  ): Promise<void> {
     await this.notificationService.markNotificationAsRead(notificationId);
   }
 }

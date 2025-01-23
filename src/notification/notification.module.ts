@@ -24,7 +24,7 @@ import { NotificationRepository } from '@/repository/notification.repository';
     WebPushNotificationStrategy,
     PushNotificationTokenRepository,
     NotificationRepository,
-    FirebaseService
+    FirebaseService,
   ],
   exports: [NotificationService, PushNotificationTokenRepository],
 })
@@ -33,7 +33,7 @@ export class NotificationModule implements OnModuleInit {
     private readonly notificationConsumerService: NotificationConsumerService,
     private readonly emailStrategy: EmailStrategy,
     private readonly webPushStrategy: WebPushNotificationStrategy,
-  ) { }
+  ) {}
 
   onModuleInit() {
     this.notificationConsumerService.registerStrategy(this.emailStrategy);

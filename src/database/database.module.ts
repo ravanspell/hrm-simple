@@ -40,9 +40,11 @@ import { DataSource, DataSourceOptions } from 'typeorm';
           entities: [__dirname + '/../**/*.entity.{js,ts}'], // Load all entities dynamically
           // this is to attach current deployment env to be used in datasource factory
           isDevelopment,
-        }
+        };
       },
-      dataSourceFactory: async (options: DataSourceOptions & { isDevelopment: boolean }) => {
+      dataSourceFactory: async (
+        options: DataSourceOptions & { isDevelopment: boolean },
+      ) => {
         const dataSource = new DataSource(options);
         // add transactional support to the DataSource
         addTransactionalDataSource(dataSource);
@@ -58,4 +60,4 @@ import { DataSource, DataSourceOptions } from 'typeorm';
     }),
   ],
 })
-export class DatabaseModule { }
+export class DatabaseModule {}
