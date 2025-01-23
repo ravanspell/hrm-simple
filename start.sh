@@ -27,20 +27,12 @@ fi
 
 # fill prisma seed data for dependency tables
 echo -e "${BOLD}${YELLOW}apply db migrations...${RESET}"
-npx prisma migrate deploy
 
 echo -e "${BOLD}${YELLOW}Generate prisma types${RESET}"
-npx prisma generate
 
 # fill prisma seed data for dependency tables
 echo -e "${BOLD}${YELLOW}Start execute db seeds...${RESET}"
-# npx prisma db seed
 
-# Start Prisma Studio in the background
-echo -e "${BOLD}${YELLOW}Starting Prisma Studio...${RESET}"
-npx prisma studio &
-
-# Wait for Prisma Studio to start
 sleep 2
 
 echo -e "${BLUE}---------------------------------------${RESET}"
