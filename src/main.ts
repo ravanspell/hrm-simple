@@ -46,7 +46,7 @@ async function bootstrap() {
   }).connect(sessionRepository);
 
   app.enableCors({
-    origin: 'https://localhost:3000',
+    origin: 'http://localhost:3000',
     credentials: true, // Allow cookies or authorization headers
   });
   app.use(
