@@ -1,8 +1,8 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
@@ -11,7 +11,6 @@ import { UserWithScopes } from '@/user/user.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  private ERROR_TYPE = 'PERMISSION';
 
   constructor(private readonly reflector: Reflector) {}
 
@@ -34,9 +33,8 @@ export class PermissionsGuard implements CanActivate {
     if (hasAllRequiredPermissions) {
       return true;
     }
-    throw new UnauthorizedException(
-      "User don't have access for this functionality",
-      { description: this.ERROR_TYPE }
+    throw new ForbiddenException(
+      "User don't have access for this functionality"
     );
   }
 }

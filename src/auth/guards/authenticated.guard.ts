@@ -11,7 +11,6 @@ import { RequestWithTenant } from 'src/coretypes';
 
 @Injectable()
 export class AuthenticatedGuard implements CanActivate {
-  private ERROR_TYPE = 'AUTHENTICATION';
 
   constructor(private readonly reflector: Reflector) { }
 
@@ -28,18 +27,17 @@ export class AuthenticatedGuard implements CanActivate {
       if (request.isAuthenticated && request.isAuthenticated()) {
         // Assuming Passport attaches user to request
         if (!request.user) {
-          throw new UnauthorizedException('User not found in session', { description: this.ERROR_TYPE });
+          throw new UnauthorizedException('User not found in session');
         }
         // Optionally, validate that the user has an associated organization
         if (!request.user.organizationId) {
           throw new UnauthorizedException(
-            'User is not associated with any organization',
-            { description: this.ERROR_TYPE }
+            'User is not associated with any organization'
           );
         }
         return true;
       }
-      throw new UnauthorizedException('User is not authenticated',{ description: this.ERROR_TYPE });
+      throw new UnauthorizedException('User is not authenticated');
     }
     return true;
   }
