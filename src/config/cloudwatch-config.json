@@ -1,0 +1,17 @@
+{
+    "logs": {
+        "force_flush_interval": 5,
+        "logs_collected": {
+            "files": {
+                "collect_list": [
+                    {
+                        "file_path": "/app/logs/*.log",
+                        "log_group_name": "/ecs/nodejs-app",
+                        "log_stream_name": "{instance_id}",
+                        "timezone": "UTC"
+                    }
+                ]
+            }
+        }
+    }
+}

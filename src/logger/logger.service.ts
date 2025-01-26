@@ -3,7 +3,6 @@
  * move to AWS itself. This will be a Facade service to hold the API actions and error loging
  * this service also helps to retrive users logs to show who did what.
  *
- * By: Ireshan Pathirana
  */
 import { Injectable } from '@nestjs/common';
 import {

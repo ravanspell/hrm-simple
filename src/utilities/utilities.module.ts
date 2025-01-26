@@ -4,6 +4,7 @@ import { AwsS3Service } from './aws-s3-service/aws-S3.service';
 import { CacheService } from './cache/cache.service';
 import { AwsSqsService } from './aws-sqs-service/aws-sqs.service';
 import { MemoryCacheService } from './cache/memory-cache.service';
+import { LoggerService } from './logger/logger.service';
 @Module({
   providers: [
     EncryptionService,
@@ -11,7 +12,14 @@ import { MemoryCacheService } from './cache/memory-cache.service';
     AwsSqsService,
     AwsS3Service,
     MemoryCacheService,
+    LoggerService,
   ],
-  exports: [EncryptionService, CacheService, AwsSqsService, AwsS3Service],
+  exports: [
+    EncryptionService,
+    CacheService,
+    AwsSqsService,
+    AwsS3Service,
+    LoggerService,
+  ],
 })
 export class UtilitiesModule {}

@@ -1,6 +1,6 @@
 # hrm app includes two docker services
 # 1. node js + nest js REST API
-# 2. mysql dabase server
+# 2. mysql database server
 
 services:
   myhrm-app:
@@ -12,11 +12,21 @@ services:
       - /app/node_modules
     ports:
       - '3001:3001'
-      # Prisma studio port expose
-      - '5555:5555'
     command: ./start.sh
     depends_on:
       - mysql
+
+  cloudwatch-agent:
+    image: amazon/cloudwatch-agent:latest
+    container_name: cloudwatch-agent-v1
+    env_file:
+      - .env
+    volumes:
+      - ./cloudwatch-config.json:/etc/cloudwatch-agent/config.json:ro
+      - /logs:/app/logs
+    environment:
+      - CW_CONFIG_FILE=/etc/cloudwatch-agent/config.json
+    command: ["/opt/aws/amazon-cloudwatch-agent/bin/start-amazon-cloudwatch-agent"]
 
   mysql:
     image: mysql:8.0
