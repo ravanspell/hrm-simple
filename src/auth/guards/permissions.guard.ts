@@ -1,8 +1,8 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
@@ -11,6 +11,7 @@ import { UserWithScopes } from '@/user/user.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
+
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(
@@ -18,7 +19,7 @@ export class PermissionsGuard implements CanActivate {
   ): boolean | Promise<boolean> | Observable<boolean> {
     const currentUser = context.switchToHttp().getRequest()
       .user as UserWithScopes;
-    // get current user scops
+    // get current user scopes
     const userPermissions = currentUser?.scopes || [];
     const requiredPermissions =
       this.reflector.get<string[]>(PERMISSIONS_KEY, context.getHandler()) || [];
@@ -32,8 +33,8 @@ export class PermissionsGuard implements CanActivate {
     if (hasAllRequiredPermissions) {
       return true;
     }
-    throw new UnauthorizedException(
-      "User don't have access for this functionality",
+    throw new ForbiddenException(
+      "User don't have access for this functionality"
     );
   }
 }

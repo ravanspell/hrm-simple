@@ -46,7 +46,9 @@ export class PushNotificationTokenRepository extends Repository<PushNotification
    * @param userId - The user ID
    * @returns Promise<NotificationToken[]>
    */
-  async getActiveTokensForUser(userId: string): Promise<PushNotificationToken[]> {
+  async getActiveTokensForUser(
+    userId: string,
+  ): Promise<PushNotificationToken[]> {
     return this.find({
       where: {
         userId,

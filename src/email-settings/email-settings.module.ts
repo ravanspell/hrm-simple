@@ -7,10 +7,7 @@ import { EmailSettingsRepository } from 'src/repository/email-settings.repositor
 @Module({
   imports: [UtilitiesModule],
   controllers: [EmailSettingsController],
-  providers: [
-    EmailSettingsService,
-    EmailSettingsRepository,
-  ],
+  providers: [EmailSettingsService, EmailSettingsRepository],
   exports: [EmailSettingsService],
 })
 export class EmailSettingsModule {}

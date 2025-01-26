@@ -1,7 +1,6 @@
 /**
  * Generic response transformer interceptor
- * tranform the response
- * log the response
+ * transform the response
  */
 import {
   CallHandler,
@@ -28,10 +27,7 @@ export class TransformInterceptor<T>
       map((data) => {
         const ctx = context.switchToHttp();
         const response = ctx.getResponse();
-        // const request = ctx.getRequest();
-
         const statusCode = response.statusCode;
-        // const url = request.originalUrl;
         const res = {
           statusCode,
           msg: null,

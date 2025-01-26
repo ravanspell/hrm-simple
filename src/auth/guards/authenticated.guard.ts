@@ -11,7 +11,8 @@ import { RequestWithTenant } from 'src/coretypes';
 
 @Injectable()
 export class AuthenticatedGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+
+  constructor(private readonly reflector: Reflector) { }
 
   canActivate(
     context: ExecutionContext,
@@ -31,7 +32,7 @@ export class AuthenticatedGuard implements CanActivate {
         // Optionally, validate that the user has an associated organization
         if (!request.user.organizationId) {
           throw new UnauthorizedException(
-            'User is not associated with any organization',
+            'User is not associated with any organization'
           );
         }
         return true;

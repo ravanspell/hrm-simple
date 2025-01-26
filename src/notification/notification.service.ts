@@ -26,7 +26,7 @@ export class NotificationService {
   constructor(
     private readonly awsSqsService: AwsSqsService,
     private readonly configService: ConfigService,
-    private readonly notificationRepository: NotificationRepository
+    private readonly notificationRepository: NotificationRepository,
   ) {
     this.notificationQueueUrl = this.configService.get<string>(
       'NOTIFICATION_QUEUE_URL',
