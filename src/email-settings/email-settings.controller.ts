@@ -16,6 +16,7 @@ import { Authentication } from 'src/decorators/auth.decorator';
 import { RequestWithTenant } from 'src/coretypes';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { NotificationService } from '@/notification/notification.service';
+import { LoggerService } from '@/utilities/logger/logger.service';
 
 @ApiTags('email-settings')
 @Controller('email-settings')
@@ -23,7 +24,11 @@ export class EmailSettingsController {
   constructor(
     private readonly emailSettingsService: EmailSettingsService,
     private readonly notificationService: NotificationService,
-  ) {}
+    private readonly logger: LoggerService,
+  ) {
+    // Set the context for all logs from this controller
+    this.logger.setContext('email-settings-controller');
+  }
 
   /**
    * Creates new email settings.
@@ -44,6 +49,7 @@ export class EmailSettingsController {
     @Body() createDto: CreateEmailSettingsDto,
     @Req() req: RequestWithTenant,
   ) {
+    this.logger.info('Starting the process', { ...createDto });
     console.log('req.user-->', req.user);
     const createEmailSettingsData = {
       ...createDto,
