@@ -115,6 +115,16 @@ CREATE TABLE user_direct_permissions (
         REFERENCES organization_licensed_permissions(organization_id, system_permission_id)
 );
 
+CREATE TABLE effective_user_permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    organization_id UUID NOT NULL REFERENCES organizations(id),
+    permission_id UUID NOT NULL REFERENCES system_permissions(id),
+    origin VARCHAR(20) CHECK (origin IN ('ROLE', 'DIRECT', 'OVERRIDE')),
+    last_updated TIMESTAMP DEFAULT NOW(),
+    UNIQUE (user_id, permission_id)
+);
+
 CREATE TABLE permission_changes_log (
     id UUID PRIMARY KEY,
     organization_id UUID NOT NULL REFERENCES organizations(id),
@@ -128,28 +138,12 @@ CREATE TABLE permission_changes_log (
     created_by_id UUID NOT NULL
 );
 
--- Optimized Indexes
-CREATE INDEX idx_olf_active_permission 
-ON organization_licensed_permissions (organization_id, system_permission_id, is_active);
-
-CREATE INDEX idx_user_direct_permissions 
-ON user_direct_permissions (user_id, organization_id, system_permission_id);
-
-CREATE INDEX idx_effective_user_permissions 
-ON effective_user_permissions (user_id, organization_id);
-
--- Precomputed Materialized View
-CREATE MATERIALIZED VIEW effective_user_permissions AS
-SELECT 
-    user_id,
-    organization_id,
-    array_agg(DISTINCT system_permission_id) AS active_permissions
-FROM user_roles ur
-JOIN role_permissions rp ON ur.role_id = rp.role_id
-JOIN organization_licensed_permissions olp 
-  ON rp.system_permission_id = olp.system_permission_id 
- AND olp.is_active = true
-GROUP BY user_id, organization_id;
-
-CREATE UNIQUE INDEX idx_effective_user_permissions 
-ON effective_user_permissions (user_id, organization_id);
+-- Indexes for Optimized Access Patterns
+CREATE UNIQUE INDEX idx_user_permissions ON effective_user_permissions(user_id, permission_id);
+CREATE INDEX idx_roles_org ON roles(organization_id, name);
+CREATE INDEX idx_user_roles_user ON user_roles(user_id, organization_id);
+CREATE INDEX idx_permission_log_entity ON permission_changes_log(entity_type, entity_id, organization_id);
+CREATE INDEX idx_permission_log_time ON permission_changes_log(organization_id, created_at);
+CREATE INDEX idx_olf_active_permission ON organization_licensed_permissions (organization_id, system_permission_id, is_active);
+CREATE INDEX idx_user_direct_permissions ON user_direct_permissions (user_id, organization_id, system_permission_id);
+CREATE INDEX idx_effective_user_permissions ON effective_user_permissions (user_id, organization_id);
