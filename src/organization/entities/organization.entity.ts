@@ -9,7 +9,6 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Role } from '@/user/entities/role.entity';
-import { Scope } from '@/user/entities/scope.entity';
 import { ORGANIZATION_TABLE } from 'src/constants/dbTables';
 import { EmailSettings } from 'src/email-settings/entities/email-setting.entity';
 import { FileMgt } from 'src/file-management/entities/file-management.entity';
@@ -17,6 +16,8 @@ import { Folder } from 'src/file-management/entities/folder.entity';
 import { User } from 'src/user/entities/user.entity';
 import { GeneralSettings } from './general-settings.entity';
 import { Notification } from '@/notification/entities/notification.entity';
+import { OrganizationLicensedPermission } from '@/permission/entities/organization-licensed-permission.entity';
+import { UserDirectPermission } from '@/permission/entities/user-direct-permission.entity';
 
 @Entity(ORGANIZATION_TABLE)
 export class Organization {
@@ -44,9 +45,6 @@ export class Organization {
   @OneToMany(() => Role, (role) => role.organization)
   roles: Role[];
 
-  @OneToMany(() => Scope, (scope) => scope.organization)
-  scopes: Scope[];
-
   @OneToMany(() => EmailSettings, (emailSettings) => emailSettings.organization)
   emailSettings: EmailSettings[];
 
@@ -66,4 +64,16 @@ export class Organization {
 
   @OneToMany(() => Notification, (notification) => notification.organization)
   notifications: Notification[];
+
+  @OneToMany(
+    () => OrganizationLicensedPermission,
+    (permission) => permission.organization,
+  )
+  licensedPermissions: OrganizationLicensedPermission[];
+
+  @OneToMany(
+    () => UserDirectPermission,
+    (permission) => permission.organization,
+  )
+  userDirectPermissions: UserDirectPermission[];
 }
