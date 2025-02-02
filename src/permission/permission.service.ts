@@ -20,18 +20,18 @@ import { UpdateSystemPermissionDto } from './dto/update-system-permission.dto';
 import { CreateOrganizationLicensedPermissionDto } from './dto/create-organization-licensed-permission.dto';
 import { IsolationLevel, Transactional } from 'typeorm-transactional';
 import { AssignUserDirectPermissionDto } from './dto/assign-user-direct-permission.dto';
-import { CreateSystemPermissionDto } from './dto/create-system-permission.dto';
 import { EffectiveUserPermissionsRepository } from './repositories/effective-user-permission.repository';
+import { SystemPermission } from './entities/system-permission.entity';
 
 @Injectable()
 export class PermissionService {
   constructor(
-    private categoryRepo: PermissionCategoryRepository,
+    private permissionCategoryRepo: PermissionCategoryRepository,
     private systemPermissionRepo: SystemPermissionRepository,
     private orgLicenseRepo: OrganizationLicensedPermissionRepository,
     private userDirectPermissionRepo: UserDirectPermissionRepository,
     private effectiveUserPermissionRepo: EffectiveUserPermissionsRepository,
-  ) {}
+  ) { }
 
   /**
    * Create a new permission category
@@ -39,13 +39,13 @@ export class PermissionService {
    * @returns Created category
    */
   async createCategory(dto: CreatePermissionCategoryDto) {
-    const existing = await this.categoryRepo.findByName(dto.name);
+    const existing = await this.permissionCategoryRepo.findByName(dto.name);
     if (existing) {
       throw new ConflictException('Category with this name already exists');
     }
 
-    const category = this.categoryRepo.create(dto);
-    return this.categoryRepo.save(category);
+    const category = this.permissionCategoryRepo.create(dto);
+    return this.permissionCategoryRepo.save(category);
   }
 
   /**
@@ -53,7 +53,7 @@ export class PermissionService {
    * @returns Array of categories
    */
   async getAllCategories() {
-    return this.categoryRepo.find({
+    return this.permissionCategoryRepo.find({
       order: { displayOrder: 'ASC' },
     });
   }
@@ -74,43 +74,41 @@ export class PermissionService {
    */
 
   async updateCategory(id: string, dto: UpdatePermissionCategoryDto) {
-    const category = await this.categoryRepo.findByIdWithLock(id);
+    const category = await this.permissionCategoryRepo.findById(id);
     if (!category) {
       throw new NotFoundException('Category not found');
     }
 
     if (dto.name) {
-      const existingWithName = await this.categoryRepo.findByName(dto.name);
+      const existingWithName = await this.permissionCategoryRepo.findByName(dto.name);
       if (existingWithName && existingWithName.id !== id) {
         throw new ConflictException('Category with this name already exists');
       }
     }
 
     Object.assign(category, dto);
-    return this.categoryRepo.save(category);
+    return this.permissionCategoryRepo.save(category);
   }
 
   /**
    * Create a new system permission
-   * Using SERIALIZABLE isolation to prevent permission key conflicts
-   * @param dto CreateSystemPermissionDto
-   * @returns Created permission
+   * @param newPermissionData
+   * @returns created system permission
    */
-  async createSystemPermission(dto: CreateSystemPermissionDto) {
-    // const category = await this.categoryRepo.findOne(dto.categoryId);
-    // if (!category) {
-    //     throw new NotFoundException('Category not found');
-    // }
+  async createSystemPermission(newPermissionData: any): Promise<SystemPermission> {
+    const category = await this.permissionCategoryRepo.findById(newPermissionData.categoryId);
+
+    if (!category) {
+      throw new NotFoundException('Permission category not found');
+    }
 
     const existing = await this.systemPermissionRepo.findOne({
-      where: { permissionKey: dto.permissionKey },
+      where: { permissionKey: newPermissionData.permissionKey },
     });
     if (existing) {
       throw new ConflictException('Permission with this key already exists');
     }
-
-    const permission = this.systemPermissionRepo.create(dto);
-    return this.systemPermissionRepo.save(permission);
+    return await this.systemPermissionRepo.createPermission(newPermissionData);
   }
 
   /**

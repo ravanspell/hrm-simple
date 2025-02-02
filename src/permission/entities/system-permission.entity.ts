@@ -11,7 +11,6 @@ import { PermissionCategory } from './permission-category.entity';
 import { OrganizationLicensedPermission } from './organization-licensed-permission.entity';
 import { UserDirectPermission } from './user-direct-permission.entity';
 import { SYSTEM_PERMISSIONS_TABLE } from '@/constants/dbTables';
-import { PermissionPrefix } from './permission-prefix.entity';
 
 /**
  * Entity representing a system permission in the system
@@ -47,10 +46,10 @@ export class SystemPermission {
   updatedAt: Date;
 
   @Column({ type: 'uuid' })
-  createdById: string;
+  createdBy: string;
 
   @Column({ type: 'uuid', nullable: true })
-  updatedById: string;
+  updatedBy: string;
 
   @OneToMany(
     () => OrganizationLicensedPermission,
@@ -63,9 +62,6 @@ export class SystemPermission {
     (permission) => permission.systemPermission,
   )
   userDirectPermissions: UserDirectPermission[];
-
-  @ManyToOne(() => PermissionPrefix, (prefix) => prefix.systemPermissions)
-  prefix: PermissionPrefix;
 
   @ManyToOne(() => PermissionCategory, (category) => category.systemPermissions)
   category: PermissionCategory;

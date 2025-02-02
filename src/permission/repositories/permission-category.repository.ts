@@ -9,14 +9,13 @@ export class PermissionCategoryRepository extends Repository<PermissionCategory>
   }
 
   /**
-   * Find category with pessimistic write lock
+   * Find permission category with category id
    * @param id Category ID
    * @returns PermissionCategory
    */
-  async findByIdWithLock(id: string): Promise<PermissionCategory> {
+  async findById(id: string): Promise<PermissionCategory> {
     return this.findOne({
       where: { id },
-      lock: { mode: 'pessimistic_write' },
     });
   }
 

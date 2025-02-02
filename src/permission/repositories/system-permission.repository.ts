@@ -10,6 +10,16 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
   }
 
   /**
+   * Create permission
+   * @param systemPermissionData
+   * @returns SystemPermission
+   */
+  async createPermission(systemPermissionData: SystemPermission): Promise<SystemPermission> {
+    const permission = this.create(systemPermissionData);
+    return this.save(permission);
+  }
+
+  /**
    * Find permission with write lock
    * @param id Permission ID
    * @returns SystemPermission

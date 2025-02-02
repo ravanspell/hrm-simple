@@ -3,9 +3,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   CreateDateColumn,
-  OneToMany,
 } from 'typeorm';
-import { SystemPermission } from './system-permission.entity';
 import { PERMISSION_PREFIXES_TABLE } from '@/constants/dbTables';
 
 @Entity(PERMISSION_PREFIXES_TABLE)
@@ -21,9 +19,4 @@ export class PermissionPrefix {
 
   @CreateDateColumn()
   createdAt: Date;
-  // defined this as lazy loaded relationship as this relationship is being used rarely
-  @OneToMany(() => SystemPermission, (permission) => permission.prefix, {
-    lazy: true,
-  })
-  systemPermissions: Promise<SystemPermission[]>;
 }
