@@ -11,7 +11,6 @@ import { UserWithScopes } from '@/user/user.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(
@@ -34,7 +33,7 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
     throw new ForbiddenException(
-      "User don't have access for this functionality"
+      "User don't have access for this functionality",
     );
   }
 }
