@@ -15,6 +15,7 @@ import { EmailSettingsModule } from './email-settings/email-settings.module';
 import { OrganizationModule } from './organization/organization.module';
 import { DatabaseModule } from './database/database.module';
 import { NotificationModule } from './notification/notification.module';
+import { PermissionModule } from './permission/permission.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { NotificationModule } from './notification/notification.module';
     EmailSettingsModule,
     OrganizationModule,
     NotificationModule,
+    PermissionModule,
   ],
   controllers: [AppController],
   providers: [
