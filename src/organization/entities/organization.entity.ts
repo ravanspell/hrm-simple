@@ -8,7 +8,7 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { Role } from '@/user/entities/role.entity';
+import { Role } from '@/role/entities/role.entity';
 import { ORGANIZATION_TABLE } from 'src/constants/dbTables';
 import { EmailSettings } from 'src/email-settings/entities/email-setting.entity';
 import { FileMgt } from 'src/file-management/entities/file-management.entity';

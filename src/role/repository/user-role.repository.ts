@@ -1,4 +1,4 @@
-import { UserRole } from '@/user/entities/user-role.entity';
+import { UserRole } from '@/role/entities/user-role.entity';
 import { Injectable } from '@nestjs/common';
 import { Repository, DataSource } from 'typeorm';
 

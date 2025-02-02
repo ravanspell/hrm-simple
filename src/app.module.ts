@@ -16,6 +16,7 @@ import { OrganizationModule } from './organization/organization.module';
 import { DatabaseModule } from './database/database.module';
 import { NotificationModule } from './notification/notification.module';
 import { PermissionModule } from './permission/permission.module';
+import { RoleModule } from './role/role.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { PermissionModule } from './permission/permission.module';
     OrganizationModule,
     NotificationModule,
     PermissionModule,
+    RoleModule,
   ],
   controllers: [AppController],
   providers: [

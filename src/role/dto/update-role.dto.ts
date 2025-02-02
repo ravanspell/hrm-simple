@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateRoleDto } from './create-role.dto';
+import { CreateRoleDto } from '../../role/dto/create-role.dto';
 
 /**
  * DTO for updating an existing role.

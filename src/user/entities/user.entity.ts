@@ -15,7 +15,7 @@ import { Organization } from '@/organization/entities/organization.entity';
 import { USER_TABLE } from 'src/constants/dbTables';
 import { FileMgt } from 'src/file-management/entities/file-management.entity';
 import { Folder } from 'src/file-management/entities/folder.entity';
-import { Role } from './role.entity';
+import { Role } from '../../role/entities/role.entity';
 import { PushNotificationToken } from '@/notification/entities/push-notification-token.entity';
 import { Notification } from '@/notification/entities/notification.entity';
 
