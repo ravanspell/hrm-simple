@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -22,6 +23,7 @@ import { IsolationLevel, Transactional } from 'typeorm-transactional';
 import { AssignUserDirectPermissionDto } from './dto/assign-user-direct-permission.dto';
 import { EffectiveUserPermissionsRepository } from './repositories/effective-user-permission.repository';
 import { SystemPermission } from './entities/system-permission.entity';
+import { PermissionCategory } from './entities/permission-category.entity';
 
 @Injectable()
 export class PermissionService {
@@ -31,7 +33,7 @@ export class PermissionService {
     private orgLicenseRepo: OrganizationLicensedPermissionRepository,
     private userDirectPermissionRepo: UserDirectPermissionRepository,
     private effectiveUserPermissionRepo: EffectiveUserPermissionsRepository,
-  ) { }
+  ) {}
 
   /**
    * Create a new permission category
@@ -80,7 +82,9 @@ export class PermissionService {
     }
 
     if (dto.name) {
-      const existingWithName = await this.permissionCategoryRepo.findByName(dto.name);
+      const existingWithName = await this.permissionCategoryRepo.findByName(
+        dto.name,
+      );
       if (existingWithName && existingWithName.id !== id) {
         throw new ConflictException('Category with this name already exists');
       }
@@ -95,12 +99,10 @@ export class PermissionService {
    * @param newPermissionData
    * @returns created system permission
    */
-  async createSystemPermission(newPermissionData: any): Promise<SystemPermission> {
-    const category = await this.permissionCategoryRepo.findById(newPermissionData.categoryId);
-
-    if (!category) {
-      throw new NotFoundException('Permission category not found');
-    }
+  async createSystemPermission(
+    newPermissionData: any,
+  ): Promise<SystemPermission> {
+    await this.getPermissionCategoryById(newPermissionData.categoryId);
 
     const existing = await this.systemPermissionRepo.findOne({
       where: { permissionKey: newPermissionData.permissionKey },
@@ -113,6 +115,7 @@ export class PermissionService {
 
   /**
    * Get system permissions with filtering
+   *
    * @param query PermissionQueryDto
    * @returns Array of permissions and count
    */
@@ -121,24 +124,38 @@ export class PermissionService {
   }
 
   /**
+   * Get the permission category by id
+   *
+   * @param id - permission category id
+   * @returns PermissionCategory
+   */
+  async getPermissionCategoryById(id: string): Promise<PermissionCategory> {
+    const category = await this.permissionCategoryRepo.findOne({
+      where: {
+        id,
+      },
+    });
+    if (!category) {
+      throw new BadRequestException('Category not found');
+    }
+    return category;
+  }
+  /**
    * Update a system permission
+   *
    * @param id Permission ID
    * @param dto UpdateSystemPermissionDto
    * @returns Updated permission
    */
-
   async updateSystemPermission(id: string, dto: UpdateSystemPermissionDto) {
     const permission = await this.systemPermissionRepo.findByIdWithLock(id);
     if (!permission) {
-      throw new NotFoundException('Permission not found');
+      throw new BadRequestException('Permission not found');
     }
 
-    // if (dto.categoryId) {
-    //     const category = await this.categoryRepo.findOne(dto.categoryId);
-    //     if (!category) {
-    //         throw new NotFoundException('Category not found');
-    //     }
-    // }
+    if (dto?.categoryId) {
+      await this.getPermissionCategoryById(dto?.categoryId);
+    }
 
     Object.assign(permission, dto);
     return this.systemPermissionRepo.save(permission);
@@ -146,6 +163,7 @@ export class PermissionService {
 
   /**
    * Create organization licensed permission
+   *
    * @param dto CreateOrganizationLicensedPermissionDto
    * @returns Created license
    */
@@ -170,6 +188,7 @@ export class PermissionService {
 
   /**
    * Bulk create organization licenses
+   *
    * @param dto BulkAssignPermissionsDto
    * @returns Created licenses
    */
@@ -203,6 +222,7 @@ export class PermissionService {
 
   /**
    * Update organization license
+   *
    * @param id License ID
    * @param dto UpdateOrganizationLicensedPermissionDto
    * @returns Updated license
@@ -221,6 +241,7 @@ export class PermissionService {
 
   /**
    * Assign direct permission to user
+   *
    * @param dto AssignUserDirectPermissionDto
    * @returns Created direct permission
    */
@@ -277,6 +298,7 @@ export class PermissionService {
   }
   /**
    * Bulk assign direct permissions to user
+   *
    * @param dto BulkAssignUserDirectPermissionsDto
    * @returns Created direct permissions
    */
@@ -323,6 +345,7 @@ export class PermissionService {
 
   /**
    * Update user direct permission
+   *
    * @param id Permission ID
    * @param dto UpdateUserDirectPermissionDto
    * @returns Updated permission

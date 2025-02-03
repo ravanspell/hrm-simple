@@ -1,10 +1,21 @@
-import { Body, Controller, Get, Post, Req, Version } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  Post,
+  Put,
+  Req,
+  Version,
+} from '@nestjs/common';
 import { PermissionService } from './permission.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequestWithTenant } from '@/coretypes';
 import { CreateSystemPermissionDto } from './dto/create-system-permission.dto';
 import { Authentication } from '@/decorators/auth.decorator';
 import { API_VERSION } from '@/constants/common';
+import { UpdateSystemPermissionDto } from './dto/update-system-permission.dto';
 
 ApiTags('User Permissions');
 @Controller('permission')
@@ -26,8 +37,8 @@ export class PermissionController {
    * @returns The created permission
    */
   @Post()
-  @ApiOperation({ summary: 'Create a new system permission' })
   @Authentication()
+  @ApiOperation({ summary: 'Create a new system permission' })
   @ApiResponse({
     status: 201,
     description: 'The system permission has been successfully created.',
@@ -39,6 +50,38 @@ export class PermissionController {
     @Req() request: RequestWithTenant,
   ): Promise<any> {
     const createdById = request.user.id;
-    return this.permissionService.createSystemPermission({...createSystemPermissionDto, createdBy: createdById});
+    return this.permissionService.createSystemPermission({
+      ...createSystemPermissionDto,
+      createdBy: createdById,
+    });
+  }
+
+  /**
+   * Update an existing permission.
+   *
+   * @param permissionId - ID of the permission to update
+   * @param updatePermissionReqBody - Data transfer object containing updated permission details
+   * @returns The updated permission
+   */
+  @Put('/:id')
+  @Authentication()
+  @ApiOperation({ summary: 'Update an existing permission' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The permission has been successfully updated.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Permission not found.',
+  })
+  @Version(API_VERSION.V1)
+  async updatePermission(
+    @Param('id') permissionId: string,
+    @Body() updatePermissionReqBody: UpdateSystemPermissionDto,
+  ): Promise<any> {
+    return this.permissionService.updateSystemPermission(
+      permissionId,
+      updatePermissionReqBody,
+    );
   }
 }
