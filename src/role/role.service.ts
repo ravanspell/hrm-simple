@@ -32,22 +32,22 @@ export class RoleService {
     return roles;
   }
 
-    /**
+  /**
    * Assign multiple roles to a user.
    * @param userId - The ID of the user.
    * @param roleIds - An array of role IDs to assign.
    * @returns The updated user entity with the assigned roles.
    */
-    // async updateUserRoles(userId: string, roleIds: string[]): Promise<User> {
-    //     // Fetch the user along with their current roles
-    //     const user = await this.findUserWithRoles(userId);
-    //     // Fetch the roles by the provided role IDs
-    //     const newRoles = await this.roleService.findRolesByIds(roleIds);
-    //     // Assign the new roles to the user
-    //     user.roles = newRoles;
-    //     // Save the user with updated roles
-    //     return await this.userRepository.saveUser(user);
-    //   }
+  // async updateUserRoles(userId: string, roleIds: string[]): Promise<User> {
+  //     // Fetch the user along with their current roles
+  //     const user = await this.findUserWithRoles(userId);
+  //     // Fetch the roles by the provided role IDs
+  //     const newRoles = await this.roleService.findRolesByIds(roleIds);
+  //     // Assign the new roles to the user
+  //     user.roles = newRoles;
+  //     // Save the user with updated roles
+  //     return await this.userRepository.saveUser(user);
+  //   }
   /**
    * Assigns roles to a user and retrieves the list of associated scopes.
    *

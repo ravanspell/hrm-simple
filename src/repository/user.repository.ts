@@ -31,7 +31,7 @@ export class UserRepository extends Repository<User> {
   findUser(email: string): Promise<User> {
     return this.findOne({ where: { email } });
   }
-  
+
   /**
    * Finds a user with their assigned scopes.
    *

@@ -18,7 +18,7 @@ export class UserService {
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
     private readonly userRepository: UserRepository,
-  ) { }
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     // Fetch related entities (Organization, EmploymentStatus, EmployeeLevel)
