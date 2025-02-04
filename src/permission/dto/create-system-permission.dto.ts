@@ -10,40 +10,49 @@ import {
 
 export class CreateSystemPermissionDto {
   @ApiProperty({ description: 'Category ID for the permission' })
-  @IsUUID()
+  @IsUUID(undefined, { message: 'Category ID must be a valid UUID.' })
   categoryId: string;
 
   @ApiProperty({ description: 'Resource the permission applies to' })
-  @IsString()
-  @MinLength(3)
-  @MaxLength(255)
+  @IsString({ message: 'Resource must be a string.' })
+  @MinLength(3, { message: 'Resource must be at least 3 characters long.' })
+  @MaxLength(255, { message: 'Resource cannot be longer than 255 characters.' })
   resource: string;
 
   @ApiProperty({ description: 'Unique key for the permission' })
-  @IsString()
-  @MinLength(3)
-  @MaxLength(255)
+  @IsString({ message: 'Permission key must be a string.' })
+  @MinLength(3, {
+    message: 'Permission key must be at least 3 characters long.',
+  })
+  @MaxLength(255, {
+    message: 'Permission key cannot be longer than 255 characters.',
+  })
   permissionKey: string;
 
   @ApiProperty({ description: 'Display name for the permission' })
-  @IsString()
-  @MinLength(3)
-  @MaxLength(255)
+  @IsString({ message: 'Display name must be a string.' })
+  @MinLength(3, { message: 'Display name must be at least 3 characters long.' })
+  @MaxLength(255, {
+    message: 'Display name cannot be longer than 255 characters.',
+  })
   displayName: string;
 
   @ApiProperty({
     description: 'Description of the permission',
     required: false,
   })
-  @IsString()
+  @IsString({ message: 'Description must be a string.' })
   @IsOptional()
+  @MaxLength(255, {
+    message: 'Description cannot be longer than 255 characters.',
+  })
   description?: string;
 
   @ApiProperty({
     description: 'Whether this is a base permission',
     default: false,
   })
-  @IsBoolean()
+  @IsBoolean({ message: 'isBasePermission must be a boolean value.' })
   @IsOptional()
   isBasePermission?: boolean;
 }
