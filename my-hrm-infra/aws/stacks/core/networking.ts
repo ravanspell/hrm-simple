@@ -35,7 +35,7 @@ export class NetworkingStack extends TerraformStack {
             }
         });
 
-        // Create public route table
+        // Create public route table and add a route to the Internet Gateway
         const publicRouteTable = new RouteTable(this, "public-rt", {
             vpcId: this.vpc.id,
             tags: {
@@ -71,7 +71,7 @@ export class NetworkingStack extends TerraformStack {
             });
         });
 
-        new TerraformOutput(this, "vpc_id", { value: this.vpc.id });
-        new TerraformOutput(this, "public_subnet_id", { value: this.publicSubnets[0].id });
+        new TerraformOutput(this, "vpc-id", { value: this.vpc.id });
+        new TerraformOutput(this, "public-subnet-id", { value: this.publicSubnets[0].id });
     }
 }
