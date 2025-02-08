@@ -8,6 +8,9 @@ import { S3Buckets } from './s3-buckets';
 import { S3IamPolicies } from './s3-iam-policies';
 import { AWS_REGION } from './constants';
 import { SQSQueues } from './sqs-queues';
+import { NetworkingStack } from './stacks/core/networking';
+import { SecurityStack } from './stacks/core/security';
+import { EC2Stack } from './stacks/compute/ec2-instance';
 
 export class AWSStack extends TerraformStack {
   constructor(scope: Construct, id: string) {
@@ -36,6 +39,13 @@ export class AWSStack extends TerraformStack {
             accessKey: '',
             secretKey: ''
         });
+        
+        new NetworkingStack(this, 'networking-stack');
+
+        new SecurityStack(this, 'security-stack');
+
+        new EC2Stack(this, 'ec2-stack');
+
         // Instantiate S3 Buckets Configuration
         new S3Buckets(this, 'S3Buckets');
         // Instantiate S3 IAM policies Configuration
