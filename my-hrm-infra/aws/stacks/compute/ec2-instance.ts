@@ -1,45 +1,45 @@
-import { TerraformStack } from "cdktf";
+import { TerraformStack, DataTerraformRemoteStateS3 } from "cdktf";
 import { Construct } from "constructs";
 import { readFileSync } from "fs";
 import { Instance } from "@cdktf/provider-aws/lib/instance";
-import { IamRole } from "@cdktf/provider-aws/lib/iam-role";
-import { IamInstanceProfile } from "@cdktf/provider-aws/lib/iam-instance-profile";
+import { AWS_REGION } from "../../constants";
+import { DataAwsSsmParameter } from "@cdktf/provider-aws/lib/data-aws-ssm-parameter";
 
 export class EC2Stack extends TerraformStack {
     constructor(scope: Construct, id: string) {
         super(scope, id);
 
+        // Get the saved infra info from the terraform state
+        const remoteState = new DataTerraformRemoteStateS3(this, "the-remote-state", {
+            bucket: 'my-hrm-state-bucket',
+            key: 'terraform.tfstate',
+            region: AWS_REGION
+        });
+
+        const publicSubnetId = remoteState.get("public-subnet-id").toString();
+        const instanceProfile = remoteState.get("ec2-instance-profile").toString();
+        const securityGroup = remoteState.get("ec2-app-sg").toString();
+
+        console.log("the saved subnet id ---->", publicSubnetId);
+        console.log("the saved instanceProfile id ---->", instanceProfile);
+        console.log("the saved securityGroup id ---->", securityGroup);
+
+        // Retrieve the latest Amazon Linux 2 AMI from SSM Parameter Store
+        const amazonLinuxAmi = new DataAwsSsmParameter(this, "amazonLinuxAmi", {
+            name: "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs",
+        });
+
         // Read the user-data.sh file and encode it in Base64
         const userData = readFileSync('./user-data.sh', 'utf-8');
 
-        // Create IAM role for EC2 to access SSM parameters
-        const role = new IamRole(this, 'EC2SSMRole', {
-            name: 'EC2-SSM-Role',
-            assumeRolePolicy: JSON.stringify({
-                Version: '2012-10-17',
-                Statement: [
-                    {
-                        Effect: 'Allow',
-                        Principal: { Service: 'ec2.amazonaws.com' },
-                        Action: 'sts:AssumeRole',
-                    },
-                ],
-            }),
-        });
-
-        // Attach policy to IAM role
-        new IamInstanceProfile(this, 'EC2InstanceProfile', {
-            name: 'EC2-Instance-Profile',
-            role: role.name,
-        });
-
         new Instance(this, 'my-hrm-ec2-instance', {
+            ami: amazonLinuxAmi.value,
             instanceType: 't3.micro',
-            keyName: 'your-key-pair',
-            iamInstanceProfile: 'EC2-Instance-Profile',
+            iamInstanceProfile: instanceProfile,
+            associatePublicIpAddress: true,  // Ensures the instance gets a public IP
             userData: Buffer.from(userData).toString('base64'), // Encode UserData in Base64
-            vpcSecurityGroupIds: ['sg-xxxxxxxx'], // Replace with your security group
-            subnetId: 'subnet-xxxxxxxx', // Replace with your subnet
+            vpcSecurityGroupIds: [securityGroup],
+            subnetId: publicSubnetId,
             tags: {
                 Name: 'primary-ec2-Instance-hrm',
             },
