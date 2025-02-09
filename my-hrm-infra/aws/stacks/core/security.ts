@@ -1,32 +1,22 @@
-
-
-
-import { DataTerraformRemoteStateS3, TerraformOutput, TerraformStack } from "cdktf";
+import { TerraformOutput } from "cdktf";
 import { Construct } from "constructs";
 import { SecurityGroup } from "@cdktf/provider-aws/lib/security-group";
 import { IamRole } from "@cdktf/provider-aws/lib/iam-role";
 import { IamRolePolicy } from "@cdktf/provider-aws/lib/iam-role-policy";
 import { IamInstanceProfile } from "@cdktf/provider-aws/lib/iam-instance-profile";
-import { AWS_REGION } from "../../constants";
+import {
+    EC2_INSTANCE_PROFILE_ID_KEY,
+    EC2_SECURITY_GROUP_ID_KEY,
+} from "../../constants";
 
-export class SecurityStack extends TerraformStack {
+export class SecurityStack extends Construct {
     public readonly ec2SecurityGroup: SecurityGroup;
     public readonly ec2IamRolePolicy: IamRolePolicy;
     public readonly ec2IamInstanceProfile: IamInstanceProfile;
     public readonly ec2IamRole: IamRole;
 
-    constructor(scope: Construct, id: string) {
+    constructor(scope: Construct, id: string, vpcId: string) {
         super(scope, id);
-
-        // Get the saved infra info from the terraform state
-        const remoteState = new DataTerraformRemoteStateS3(this, "the-remote-state", {
-            bucket: 'my-hrm-state-bucket',
-            key: 'terraform.tfstate',
-            region: AWS_REGION
-        });
-
-        const vpcId = remoteState.get("vpc-id").toString();
-        console.log("the saved vpcId ---->", vpcId);
 
         // EC2 Security Group
         this.ec2SecurityGroup = new SecurityGroup(this, "ec2-sg", {
@@ -39,15 +29,16 @@ export class SecurityStack extends TerraformStack {
                     fromPort: 3000,
                     toPort: 3000,
                     cidrBlocks: ["0.0.0.0/0"],
-                    description: "Allow API Gateway traffic"
+                    description: "Allow inbound traffic to REST API",
                 },
                 {
-                    protocol: "-1", // "-1" means all protocols
-                    fromPort: 0,
-                    toPort: 0,
-                    cidrBlocks: ["0.0.0.0/0"], // Allows traffic from any IPv4 address
-                    description: "Allow all inbound public traffic"
-                }
+                    protocol: "tcp",
+                    fromPort: 22,
+                    toPort: 22,
+                    cidrBlocks: ["0.0.0.0/0"],
+                    // For tighter security, consider using your known IP address instead of 0.0.0.0/0
+                    description: "Allow SSH access",
+                },
             ],
 
             egress: [
@@ -56,10 +47,11 @@ export class SecurityStack extends TerraformStack {
                     fromPort: 0,
                     toPort: 0,
                     cidrBlocks: ["0.0.0.0/0"],
-                    description: "Allow all outbound traffic"
-                }
-            ]
+                    description: "Allow all outbound traffic",
+                },
+            ],
         });
+
         // IAM Role that allows EC2 to assume the role
         this.ec2IamRole = new IamRole(this, "ec2-role", {
             name: "ec2-role",
@@ -86,8 +78,7 @@ export class SecurityStack extends TerraformStack {
                         "sns:*",
                         "sqs:*",
                         "cloudwatch:*",
-                        "ssm:GetParameter",
-                        "ssm:GetParameters"
+                        "ssm:*",
                     ],
                     Resource: "*"
                 }]
@@ -100,7 +91,7 @@ export class SecurityStack extends TerraformStack {
             role: this.ec2IamRole.name,
         });
 
-        new TerraformOutput(this, this.ec2IamInstanceProfile.name, { value: this.ec2IamInstanceProfile.id });
-        new TerraformOutput(this, this.ec2SecurityGroup.name, { value: this.ec2SecurityGroup.id });
+        new TerraformOutput(this, EC2_INSTANCE_PROFILE_ID_KEY, { value: this.ec2IamInstanceProfile.id });
+        new TerraformOutput(this, EC2_SECURITY_GROUP_ID_KEY, { value: this.ec2SecurityGroup.id });
     }
 }
