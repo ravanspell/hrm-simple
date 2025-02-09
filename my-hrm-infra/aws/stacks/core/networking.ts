@@ -78,9 +78,6 @@ export class NetworkingStack extends Construct {
             subnetId: this.publicSubnets[0].id,
             routeTableId: publicRouteTable.id,
         });
-
-        console.log("this.vpc.id xxx--->", this.vpc.id);
-
         new TerraformOutput(this, VPC_ID_KEY, { value: this.vpc.id });
         new TerraformOutput(this, PUBLIC_SUBNET_ID_KEY, { value: this.publicSubnets[0].id });
     }
