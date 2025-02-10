@@ -103,8 +103,7 @@ done
 
 # Fetch password from AWS Secrets Manager
 DB_PASSWORD=$(aws ssm get-parameter \
-    --region us-east-1 \
-    --name "/myhrm/prod/db/root" \
+    --name "/hrm-app/PRIMARY_DATABASE_PASSWORD" \
     --with-decryption \
     --query 'Parameter.Value' \
     --output text)
