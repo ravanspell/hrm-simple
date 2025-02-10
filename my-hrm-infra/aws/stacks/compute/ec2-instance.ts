@@ -1,7 +1,6 @@
 import { Construct } from "constructs";
 import { readFileSync } from "fs";
 import { Instance } from "@cdktf/provider-aws/lib/instance";
-import { DataAwsSsmParameter } from "@cdktf/provider-aws/lib/data-aws-ssm-parameter";
 import { join } from "path";
 import { NetworkingStack } from "../core/networking";
 import { SecurityStack } from "../core/security";
@@ -26,21 +25,13 @@ export class EC2Stack extends Construct {
         const instanceProfile = securityStack.ec2IamInstanceProfile.id // remoteState.get(`security-stack.${EC2_INSTANCE_PROFILE_ID_KEY}`).toString();
         const securityGroup = securityStack.ec2SecurityGroup.id // remoteState.get(`security-stack.${EC2_SECURITY_GROUP_ID_KEY}`).toString();
 
-        console.log("the saved subnet id ---->", publicSubnetId);
-        console.log("the saved instanceProfile id ---->", instanceProfile);
-        console.log("the saved securityGroup id ---->", securityGroup);
-
-        // Retrieve the latest Amazon Linux 2 AMI from SSM Parameter Store
-        const amazonLinuxAmi = new DataAwsSsmParameter(this, "amazonLinuxAmi", {
-            name: "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs",
-        });
-
         // Read the user-data.sh file and encode it in Base64
         const userData = readFileSync(join(__dirname, 'user-data.sh'), 'utf-8');
-        console.log("userData--->", userData);
         
         new Instance(this, 'my-hrm-ec2-instance', {
-            ami: amazonLinuxAmi.value,
+            // Amazon Linux 2023 - Amazon Machine Image (AMI)
+            // https://aws.amazon.com/linux/amazon-linux-2023
+            ami: 'ami-0474ac020852b87a9',
             instanceType: 't3.micro',
             iamInstanceProfile: instanceProfile,
             associatePublicIpAddress: true,  // Ensures the instance gets a public IP
