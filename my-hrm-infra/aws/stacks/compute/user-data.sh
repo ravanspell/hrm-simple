@@ -28,12 +28,52 @@ sudo dnf update -y
 # Install necessary utilities
 sudo dnf install -y unzip git
 
-# Install Node.js (LTS) and npm using NodeSource for RPM-based systems
-curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
-sudo yum install -y nodejs
+# Install AWS CloudWatch Agent
+sudo dnf install -y amazon-cloudwatch-agent
 
-# Install PM2 globally
-sudo npm install -g pm2
+# Create config file directory
+mkdir -p /opt/aws/amazon-cloudwatch-agent/etc/
+
+# Cloudwatch agent config for pick Ec2 instance data and application logs
+cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'EOF'
+{
+  "agent": {
+    "metrics_collection_interval": 60
+  },
+  "metrics": {
+    "metrics_collected": {
+      "cpu": {
+        "measurement": ["cpu_usage_idle", "cpu_usage_user", "cpu_usage_system"]
+      },
+      "disk": {
+        "measurement": ["used_percent"],
+        "resources": ["/"]
+      },
+      "mem": {
+        "measurement": ["mem_used_percent"]
+      }
+    }
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/backend/logs/*.log",
+            "log_group_name": "/ec2/application/backend",
+            "log_stream_name": "{instance_id}-backend",
+            "timestamp_format": "%Y-%m-%d %H:%M:%S"
+          }
+        ]
+      }
+    }
+  }
+}
+EOF
+
+# Start and enable the agent
+systemctl start amazon-cloudwatch-agent
+systemctl enable amazon-cloudwatch-agent
 
 # Create a new repository file for MariaDB
 sudo tee /etc/yum.repos.d/mariadb.repo << EOF
@@ -69,11 +109,40 @@ DB_PASSWORD=$(aws ssm get-parameter \
     --query 'Parameter.Value' \
     --output text)
 
-# Create a database if it does not exist
-echo "CREATE DATABASE IF NOT EXISTS myhrm-db-v1;" | sudo mysql
+#login to mariadb default root user
+sudo mariadb -u root <<EOF
 
-# Install AWS CloudWatch Agent
-sudo dnf install -y amazon-cloudwatch-agent
+# Set root password
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
+
+# Create application database
+CREATE DATABASE IF NOT EXISTS myhrm_dev;
+
+# Create application database
+CREATE DATABASE IF NOT EXISTS myhrm_dev;
+
+# Create application user with limited privileges
+CREATE USER 'myhrm_user'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';
+GRANT ALL PRIVILEGES ON myhrm_dev.* TO 'myhrm_user'@'localhost';
+
+# Apply changes
+FLUSH PRIVILEGES;
+EOF
+
+# install NVM - node version manager
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+#Load nvm
+source ~/.bashrc
+
+# install node.js version 20.17.0 as default with NVM
+nvm install default 20.17.0
+
+#select installed node.js version
+nvm use 20.17.0
+
+# Install PM2 globally
+sudo npm install -g pm2
 
 # Ensure PM2 starts on boot for ec2-user
 pm2 startup systemd -u ec2-user --hp /home/ec2-user
