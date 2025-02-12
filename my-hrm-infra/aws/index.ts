@@ -6,12 +6,15 @@ import { S3Backend, TerraformStack } from 'cdktf';
 import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
 import { S3Buckets } from './s3-buckets';
 import { S3IamPolicies } from './s3-iam-policies';
-import { AWS_REGION } from './constants';
+import { AWS_REGION, S3_STATE_PATH } from './constants';
 import { SQSQueues } from './sqs-queues';
+import { NetworkingStack } from './stacks/core/networking';
+import { SecurityStack } from './stacks/core/security';
+import { EC2Stack } from './stacks/compute/ec2-instance';
 
 export class AWSStack extends TerraformStack {
-  constructor(scope: Construct, id: string) {
-    super(scope, id);
+    constructor(scope: Construct, id: string) {
+        super(scope, id);
 
         new AwsProvider(this, 'AWS', {
             region: AWS_REGION,
@@ -31,11 +34,18 @@ export class AWSStack extends TerraformStack {
         // this state locking is optional.
         new S3Backend(this, {
             bucket: 'my-hrm-state-bucket',
-            key: 'terraform.tfstate',
+            key: S3_STATE_PATH,
             region: AWS_REGION,
             accessKey: '',
             secretKey: ''
         });
+
+        const networkingStack = new NetworkingStack(this, 'networking-stack');
+
+        const securityStack = new SecurityStack(this, 'security-stack', networkingStack.vpc.id);
+
+        new EC2Stack(this, 'ec2-stack', networkingStack, securityStack);
+
         // Instantiate S3 Buckets Configuration
         new S3Buckets(this, 'S3Buckets');
         // Instantiate S3 IAM policies Configuration
