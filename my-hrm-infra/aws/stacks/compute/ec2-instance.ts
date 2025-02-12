@@ -6,6 +6,7 @@ import { NetworkingStack } from "../core/networking";
 import { SecurityStack } from "../core/security";
 
 export class EC2Stack extends Construct {
+    public readonly ec2Instance: Instance;
     constructor(
         scope: Construct,
         id: string,
@@ -28,7 +29,7 @@ export class EC2Stack extends Construct {
         // Read the user-data.sh file and encode it in Base64
         const userData = readFileSync(join(__dirname, 'user-data.sh'), 'utf-8');
         
-        new Instance(this, 'my-hrm-ec2-instance', {
+        this.ec2Instance = new Instance(this, 'my-hrm-ec2-instance', {
             // Amazon Linux 2023 - Amazon Machine Image (AMI)
             // https://aws.amazon.com/linux/amazon-linux-2023
             ami: 'ami-0474ac020852b87a9',
@@ -45,8 +46,8 @@ export class EC2Stack extends Construct {
             },
             // Configure the root volume
             rootBlockDevice: {
-                volumeSize: 8,              // size in GiB
-                volumeType: "gp3",          // gp2 or gp3
+                volumeSize: 4,              // size in GiB
+                volumeType: "gp3",          // general purpose 3 (SSD)
                 encrypted: true,            // encrypt the volume
                 deleteOnTermination: false  // automatically delete volume on instance termination (if true)
             },
