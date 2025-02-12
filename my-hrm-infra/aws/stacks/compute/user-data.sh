@@ -31,17 +31,9 @@ sudo dnf update -y
 # Install necessary utilities
 sudo dnf install -y unzip git
 
-# install NVM - node version manager
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-
-#Load nvm
-source ~/.bashrc
-
-# install node.js version 20.17.0 as default with NVM
-nvm install default 20.17.0
-
-#select installed node.js version
-nvm use 20.17.0
+# Install Node.js version 20 using NodeSource
+curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+sudo dnf install -y nodejs
 
 # Install PM2 globally
 sudo npm install -g pm2
@@ -52,10 +44,12 @@ sudo env PATH=$PATH:/home/ec2-user/.nvm/versions/node/v22.13.1/bin pm2 startup s
 
 # Create a dedicated directory for the backend
 mkdir -p backend
-cd backend
 
 # Change ownership to ec2-user
 sudo chown -R ec2-user:ec2-user backend
+
+# change the dir to navigate to the directory
+cd backend
 
 # Initialize Git repo (if not already initialized)
 if [ ! -d ".git" ]; then
