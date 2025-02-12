@@ -22,7 +22,7 @@ export class SecurityStack extends Construct {
         this.ec2SecurityGroup = new SecurityGroup(this, "ec2-sg", {
             name: "ec2-app-sg",
             vpcId: vpcId,
-
+            description: 'Security group for main ec2 instance',
             ingress: [
                 {
                     protocol: "tcp",
@@ -79,6 +79,10 @@ export class SecurityStack extends Construct {
                         "sqs:*",
                         "cloudwatch:*",
                         "ssm:*",
+                        "ec2:*",
+                        "logs:*",
+                        "ssmmessages:*",
+                        "ec2messages:*"
                     ],
                     Resource: "*"
                 }]
