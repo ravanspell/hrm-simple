@@ -11,6 +11,7 @@ import { SQSQueues } from './sqs-queues';
 import { NetworkingStack } from './stacks/core/networking';
 import { SecurityStack } from './stacks/core/security';
 import { EC2Stack } from './stacks/compute/ec2-instance';
+import { APIGatewayStack } from './stacks/api/api-gateway';
 
 export class AWSStack extends TerraformStack {
     constructor(scope: Construct, id: string) {
@@ -45,6 +46,8 @@ export class AWSStack extends TerraformStack {
         const securityStack = new SecurityStack(this, 'security-stack', networkingStack.vpc.id);
 
         new EC2Stack(this, 'ec2-stack', networkingStack, securityStack);
+
+        new APIGatewayStack(this, 'api-gateway-stack', networkingStack);
 
         // Instantiate S3 Buckets Configuration
         new S3Buckets(this, 'S3Buckets');
