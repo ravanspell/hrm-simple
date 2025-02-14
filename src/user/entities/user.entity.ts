@@ -56,6 +56,9 @@ export class User {
   @Index()
   employeeLevelId: string;
 
+  @Column({ nullable: true })
+  passwordResetToken: string;
+
   @Column({ type: 'timestamp' })
   startDate: Date;
 
