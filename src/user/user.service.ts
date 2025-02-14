@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 // import { FilterUsersDto, Gender } from './dto/filter-user.dto';
@@ -225,7 +225,7 @@ export class UserService {
     console.log('user--->', user);
 
     if (!user) {
-      throw new NotFoundException('User with ID not found.');
+      throw new BadRequestException('User with ID not found.');
     }
 
     // Combine role-based scopes and custom scopes
