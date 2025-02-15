@@ -88,7 +88,7 @@ export class FileManagementService {
    * Generates a presigned URL for uploading a file to the dirty bucket.
    *
    * @param filename - uploading file name.
-   * @param fileType - file extention of the file.
+   * @param fileType - file extension of the file.
    * @returns upload url and key
    */
   async generateDirtyStorageObjectUploadUrl(
@@ -162,7 +162,7 @@ export class FileManagementService {
     const fileS3ObjectKeys = files.map((file) => file.s3ObjectKey);
 
     // tag to be deleted the file object in the storage
-    // Laveraging the AWS S3 lifecycle methods to delete after some time taged
+    // Leveraging the AWS S3 lifecycle methods to delete after some time tagged
     // objects we 'DELETED'
     this.tagMultipleObjectsWithRollback(
       this.permanentBucket,
@@ -172,7 +172,7 @@ export class FileManagementService {
   }
 
   /**
-   * Retrieves files based on a flexible filter. warapper service method for repository
+   * Retrieves files based on a flexible filter. wrapper service method for repository
    * @param where - db filter criteria to apply (e.g., ID, size, name).
    * @param select - Optional fields to select from the result.
    * @returns Array of files matching the filter criteria.

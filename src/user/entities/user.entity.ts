@@ -56,6 +56,16 @@ export class User {
   @Index()
   employeeLevelId: string;
 
+  // Columns for reset password functionality:
+  @Column({ nullable: true })
+  resetPasswordToken?: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetPasswordExpires?: Date;
+
+  @Column({ type: 'uuid', nullable: true })
+  resetRequestId?: string;
+
   @Column({ type: 'timestamp' })
   startDate: Date;
 
