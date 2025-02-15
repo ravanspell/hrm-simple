@@ -27,6 +27,7 @@ import { DeleteFilesDto } from './dto/delete-files.dto';
 import { Response } from 'express';
 import * as archiver from 'archiver';
 import { Folder } from './entities/folder.entity';
+import { Authentication } from '@/decorators/auth.decorator';
 
 class InitUploadDto {
   @IsString()
@@ -79,15 +80,25 @@ export class FileManagementController {
     };
     return this.fileManagementService.createFolder(folderData);
   }
-  // Get combined list of files and folders with pagination
+  
+  /**
+   * Return the files belongs to a organization
+   * 
+   * @param folderId folder id - the file belongs to (optional)
+   * @param page current page
+   * @param limit file and folder count per page
+   * @param req get the current login user information along with the auth
+   * @returns files and folders references
+   */
   @Get()
+  @Authentication()
   async listFilesAndFolders(
     @Query('folderId') folderId: string | null,
     @Query('page') page: number = 1, // Default to page 1
     @Query('limit') limit: number = 10, // Default to 10 items per page
     @Req() req: RequestWithTenant,
   ) {
-    const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d'; //req.user.organizationId;
+    const organizationId = req.user.organizationId;
     const skip = (page - 1) * limit;
     // Fetch files, folders, and counts in parallel
     const [filesWithCount, foldersWithCount] = await Promise.all([
@@ -193,13 +204,13 @@ export class FileManagementController {
       'file.id IN (:...ids)',
       { ids: ids },
     );
-    // collect avaialbe file ids for delete
-    const availalbeFilesForDelete = files.map((file) => file.id);
-    if (availalbeFilesForDelete.length === 0) {
+    // collect available file ids for delete
+    const availableFilesForDelete = files.map((file) => file.id);
+    if (availableFilesForDelete.length === 0) {
       throw new UnprocessableEntityException('files not available for delete');
     }
     return this.fileManagementService.softdeleteFiles(
-      availalbeFilesForDelete,
+      availableFilesForDelete,
       files,
     );
   }
