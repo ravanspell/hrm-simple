@@ -65,4 +65,41 @@ export class AuthService {
     // TODO: implement the email template with email service for forgot password
     return { id: user.id, token };
   }
+
+  /**
+  * Submits a new password for the forgot password flow.
+  *
+  * @param resetRequestId - Unique reset request identifier provided in the reset link.
+  * @param token - The raw reset token provided in the reset link.
+  * @param newPassword - The new password to set for the user.
+  *
+  */
+  async submitForgotPassword(
+    resetRequestId: string,
+    token: string,
+    newPassword: string,
+  ): Promise<void> {
+    // Retrieve the user by the resetRequestId.
+    const user = await this.userService.findResetPasswordUser(resetRequestId);
+  
+    // Verify that the token has not expired.
+    if (new Date() > user.resetPasswordExpires) {
+      throw new BadRequestException('Token has expired.');
+    }
+    // Validate the provided token.
+    const isValid = await compare(token, user.resetPasswordToken);
+    
+    if (!isValid) {
+      throw new BadRequestException('Invalid token.');
+    }
+    // Hash the new password.
+    const hashedPassword = await hash(newPassword, 10);
+    user.password = hashedPassword;
+    // Clear reset token fields.
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    user.resetRequestId = null;
+
+    await this.userService.save(user);
+  }
 }

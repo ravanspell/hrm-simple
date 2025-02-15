@@ -160,4 +160,24 @@ export class UserService {
       scopes: combinedScopes,
     };
   }
+
+  /**
+   * Fined the user data by password reset id to verify password reset
+   *
+   * @param resetRequestId - Unique reset request identifier provided in the reset link.
+   * @returns User - the use data object
+   *
+   */
+  async findResetPasswordUser(resetRequestId: string): Promise<User> {
+    console.log("resetRequestId-->", resetRequestId);
+    
+    const userPasswordResetData = await this.userRepository.findOne({
+      where: { resetRequestId }
+    });
+    console.log("userPasswordResetData-->", userPasswordResetData);
+    if (!userPasswordResetData || !userPasswordResetData.resetPasswordToken || !userPasswordResetData.resetPasswordExpires) {
+      throw new BadRequestException('Invalid or expired token.');
+    }
+    return userPasswordResetData;
+  }
 }

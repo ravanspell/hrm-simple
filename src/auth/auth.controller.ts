@@ -23,6 +23,7 @@ import { Authentication } from '@/decorators/auth.decorator';
 import { LoginDto } from './dto/login.dto';
 import { ForgetPasswordRequest } from './dto/forget-password.dto';
 import { AuthService } from './auth.service';
+import { SubmitForgotPasswordRequest } from './dto/forgot-password-submit.dto';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -140,10 +141,44 @@ export class AuthController {
     @Body() dto: ForgetPasswordRequest,
   ): Promise<{ message: string }> {
     // TODO: need to setup the email service instead of return the tokens
-    // TODO: the link to be shttps://theapp.com/reset-password?rid=resetRequestId&token=raw-token
+    // TODO: the link to be https://theapp.com/reset-password?rid=resetRequestId&token=raw-token
     const { id, token } = await this.authService.initiateForgetPassword(dto.email);
     return {
       message: `If an account with that email exists, a reset link has been sent. Reset ID: ${id}, token: ${token}`,
     };
+  }
+
+  /**
+   * Submit a new password using the forgot password reset link.
+   *
+   * This endpoint accepts the reset request ID and token (both provided in the reset link),
+   * along with the new password and its confirmation. It verifies the token and, if valid,
+   * updates the user's password.
+   *
+   * @param dto - Contains the resetRequestId, token, new password, and password confirmation.
+   * @returns A success message upon a successful password reset.
+   *
+   */
+  @Post('forgot-password/submit')
+  @ApiOperation({ summary: 'Submit new password for forgot password flow.' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Password has been reset successfully.',
+    schema: {
+      example: { message: 'Password has been reset successfully.' },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid or expired token, or password validation error.',
+  })
+  async submitForgotPassword(
+    @Body() dto: SubmitForgotPasswordRequest,
+  ): Promise<{ message: string }> {
+    await this.authService.submitForgotPassword(
+      dto.resetRequestId,
+      dto.token,
+      dto.password,
+    );
+    return { message: 'Password has been reset successfully.' };
   }
 }
