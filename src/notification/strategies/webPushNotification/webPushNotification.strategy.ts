@@ -5,22 +5,28 @@ import {
   FCMResponse,
   FirebaseService,
 } from '@/utilities/firebase-admin-service/firebase-admin.service';
+import { NotificationTypePayloads } from '@/notification/notification.service';
+import { NOTIFICATION_TYPE } from '@/constants/notifications';
 
 @Injectable()
 export class WebPushNotificationStrategy implements NotificationStrategy {
-  readonly type: string = 'webPush';
+  readonly type: string = NOTIFICATION_TYPE.WEB_PUSH;
 
   constructor(
     private readonly pushNotificationTokenRepository: PushNotificationTokenRepository,
     private readonly firebaseService: FirebaseService,
   ) {}
 
-  async send(to: string, data: any): Promise<void> {
-    console.log('the notification payload--->', data?.payload);
-    const userId = data?.payload?.userId;
+  async send(
+    notificationPayload: NotificationTypePayloads['webPush'],
+  ): Promise<void> {
+    const userId = notificationPayload?.userId;
     const tokens = await this.getActiveTokensForUser(userId);
     if (tokens.length > 0) {
-      const response = await this.sendNotificationToTokens(tokens, data);
+      const response = await this.sendNotificationToTokens(
+        tokens,
+        notificationPayload.body,
+      );
       await this.handleNotificationResponse(response);
     }
   }

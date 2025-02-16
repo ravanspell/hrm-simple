@@ -32,7 +32,7 @@ export class AuthController {
     private readonly pushNotificationTokenRepository: PushNotificationTokenRepository,
     private readonly userService: UserService,
     private readonly authService: AuthService,
-  ) { }
+  ) {}
 
   /**
    * Handles user login and generates an authenticated session.
@@ -72,7 +72,7 @@ export class AuthController {
   @ApiOperation({ summary: 'User logout' })
   @ApiResponse({ status: 200, description: 'User logged out successfully' })
   async logout(@Req() req: Request) {
-    req.session.destroy(() => { });
+    req.session.destroy(() => {});
     return true;
   }
 
@@ -117,7 +117,7 @@ export class AuthController {
    * This endpoint accepts an email address and, if an account exists, creates a reset token
    * stored on the user record. In a production environment, the raw token should be emailed
    * to the user.
-   * 
+   *
    * @param dto - Contains the user's email.
    * @returns A message indicating that a reset link has been sent.
    */
@@ -140,11 +140,9 @@ export class AuthController {
   async requestForgetPassword(
     @Body() dto: ForgetPasswordRequest,
   ): Promise<{ message: string }> {
-    // TODO: need to setup the email service instead of return the tokens
-    // TODO: the link to be https://theapp.com/reset-password?rid=resetRequestId&token=raw-token
-    const { id, token } = await this.authService.initiateForgetPassword(dto.email);
+    await this.authService.initiateForgetPassword(dto.email);
     return {
-      message: `If an account with that email exists, a reset link has been sent. Reset ID: ${id}, token: ${token}`,
+      message: `If an account with that email exists, a reset link has been sent.`,
     };
   }
 
