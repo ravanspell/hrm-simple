@@ -101,21 +101,18 @@ export class NotificationConsumerService
    * @param message - The message to process.
    */
   private async sendNotifications(message: Message): Promise<void> {
-    console.log('message has been sent', message);
+    // Step 1: parse the queue message into Js object
     const notificationPayload = JSON.parse(message?.Body);
-    console.log('notificationType--->', notificationPayload);
 
     const notificationStrategyType = notificationPayload.type;
+    // Step 2: get the notification strategy
     const notificationStrategy = this.getStrategy(notificationStrategyType);
-
     if (!notificationStrategy) {
       throw new Error(`Strategy not found: ${notificationStrategyType}`);
     }
-
-    await notificationStrategy.send(
-      '001d9ff0-80f3-40ba-8ffe-48e1b7dc9730',
-      notificationPayload,
-    );
+    const currentNotificationPayload = notificationPayload.payload;
+    // send the email and delete the queue message
+    await notificationStrategy.send(currentNotificationPayload);
 
     await this.awsSqsService.deleteMessage(
       this.notificationQueueUrl,

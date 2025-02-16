@@ -10,30 +10,33 @@ import { ConfigService } from '@nestjs/config';
 export class EncryptionService {
   private readonly algorithm = 'aes-256-cbc';
   private readonly key: Buffer;
-  private readonly iv: Buffer;
 
   /**
    * Constructs the EncryptionService.
    * @param configService - The configuration service to retrieve encryption key.
    */
   constructor(private configService: ConfigService) {
-    // Set up encryption key and IV (Initialization Vector)
+    // Set up encryption key
     this.key = Buffer.from(
       this.configService.get<string>('ENCRYPTION_KEY'),
       'hex',
     );
-    this.iv = crypto.randomBytes(16); // 16 bytes for aes-256-cbc
   }
 
   /**
    * Encrypts a given text using AES-256-CBC algorithm.
    * @param text - The plain text to encrypt.
-   * @returns The encrypted text in hex format.
+   * @returns The encrypted text in the format "iv:encrypted".
    */
   encrypt(text: string): string {
-    const cipher = crypto.createCipheriv(this.algorithm, this.key, this.iv);
+    // iv (Initialization Vector): A random value added to the encryption process
+    // to ensure that identical plaintext inputs produce unique ciphertext outputs.
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(this.algorithm, this.key, iv);
     let encrypted = cipher.update(text, 'utf8', 'hex');
-    return (encrypted += cipher.final('hex'));
+    encrypted += cipher.final('hex');
+    // Prepend the IV (in hex) to the encrypted text, separated by a colon
+    return `${iv.toString('hex')}:${encrypted}`;
   }
 
   /**

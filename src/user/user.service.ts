@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Organization } from '@/organization/entities/organization.entity';
 import { UserRepository } from 'src/repository/user.repository';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 export type UserWithScopes = Omit<User, 'roles' | 'scopes'> & {
   roles?: any[]; // Optional if roles are included for debugging purposes
@@ -27,7 +27,7 @@ export class UserService {
     });
 
     if (!organization) {
-      throw new NotFoundException('Organization not found');
+      throw new BadRequestException('Organization not found');
     }
 
     // Create the user instance
@@ -44,107 +44,35 @@ export class UserService {
       createdBy: 'wewewxxe',
       updatedBy: 'wewewxxe',
     });
-
     // Save the user in the database
-    return await this.userRepository.save(user);
+    return await this.save(user);
   }
 
-  // async filterUsers(filters: FilterUsersDto[], orgId: string) {
-  //   const conditions: Prisma.UserWhereInput[] = [
-  //     {
-  //       organizationId: orgId,
-  //     },
-  //   ];
-
-  //   // Track whether we need to include relations like employeeLevel or employmentStatus
-  //   let includeEmployeeLevel = false;
-  //   let includeEmploymentStatus = false;
-
-  //   // Loop through the filters provided by the user and build dynamic conditions
-  //   filters.forEach((filter) => {
-  //     const { field, operator, value, logic } = filter;
-
-  //     // Skip empty or invalid filters
-  //     if (!value || value === '') return;
-
-  //     // Push conditions based on the field, operator, and value
-  //     switch (field) {
-  //       case 'gender':
-  //         if (operator === 'is' && typeof value === 'string') {
-  //           conditions.push({
-  //             gender: value as Gender, // Directly match gender field
-  //           });
-  //         }
-  //         break;
-  //       case 'employeeLevel':
-  //         includeEmployeeLevel = true;
-  //         if (operator === 'is' && value) {
-  //           conditions.push({
-  //             employeeLevelId: value as string, // Prisma will auto-join employeeLevel based on this condition
-  //           });
-  //         }
-  //         break;
-  //       case 'employmentStatus':
-  //         includeEmploymentStatus = true;
-  //         if (operator === 'is' && value) {
-  //           conditions.push({
-  //             employmentStatusId: value as string, // Prisma will auto-join employmentStatus based on this condition
-  //           });
-  //         }
-  //         break;
-  //       // Add more cases for different fields if needed
-  //       default:
-  //         break;
-  //     }
-  //   });
-
-  //   // Dynamic AND/OR logic
-  //   const logic = filters.some((filter) => filter.logic === 'OR')
-  //     ? 'OR'
-  //     : 'AND';
-  //   const whereClause: Prisma.UserWhereInput = {};
-  //   if (conditions.length > 0) {
-  //     whereClause[logic] = conditions; // Apply the logic (AND/OR) based on filters
-  //   }
-
-  //   // Define the fields to select
-  //   const selectClause: Prisma.UserSelect = {
-  //     id: true,
-  //     firstName: true,
-  //     lastName: true,
-  //     email: true,
-  //     gender: true,
-  //     employeeLevel: includeEmployeeLevel
-  //       ? {
-  //         select: {
-  //           name: true,
-  //           description: true,
-  //         },
-  //       }
-  //       : false, // Conditionally include employeeLevel with name
-  //     employmentStatus: includeEmploymentStatus
-  //       ? {
-  //         select: {
-  //           status: true,
-  //           description: true,
-  //         },
-  //       }
-  //       : false, // Conditionally include employmentStatus with status
-  //   };
-
-  //   // Build the query with optional includes (employeeLevel/employmentStatus) and dynamic where clause
-  //   const users = await this.databaseService.user.findMany({
-  //     where: whereClause,
-  //     select: selectClause,
-  //   });
-  //   return users;
-  // }
+  /**
+   * save user data with retrieved user object.
+   *
+   * @param user obj
+   * this method can be used as save user and for update
+   * @returns
+   */
+  async save(user: User): Promise<User> {
+    return await this.userRepository.save(user);
+  }
 
   async findOne(email: string): Promise<User> {
     const user = await this.userRepository.findUser(email);
 
     if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
+      throw new BadRequestException(`User with email ${email} not found`);
+    }
+    return user;
+  }
+
+  async findUserByUserId(id: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id } });
+
+    if (!user) {
+      throw new BadRequestException(`User with id ${id} not found`);
     }
     return user;
   }
@@ -188,7 +116,7 @@ export class UserService {
     console.log('user--->', user);
 
     if (!user) {
-      throw new NotFoundException('User with ID not found.');
+      throw new BadRequestException('User with ID not found.');
     }
 
     // // Combine role-based scopes and custom scopes
@@ -203,5 +131,27 @@ export class UserService {
       ...user,
       scopes: [],
     };
+  }
+
+  /**
+   * Fined the user data by password reset id to verify password reset
+   *
+   * @param resetRequestId - Unique reset request identifier provided in the reset link.
+   * @returns User - the use data object
+   *
+   */
+  async findResetPasswordUser(resetRequestId: string): Promise<User> {
+    const userPasswordResetData = await this.userRepository.findOne({
+      where: { resetRequestId },
+    });
+
+    if (
+      !userPasswordResetData ||
+      !userPasswordResetData.resetPasswordToken ||
+      !userPasswordResetData.resetPasswordExpires
+    ) {
+      throw new BadRequestException('Invalid or expired token.');
+    }
+    return userPasswordResetData;
   }
 }
