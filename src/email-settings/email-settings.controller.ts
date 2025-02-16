@@ -16,6 +16,7 @@ import { Authentication } from 'src/decorators/auth.decorator';
 import { RequestWithTenant } from 'src/coretypes';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { NotificationService } from '@/notification/notification.service';
+import { NOTIFICATION_TYPE } from '@/constants/notifications';
 
 @ApiTags('email-settings')
 @Controller('email-settings')
@@ -74,7 +75,10 @@ export class EmailSettingsController {
     };
     console.log('req?.user?.organizationId--->', req?.user);
 
-    await this.notificationService.publishNotification('webPush', webPush);
+    await this.notificationService.publishNotification(
+      NOTIFICATION_TYPE.WEB_PUSH,
+      webPush,
+    );
     return this.emailSettingsService.findAllByOrganization(
       req?.user?.organizationId,
     );
