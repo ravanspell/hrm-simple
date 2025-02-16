@@ -41,7 +41,7 @@ export class FileManagementController {
   @Post('upload/init')
   async initUpload(@Body() initUploadDto: InitUploadDto) {
     const { fileName } = initUploadDto;
-    // get the file extention out of the file name
+    // get the file extension out of the file name
     const splittedFileName = fileName.split('.');
     const fileType = splittedFileName[splittedFileName.length - 1];
     if (!fileName || !fileType) {
@@ -80,10 +80,10 @@ export class FileManagementController {
     };
     return this.fileManagementService.createFolder(folderData);
   }
-  
+
   /**
    * Return the files belongs to a organization
-   * 
+   *
    * @param folderId folder id - the file belongs to (optional)
    * @param page current page
    * @param limit file and folder count per page

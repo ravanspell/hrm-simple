@@ -73,8 +73,6 @@ export class EmailSettingsController {
       subject: '',
       userId: '',
     };
-    console.log('req?.user?.organizationId--->', req?.user);
-
     await this.notificationService.publishNotification(
       NOTIFICATION_TYPE.WEB_PUSH,
       webPush,

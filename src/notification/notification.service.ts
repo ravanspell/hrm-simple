@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { NotificationRepository } from '@/repository/notification.repository';
 import { Notification } from './entities/notification.entity';
 
-type NotificationTypePayloads = {
+export type NotificationTypePayloads = {
   email: {
     userId: string;
     subject?: string;
