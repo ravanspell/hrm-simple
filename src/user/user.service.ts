@@ -22,7 +22,7 @@ export class UserService {
     private readonly userRepository: UserRepository,
     private readonly roleRepository: RoleRepository,
     private readonly roleService: RolesService,
-  ) { }
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     // Fetch related entities (Organization, EmploymentStatus, EmployeeLevel)
@@ -68,6 +68,15 @@ export class UserService {
 
     if (!user) {
       throw new BadRequestException(`User with email ${email} not found`);
+    }
+    return user;
+  }
+
+  async findUserByUserId(id: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id } });
+
+    if (!user) {
+      throw new BadRequestException(`User with id ${id} not found`);
     }
     return user;
   }
@@ -169,13 +178,15 @@ export class UserService {
    *
    */
   async findResetPasswordUser(resetRequestId: string): Promise<User> {
-    console.log("resetRequestId-->", resetRequestId);
-    
     const userPasswordResetData = await this.userRepository.findOne({
-      where: { resetRequestId }
+      where: { resetRequestId },
     });
-    console.log("userPasswordResetData-->", userPasswordResetData);
-    if (!userPasswordResetData || !userPasswordResetData.resetPasswordToken || !userPasswordResetData.resetPasswordExpires) {
+
+    if (
+      !userPasswordResetData ||
+      !userPasswordResetData.resetPasswordToken ||
+      !userPasswordResetData.resetPasswordExpires
+    ) {
       throw new BadRequestException('Invalid or expired token.');
     }
     return userPasswordResetData;

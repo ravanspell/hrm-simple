@@ -51,7 +51,7 @@ export class EmailSettingsService {
     };
 
     await this.emailSettingsRepository.createEmailSettings(newEmailSetting);
-    // create shalow copy of the created
+    // create shallow copy of the created
     const emailSettings = { ...newEmailSetting };
     delete emailSettings.emailAuthPassword;
     delete emailSettings.organization;
@@ -104,12 +104,13 @@ export class EmailSettingsService {
         emailSettingId,
         organizationId,
       );
-
+    // decrypt the SMTP password
+    const emailAuthPassword = this.encryptionService.decrypt(
+      emailSettings.emailAuthPassword,
+    );
     return {
       ...emailSettings,
-      emailAuthPassword: this.encryptionService.decrypt(
-        emailSettings.emailAuthPassword,
-      ),
+      emailAuthPassword,
     };
   }
 

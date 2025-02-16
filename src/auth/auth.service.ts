@@ -2,10 +2,16 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { compare, hash, genSalt } from 'bcryptjs';
 import * as uuid from 'uuid';
+import { NotificationService } from '@/notification/notification.service';
+import { NOTIFICATION_TYPE } from '@/constants/notifications';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly userService: UserService) { }
+  constructor(
+    private readonly userService: UserService,
+    private readonly notificationService: NotificationService,
+  ) {}
 
   async verifyUser(email: string, password: string) {
     const user = await this.userService.findOne(email);
@@ -36,9 +42,8 @@ export class AuthService {
    * @returns An object containing the reset entry id and the raw token.
    *
    */
-  async initiateForgetPassword(
-    email: string,
-  ): Promise<{ id: string; token: string }> {
+  @Transactional()
+  async initiateForgetPassword(email: string): Promise<boolean> {
     const user = await this.userService.findOne(email);
     if (!user) {
       // Do not reveal user existence. Always respond with the same message.
@@ -62,18 +67,27 @@ export class AuthService {
     // Persist the changes.
     await this.userService.save(user);
 
-    // TODO: implement the email template with email service for forgot password
-    return { id: user.id, token };
+    // sends the password reset link into the user's email
+    // TODO: setup email template service to keep email templates.
+    await this.notificationService.publishNotification(
+      NOTIFICATION_TYPE.EMAIL,
+      {
+        userId: user.id,
+        subject: 'Password Reset',
+        body: `Hi, follow this link to reset your password https://theapp.com/reset-password?rid=${resetRequestId}&token=${token}`,
+      },
+    );
+    return true;
   }
 
   /**
-  * Submits a new password for the forgot password flow.
-  *
-  * @param resetRequestId - Unique reset request identifier provided in the reset link.
-  * @param token - The raw reset token provided in the reset link.
-  * @param newPassword - The new password to set for the user.
-  *
-  */
+   * Submits a new password for the forgot password flow.
+   *
+   * @param resetRequestId - Unique reset request identifier provided in the reset link.
+   * @param token - The raw reset token provided in the reset link.
+   * @param newPassword - The new password to set for the user.
+   *
+   */
   async submitForgotPassword(
     resetRequestId: string,
     token: string,
@@ -81,14 +95,14 @@ export class AuthService {
   ): Promise<void> {
     // Retrieve the user by the resetRequestId.
     const user = await this.userService.findResetPasswordUser(resetRequestId);
-  
+
     // Verify that the token has not expired.
     if (new Date() > user.resetPasswordExpires) {
       throw new BadRequestException('Token has expired.');
     }
     // Validate the provided token.
     const isValid = await compare(token, user.resetPasswordToken);
-    
+
     if (!isValid) {
       throw new BadRequestException('Invalid token.');
     }

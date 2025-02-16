@@ -8,6 +8,7 @@ import { NotificationService } from './notification.service';
 import { PushNotificationTokenRepository } from '@/repository/push-notification-token.repository';
 import { FirebaseService } from '@/utilities/firebase-admin-service/firebase-admin.service';
 import { NotificationRepository } from '@/repository/notification.repository';
+import { UserModule } from '@/user/user.module';
 
 /**
  * defined notification module as global
@@ -15,7 +16,7 @@ import { NotificationRepository } from '@/repository/notification.repository';
  */
 @Global()
 @Module({
-  imports: [EmailSettingsModule],
+  imports: [EmailSettingsModule, UserModule],
   providers: [
     AwsSqsService,
     NotificationService,
