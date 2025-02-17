@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -12,6 +13,7 @@ import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { RequestWithTenant } from '@/coretypes';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { API_VERSION } from '@/constants/common';
 
 @Controller('role')
 export class RoleController {
@@ -40,11 +42,11 @@ export class RoleController {
    * @param createRoleData Data to create the role.
    */
   @Post('role')
-  @Version('1')
+  @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Create a new role' })
   @ApiBody({ type: CreateRoleDto })
-  @ApiResponse({ status: 201, description: 'Role successfully created' })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Role successfully created' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request' })
   createRole(
     @Body() createRoleData: CreateRoleDto,
     @Req() requestWithTenant: RequestWithTenant,
@@ -60,7 +62,7 @@ export class RoleController {
    * @param updateRoleData Data to update the role.
    */
   @Put('role/:id')
-  @Version('1')
+  @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Update a role by ID' })
   @ApiParam({ name: 'id', type: String, description: 'Role ID' })
   @ApiBody({ type: UpdateRoleDto })

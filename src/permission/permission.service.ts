@@ -28,11 +28,11 @@ import { PermissionCategory } from './entities/permission-category.entity';
 @Injectable()
 export class PermissionService {
   constructor(
-    private permissionCategoryRepo: PermissionCategoryRepository,
-    private systemPermissionRepo: SystemPermissionRepository,
-    private orgLicenseRepo: OrganizationLicensedPermissionRepository,
-    private userDirectPermissionRepo: UserDirectPermissionRepository,
-    private effectiveUserPermissionRepo: EffectiveUserPermissionsRepository,
+    private readonly permissionCategoryRepo: PermissionCategoryRepository,
+    private readonly systemPermissionRepo: SystemPermissionRepository,
+    private readonly orgLicenseRepo: OrganizationLicensedPermissionRepository,
+    private readonly userDirectPermissionRepo: UserDirectPermissionRepository,
+    private readonly effectiveUserPermissionRepo: EffectiveUserPermissionsRepository,
   ) {}
 
   /**

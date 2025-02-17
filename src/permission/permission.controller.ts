@@ -23,8 +23,9 @@ export class PermissionController {
   constructor(private readonly permissionService: PermissionService) {}
 
   @Get('user-permissions')
+  @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Get system permissions with filters' })
-  @ApiResponse({ status: 200, description: 'Returns filtered permissions' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Returns filtered permissions' })
   async getPermissions(@Req() req: RequestWithTenant) {
     const userId = req.user.id;
     return this.permissionService.getUserEffectivePermissions(userId);
@@ -37,14 +38,14 @@ export class PermissionController {
    * @returns The created permission
    */
   @Post()
+  @Version(API_VERSION.V1)
   @Authentication()
   @ApiOperation({ summary: 'Create a new system permission' })
   @ApiResponse({
-    status: 201,
+    status: HttpStatus.CREATED,
     description: 'The system permission has been successfully created.',
   })
-  @ApiResponse({ status: 400, description: 'Bad Request.' })
-  @Version(API_VERSION.V1)
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request.' })
   async createSystemPermission(
     @Body() createSystemPermissionDto: CreateSystemPermissionDto,
     @Req() request: RequestWithTenant,
@@ -64,6 +65,7 @@ export class PermissionController {
    * @returns The updated permission
    */
   @Put('/:id')
+  @Version(API_VERSION.V1)
   @Authentication()
   @ApiOperation({ summary: 'Update an existing permission' })
   @ApiResponse({
@@ -74,7 +76,6 @@ export class PermissionController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Permission not found.',
   })
-  @Version(API_VERSION.V1)
   async updatePermission(
     @Param('id') permissionId: string,
     @Body() updatePermissionReqBody: UpdateSystemPermissionDto,
