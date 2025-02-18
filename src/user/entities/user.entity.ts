@@ -15,9 +15,7 @@ import { Organization } from '@/organization/entities/organization.entity';
 import { USER_TABLE } from 'src/constants/dbTables';
 import { FileMgt } from 'src/file-management/entities/file-management.entity';
 import { Folder } from 'src/file-management/entities/folder.entity';
-import { Role } from './role.entity';
-import { Scope } from './scope.entity';
-import { UserScope } from './user-scope.entity';
+import { Role } from '../../role/entities/role.entity';
 import { PushNotificationToken } from '@/notification/entities/push-notification-token.entity';
 import { Notification } from '@/notification/entities/notification.entity';
 
@@ -102,16 +100,9 @@ export class User {
   @OneToMany(() => Folder, (folder) => folder.updater)
   updatedFolders: Folder[];
 
-  @ManyToMany(() => Role, (role) => role.users)
+  @ManyToMany(() => Role, (role) => role.userRoles)
   @JoinTable()
   roles: Role[];
-
-  @ManyToMany(() => Scope, (scope) => scope.users)
-  @JoinTable()
-  scopes: Scope[];
-
-  @OneToMany(() => UserScope, (userScope) => userScope.user)
-  customScopes: UserScope[];
 
   @OneToMany(
     () => PushNotificationToken,

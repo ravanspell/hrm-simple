@@ -8,13 +8,10 @@ import {
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
-  // eslint-disable-next-line class-methods-use-this
   catch(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
-    const request = ctx.getRequest();
 
-    const url = request.originalUrl;
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
@@ -30,6 +27,5 @@ export class HttpExceptionFilter implements ExceptionFilter {
     response.status(status);
     response.header('Content-Type', 'application/json; charset=utf-8');
     response.send(errorResponse);
-    // errorLogger.error(url, errorResponse);
   }
 }

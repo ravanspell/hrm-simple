@@ -5,8 +5,6 @@ import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Organization } from '@/organization/entities/organization.entity';
 import { UserRepository } from 'src/repository/user.repository';
-import { RoleRepository } from '@/repository/role.repository';
-import { RolesService } from './roles.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 export type UserWithScopes = Omit<User, 'roles' | 'scopes'> & {
@@ -20,8 +18,6 @@ export class UserService {
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
     private readonly userRepository: UserRepository,
-    private readonly roleRepository: RoleRepository,
-    private readonly roleService: RolesService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -90,38 +86,6 @@ export class UserService {
   }
 
   /**
-   * Fetch a user with their roles by user ID.
-   * @param userId - The ID of the user.
-   * @returns The User entity with roles.
-   */
-  async findUserWithRoles(userId: string): Promise<User> {
-    const user = await this.userRepository.findUserWithRoles(userId);
-
-    if (!user) {
-      throw new BadRequestException(`User with ID ${userId} not found.`);
-    }
-
-    return user;
-  }
-
-  /**
-   * Assign multiple roles to a user.
-   * @param userId - The ID of the user.
-   * @param roleIds - An array of role IDs to assign.
-   * @returns The updated user entity with the assigned roles.
-   */
-  async updateUserRoles(userId: string, roleIds: string[]): Promise<User> {
-    // Fetch the user along with their current roles
-    const user = await this.findUserWithRoles(userId);
-    // Fetch the roles by the provided role IDs
-    const newRoles = await this.roleService.findRolesByIds(roleIds);
-    // Assign the new roles to the user
-    user.roles = newRoles;
-    // Save the user with updated roles
-    return await this.userRepository.saveUser(user);
-  }
-
-  /**
    * Fetch a user's assigned scopes.
    *
    * This method retrieves all scopes assigned to a user, combining:
@@ -155,18 +119,17 @@ export class UserService {
       throw new BadRequestException('User with ID not found.');
     }
 
-    // Combine role-based scopes and custom scopes
-    const roleBasedScopes = user.roles.flatMap((role) => role.scopes);
-    const customScopes = user?.scopes || [];
+    // // Combine role-based scopes and custom scopes
+    // const roleBasedScopes = user.roles.flatMap((role) => role.rolePermissions);
 
-    // Merge all scopes, deduplicate by scope name
-    const combinedScopes = Array.from(
-      new Set([...roleBasedScopes, ...customScopes].map((scope) => scope.name)),
-    );
+    // // Merge all scopes, deduplicate by scope name
+    // const combinedScopes = Array.from(
+    //   new Set([...roleBasedScopes].map((scope) => scope.systemPermissionId)),
+    // );
 
     return {
       ...user,
-      scopes: combinedScopes,
+      scopes: [],
     };
   }
 

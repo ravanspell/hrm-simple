@@ -1,4 +1,4 @@
-import { DataSource, Repository, UpdateResult } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Notification } from '@/notification/entities/notification.entity';
 

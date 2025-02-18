@@ -24,3 +24,11 @@ export const USER_ROLE_TABLE = 'user_role';
 export const SCOPE_CATEGORY_TABLE = 'scope_category';
 export const USER_SCOPE_TABLE = 'user_scope';
 export const PUSH_NOTIFICATION_TOKENS_TABLE = 'push_notification_token';
+
+export const PERMISSION_CATEGORIES_TABLE = 'permission_categories';
+export const SYSTEM_PERMISSIONS_TABLE = 'system_permissions';
+export const ORGANIZATION_LICENSED_PERMISSIONS_TABLE =
+  'organization_licensed_permissions';
+export const USER_DIRECT_PERMISSIONS_TABLE = 'user_direct_permissions';
+export const EFFECTIVE_USER_PERMISSIONS_VIEW = 'effective_user_permissions';
+export const PERMISSION_PREFIXES_TABLE = 'permission_prefixes';

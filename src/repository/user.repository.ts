@@ -33,18 +33,6 @@ export class UserRepository extends Repository<User> {
   }
 
   /**
-   * Finds a user by their ID and includes their roles.
-   * @param userId - The ID of the user to find.
-   * @returns A promise that resolves to the User entity with roles or null if not found.
-   */
-  async findUserWithRoles(userId: string): Promise<User | null> {
-    return this.findOne({
-      where: { id: userId },
-      relations: ['roles'],
-    });
-  }
-
-  /**
    * Finds a user with their assigned scopes.
    *
    * This method retrieves a user from the database along with:
@@ -87,10 +75,10 @@ export class UserRepository extends Repository<User> {
 
     return this.findOne({
       where: { id: userId },
-      relations: [
-        'roles.scopes', // Fetch scopes associated with the user's roles
-        // 'scopes',       // Fetch custom scopes directly assigned to the user
-      ],
+      // relations: [
+      //   'roles.scopes', // Fetch scopes associated with the user's roles
+      //   // 'scopes',       // Fetch custom scopes directly assigned to the user
+      // ],
     });
   }
 }
