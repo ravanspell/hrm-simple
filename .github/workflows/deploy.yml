@@ -1,0 +1,99 @@
+name: The deployment of the REST API
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+
+    # Create production .env file
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        ENV='${{ secrets.ENV }}'
+        AWS_ACCESS_KEY_ID='${{ secrets.AWS_ACCESS_KEY_ID }}'
+        AWS_SECRET_ACCESS_KEY='${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+        AWS_REGION='${{ secrets.AWS_REGION }}'
+        MYSQL_ALLOW_EMPTY_PASSWORD='${{ secrets.MYSQL_ALLOW_EMPTY_PASSWORD }}'
+        PRIMARY_DATABASE_TYPE='${{ secrets.PRIMARY_DATABASE_TYPE }}'
+        PRIMARY_DATABASE='${{ secrets.PRIMARY_DATABASE }}'
+        PRIMARY_DATABASE_PORT='${{ secrets.PRIMARY_DATABASE_PORT }}'
+        PRIMARY_DATABASE_CONNECTION_LIMIT='${{ secrets.PRIMARY_DATABASE_CONNECTION_LIMIT }}'
+        PRIMARY_DATABASE_PASSWORD='${{ secrets.PRIMARY_DATABASE_PASSWORD }}'
+        SESSION_TOKEN_SECRET='${{ secrets.SESSION_TOKEN_SECRET }}'
+        SESSION_TOKEN_SECRET_EXPIRATION_MS='${{ secrets.SESSION_TOKEN_SECRET_EXPIRATION_MS }}'
+        PERMANENT_BUCKET_NAME='${{ secrets.PERMANENT_BUCKET_NAME }}'
+        DIRTY_BUCKET_NAME='${{ secrets.DIRTY_BUCKET_NAME }}'
+        NOTIFICATION_QUEUE_URL='${{ secrets.NOTIFICATION_QUEUE_URL }}'
+        ENCRYPTION_KEY='${{ secrets.ENCRYPTION_KEY }}'
+        FIREBASE_PROJECT_ID='${{ secrets.FIREBASE_PROJECT_ID }}'
+        FIREBASE_PRIVATE_KEY='${{ secrets.FIREBASE_PRIVATE_KEY }}'
+        FIREBASE_CLIENT_EMAIL='${{ secrets.FIREBASE_CLIENT_EMAIL }}'
+        EOF
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build application
+      run: npm run build
+
+    # Create SSH key file
+    - name: Create SSH key file
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+    # Deploy to EC2
+    - name: Deploy to EC2
+      run: |
+        # Stop existing PM2 process if exists
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+          if pm2 list | grep -q "nest-app"; then
+            pm2 stop nest-app
+            pm2 delete nest-app
+          fi
+        '
+        
+        # Create deployment directory
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+          rm -rf ~/nest-app
+          mkdir -p ~/nest-app
+        '
+        
+        # Copy only necessary files to EC2
+        scp -i ~/.ssh/id_rsa -r \
+          ./dist \
+          ./package.json \
+          ./package-lock.json \
+          ./.env \
+          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/nest-app/
+        
+        # Install dependencies, run DB sync, and start application
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+          cd ~/nest-app
+          if ! command -v pm2 &> /dev/null; then
+            npm install -g pm2
+          fi
+          npm ci --production
+          
+          # Run TypeORM schema sync
+          node dist/typeorm-cli.js schema:sync
+          
+          # Start the application with PM2
+          pm2 start dist/main.js --name "nest-app"
+          pm2 save
+        '
