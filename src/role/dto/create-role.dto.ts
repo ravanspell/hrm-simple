@@ -1,7 +1,7 @@
 import { IsString, IsOptional, IsUUID, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class CreateRoleDto {
+export class CreateRoleRequest {
   /**
    * The name of the role.
    * @example "Admin"

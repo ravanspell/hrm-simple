@@ -55,4 +55,13 @@ export class RoleRepository extends Repository<Role> {
   async findRolesByIds(roleIds: string[]): Promise<Role[]> {
     return this.findBy({ id: In(roleIds) });
   }
+
+  /**
+   * Saves a role.
+   * @param role - The role to save.
+   * @returns A promise that resolves to the saved Role entity.
+   */
+  async saveRole(role: Role): Promise<Role> {
+    return this.save(role);
+  }
 }
