@@ -4,7 +4,7 @@
  * configuration values and sets up the DataSource with transactional support.
  */
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource, DataSourceOptions } from 'typeorm';
@@ -14,50 +14,44 @@ import { DataSource, DataSourceOptions } from 'typeorm';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      // TODO: config service to be used to get the configuration values
-      useFactory: (configService: ConfigService) => {
+      useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => {
         const isDevelopment = configService.get('ENV') === 'dev';
-
         return {
           name: 'default',
-          type: 'mysql',
-          host: 'mysql', // Use the Docker container name or IP address
+          type: configService.get('PRIMARY_DATABASE_TYPE') as any,
+          host: configService.get('PRIMARY_DATABASE_HOST'),
           port: +configService.get('PRIMARY_DATABASE_PORT'),
-          username: 'root', // Replace with your MySQL username
-          password: '', // Replace with your MySQL password
-          database: configService.get('PRIMARY_DATABASE'), // Replace with your MySQL database name
-          timezone: 'Z', // Timezone
-          synchronize: false, // Auto synchronize schema with database
-          logging: isDevelopment, // Enable query logging for development only
-          maxQueryExecutionTime: 1000, // Log queries that take longer than 1000 ms (1 second)
+          username: configService.get('PRIMARY_DATABASE_USERNAME'),
+          password: configService.get<string>('PRIMARY_DATABASE_PASSWORD'),
+          database: configService.get<string>('PRIMARY_DATABASE'),
+          timezone: configService.get<string>('PRIMARY_DATABASE_TIMEZONE'),
+          logging: isDevelopment,
+          maxQueryExecutionTime: +configService.get('PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME'),
+          entities: [__dirname + '/../**/*.entity.{js,ts}'],
+          migrations: [__dirname + '/../migrations/**/*{.ts,js}'],
+          subscribers: [__dirname + '/../**/*.subscriber.{js,ts}'],
+          synchronize: isDevelopment,
+          migrationsRun: false,
+          migrationsTableName: 'migrations',
           extra: {
-            connectionLimit: +configService.get(
-              'PRIMARY_DATABASE_CONNECTION_LIMIT',
-            ), // Maximum number of database connections in pool (default is 10)
-          },
-          insecureAuth: false, // Allow insecure authentication
-          connectTimeout: 10000, // Connection timeout (in ms)
-          entities: [__dirname + '/../**/*.entity.{js,ts}'], // Load all entities dynamically
-          // this is to attach current deployment env to be used in datasource factory
-          isDevelopment,
+            connectionLimit: +configService.get('PRIMARY_DATABASE_CONNECTION_LIMIT'),
+            idleTimeoutMillis: +configService.get('PRIMARY_DATABASE_IDLE_TIMEOUT'),
+            connectionTimeoutMillis: +configService.get('PRIMARY_DATABASE_CONNECTION_TIMEOUT'),
+          }
         };
       },
       dataSourceFactory: async (
-        options: DataSourceOptions & { isDevelopment: boolean },
+        options: DataSourceOptions,
       ) => {
         const dataSource = new DataSource(options);
         // add transactional support to the DataSource
         addTransactionalDataSource(dataSource);
         // initialize the DataSource to connect to the database
         await dataSource.initialize();
-        // sync with change into the database when changes made
-        if (options.isDevelopment) {
-          await dataSource.synchronize();
-        }
         console.log('Data Source has been initialized!!');
         return dataSource;
       },
     }),
   ],
 })
-export class DatabaseModule {}
+export class DatabaseModule { }
