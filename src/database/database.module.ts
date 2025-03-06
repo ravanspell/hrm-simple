@@ -31,7 +31,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
           migrations: [__dirname + '/../migrations/**/*{.ts,js}'],
           subscribers: [__dirname + '/../**/*.subscriber.{js,ts}'],
           synchronize: isDevelopment,
-          migrationsRun: false,
+          migrationsRun: configService.get('DATABASE_MIGRATIONS_RUN') === 'true',
           migrationsTableName: 'migrations',
           extra: {
             connectionLimit: +configService.get('PRIMARY_DATABASE_CONNECTION_LIMIT'),
