@@ -46,7 +46,7 @@ export class EC2Stack extends Construct {
             },
             // Configure the root volume
             rootBlockDevice: {
-                volumeSize: 4,              // size in GiB
+                volumeSize: 8,              // size in GiB
                 volumeType: "gp3",          // general purpose 3 (SSD)
                 encrypted: true,            // encrypt the volume
                 deleteOnTermination: false  // automatically delete volume on instance termination (if true)

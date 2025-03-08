@@ -2,6 +2,7 @@ import { S3Backend, TerraformStack } from 'cdktf';
 import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
 import { Construct } from 'constructs';
 import { AWS_REGION, S3_STATE_PATH } from './constants';
+import { config } from './stacks/front-end-stack/config';
 
 export class BaseStack extends TerraformStack {
     constructor(scope: Construct, id: string) {
@@ -12,13 +13,10 @@ export class BaseStack extends TerraformStack {
             secretKey: '',
             defaultTags: [
                 {
-                    tags: {
-                        environment: 'dev',
-                    },
+                    tags: config.tags                    
                 },
             ],
         });
-
         // S3 Backend for state storage
         // Terraform state in an S3 bucket and,
         // DynamoDB for state locking to ensure only one process modifies the state at a time.
