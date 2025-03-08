@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class LoginDto {
   /**
@@ -40,4 +40,18 @@ export class LoginDto {
   @IsOptional()
   @IsString({ message: 'The notification token must be a string.' })
   notificationToken?: string;
+
+  /**
+   * The turnstile token for the user.
+   *
+   * This token is used to verify the user's turnstile token.
+   */
+  @ApiProperty({
+    description: 'The turnstile token for the user.',
+    example: 'turnstile_token_12345',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsString({ message: 'The turnstile token must be a string.' })
+  turnstileToken: string;
 }

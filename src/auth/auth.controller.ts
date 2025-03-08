@@ -24,6 +24,7 @@ import { LoginDto } from './dto/login.dto';
 import { ForgetPasswordRequest } from './dto/forget-password.dto';
 import { AuthService } from './auth.service';
 import { SubmitForgotPasswordRequest } from './dto/forgot-password-submit.dto';
+import { TurnstileService } from '@/utilities/turnstile-service/turnstile-service';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -32,6 +33,7 @@ export class AuthController {
     private readonly pushNotificationTokenRepository: PushNotificationTokenRepository,
     private readonly userService: UserService,
     private readonly authService: AuthService,
+    private readonly turnstileService: TurnstileService,
   ) {}
 
   /**
@@ -58,6 +60,9 @@ export class AuthController {
   async login(@Body() body: LoginDto, @Req() req: RequestWithTenant) {
     const user = req.user;
     const notificationToken = body?.notificationToken;
+    const turnstileToken = body.turnstileToken;
+    // verify turnstile token - turnstile is similar to reCAPTCHA
+    await this.turnstileService.verify(turnstileToken);
     // TODO: to be moved to service
     if (notificationToken) {
       await this.pushNotificationTokenRepository.upsertToken(
