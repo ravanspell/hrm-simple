@@ -23,7 +23,7 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
 
-    # Create production .env file
+    # Create deployment .env file
     - name: Create .env file
       run: |
         cat > .env << EOF
