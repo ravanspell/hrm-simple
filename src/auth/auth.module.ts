@@ -8,12 +8,13 @@ import { SessionSerializer } from './session.serializer';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Session } from './entities/session.entity';
 import { PushNotificationTokenRepository } from '@/repository/push-notification-token.repository';
-
+import { UtilitiesModule } from 'src/utilities/utilities.module';
 @Module({
   imports: [
     UserModule,
     PassportModule.register({ session: true }),
     TypeOrmModule.forFeature([Session]),
+    UtilitiesModule,
   ],
   exports: [],
   providers: [

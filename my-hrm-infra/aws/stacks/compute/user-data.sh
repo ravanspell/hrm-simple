@@ -32,31 +32,35 @@ sudo dnf update -y
 sudo dnf install -y unzip git
 
 # Install Node.js version 20 using NodeSource
-curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
-sudo dnf install -y nodejs
+if ! curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -; then
+    echo "Failed to set up NodeSource for Node.js"
+    exit 1
+fi
+if ! sudo dnf install -y nodejs; then
+    echo "Failed to install Node.js"
+    exit 1
+fi
 
 # Install PM2 globally
-sudo npm install -g pm2
+if ! sudo npm install -g pm2; then
+    echo "Failed to install PM2"
+    exit 1
+fi
 
 # Ensure PM2 starts on boot for ec2-user
-pm2 startup systemd -u ec2-user --hp /home/ec2-user
-sudo env PATH=$PATH:/home/ec2-user/.nvm/versions/node/v22.13.1/bin pm2 startup systemd -u ec2-user --hp /home/ec2-user
+if ! pm2 startup systemd -u ec2-user --hp /home/ec2-user; then
+    echo "Failed to set up PM2 startup"
+    exit 1
+fi
 
-# Create a dedicated directory for the backend
-mkdir -p backend
+# Create a dedicated directory for the api
+mkdir -p api
 
 # Change ownership to ec2-user
-sudo chown -R ec2-user:ec2-user backend
+sudo chown -R ec2-user:ec2-user api
 
 # change the dir to navigate to the directory
-cd backend
-
-# Initialize Git repo (if not already initialized)
-if [ ! -d ".git" ]; then
-  echo "Initializing Git repository..."
-  git init
-  git remote add origin https://github.com/ravanspell/hrm-simple.git
-fi
+cd api
 
 # Create a new repository file for MariaDB
 sudo tee /etc/yum.repos.d/mariadb.repo << EOF
@@ -127,9 +131,9 @@ sudo cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 
       "files": {
         "collect_list": [
           {
-            "file_path": "/backend/logs/*.log",
-            "log_group_name": "/ec2/application/backend",
-            "log_stream_name": "{instance_id}-backend",
+            "file_path": "/api/logs/*.log",
+            "log_group_name": "/ec2/application/api",
+            "log_stream_name": "{instance_id}-api",
             "timestamp_format": "%Y-%m-%d %H:%M:%S"
           }
         ]
