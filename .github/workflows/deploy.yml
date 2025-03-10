@@ -60,7 +60,9 @@ jobs:
       run: npm ci
 
     - name: Build application
-      run: npm run build
+      run: |
+        echo "my-hrm-infra" >> .gitignore
+        npm run build
 
     # Create SSH key file
     - name: Create SSH key file
