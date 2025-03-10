@@ -1,11 +1,10 @@
 name: The deployment of the REST API
 
-# Temporarily disabled workflow triggers
-# on:
-#   push:
-#     branches: [ master ]
-#   pull_request:
-#     branches: [ master ]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
     
 # Define environment variables that will be used across jobs
 env:
@@ -37,6 +36,14 @@ jobs:
         PRIMARY_DATABASE_PORT='${{ secrets.PRIMARY_DATABASE_PORT }}'
         PRIMARY_DATABASE_CONNECTION_LIMIT='${{ secrets.PRIMARY_DATABASE_CONNECTION_LIMIT }}'
         PRIMARY_DATABASE_PASSWORD='${{ secrets.PRIMARY_DATABASE_PASSWORD }}'
+        PRIMARY_DATABASE_HOST='${{ secrets.PRIMARY_DATABASE_HOST }}'
+        PRIMARY_DATABASE_USERNAME='${{ secrets.PRIMARY_DATABASE_USERNAME }}'
+        PRIMARY_DATABASE_TIMEZONE='${{ secrets.PRIMARY_DATABASE_TIMEZONE }}'
+        PRIMARY_DATABASE_LOGGING='${{ secrets.PRIMARY_DATABASE_LOGGING }}'
+        PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME='${{ secrets.PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME }}'
+        PRIMARY_DATABASE_IDLE_TIMEOUT='${{ secrets.PRIMARY_DATABASE_IDLE_TIMEOUT }}'
+        PRIMARY_DATABASE_CONNECTION_TIMEOUT='${{ secrets.PRIMARY_DATABASE_CONNECTION_TIMEOUT }}'
+        DATABASE_MIGRATIONS_RUN='${{ secrets.DATABASE_MIGRATIONS_RUN }}'
         SESSION_TOKEN_SECRET='${{ secrets.SESSION_TOKEN_SECRET }}'
         SESSION_TOKEN_SECRET_EXPIRATION_MS='${{ secrets.SESSION_TOKEN_SECRET_EXPIRATION_MS }}'
         PERMANENT_BUCKET_NAME='${{ secrets.PERMANENT_BUCKET_NAME }}'
@@ -46,7 +53,8 @@ jobs:
         FIREBASE_PROJECT_ID='${{ secrets.FIREBASE_PROJECT_ID }}'
         FIREBASE_PRIVATE_KEY='${{ secrets.FIREBASE_PRIVATE_KEY }}'
         FIREBASE_CLIENT_EMAIL='${{ secrets.FIREBASE_CLIENT_EMAIL }}'
-        EOF
+        CLOUDFLARE_TURNSTILE_SECRET_KEY='${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}'
+        EOF 
 
     - name: Install dependencies
       run: npm ci
@@ -67,16 +75,16 @@ jobs:
       run: |
         # Stop existing PM2 process if exists
         ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
-          if pm2 list | grep -q "nest-app"; then
-            pm2 stop nest-app
-            pm2 delete nest-app
+          if pm2 list | grep -q "api"; then
+            pm2 stop api
+            pm2 delete api
           fi
         '
         
         # Create deployment directory
         ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
-          rm -rf ~/nest-app
-          mkdir -p ~/nest-app
+          rm -rf ~/api
+          mkdir -p ~/api
         '
         
         # Copy only necessary files to EC2
@@ -85,11 +93,11 @@ jobs:
           ./package.json \
           ./package-lock.json \
           ./.env \
-          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/nest-app/
+          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/api/
         
         # Install dependencies, run DB sync, and start application
         ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
-          cd ~/nest-app
+          cd ~/api
           if ! command -v pm2 &> /dev/null; then
             npm install -g pm2
           fi
@@ -99,6 +107,6 @@ jobs:
           node dist/typeorm-cli.js schema:sync
           
           # Start the application with PM2
-          pm2 start dist/main.js --name "nest-app"
+          pm2 start dist/main.js --name "api"
           pm2 save
         '
