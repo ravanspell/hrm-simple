@@ -76,10 +76,8 @@ jobs:
       run: |
         # Stop existing PM2 process if exists
         ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
-          if pm2 list | grep -q "api"; then
-            pm2 stop api
-            pm2 delete api
-          fi
+          pm2 stop api || true
+          pm2 delete api || true
         '
         
         # Create deployment directory
