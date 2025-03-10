@@ -7,14 +7,28 @@ import {
   Transactional,
 } from 'typeorm-transactional';
 import { Role } from './entities/role.entity';
+import { CreateRoleRequest } from './dto/create-role.dto';
 
 @Injectable()
 export class RoleService {
   constructor(
     private readonly roleRepository: RoleRepository,
     private readonly userRoleRepository: UserRoleRepository,
-  ) {}
+  ) { }
 
+  /**
+   * Create a new role.
+   * @param createRoleData - The data to create the role.
+   * @param organizationId - The ID of the organization.
+   * @returns The created role.
+   */
+  async createRole(createRoleData: CreateRoleRequest, organizationId: string): Promise<Role> {
+    const role = new Role();
+    role.name = createRoleData.name;
+    role.description = createRoleData.description;
+    role.organizationId = organizationId;
+    return this.roleRepository.saveRole(role);
+  }
   /**
    * Fetch roles by their IDs.
    * @param roleIds - An array of role IDs.

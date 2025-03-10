@@ -1,9 +1,15 @@
 import { Construct } from "constructs";
 import { readFileSync } from "fs";
 import { Instance } from "@cdktf/provider-aws/lib/instance";
+import { KeyPair } from '@cdktf/provider-aws/lib/key-pair';
+import { TlsProvider } from '@cdktf/provider-tls/lib/provider';
+import { PrivateKey } from '@cdktf/provider-tls/lib/private-key';
 import { join } from "path";
 import { NetworkingStack } from "../core/networking";
 import { SecurityStack } from "../core/security";
+import { File } from "@cdktf/provider-local/lib/file";
+import { LocalProvider } from "@cdktf/provider-local/lib/provider";
+
 
 export class EC2Stack extends Construct {
     public readonly ec2Instance: Instance;
@@ -14,6 +20,26 @@ export class EC2Stack extends Construct {
         securityStack: SecurityStack
     ) {
         super(scope, id);
+
+        /**
+         * The TLS provider is used to generate a new RSA private key
+         */
+        new TlsProvider(this, 'tls', {});
+        /**
+         * The Local provider is used to save the private key to a local file
+         */
+        new LocalProvider(this, "local");
+        // Generate a new RSA private key
+        const privateKey = new PrivateKey(this, 'private_key', {
+            algorithm: 'RSA',
+            rsaBits: 4096, // Strong key size
+        });
+
+        // Save the private key to the key pair
+        const keyPair = new KeyPair(this, 'key_pair', {
+            keyName: 'instance-key-pair',
+            publicKey: privateKey.publicKeyOpenssh,
+        });
 
         // Get the saved infra info from the terraform state
         // const remoteState = new DataTerraformRemoteStateS3(this, "the-remote-state", {
@@ -28,7 +54,7 @@ export class EC2Stack extends Construct {
 
         // Read the user-data.sh file and encode it in Base64
         const userData = readFileSync(join(__dirname, 'user-data.sh'), 'utf-8');
-        
+
         this.ec2Instance = new Instance(this, 'my-hrm-ec2-instance', {
             // Amazon Linux 2023 - Amazon Machine Image (AMI)
             // https://aws.amazon.com/linux/amazon-linux-2023
@@ -40,6 +66,7 @@ export class EC2Stack extends Construct {
             vpcSecurityGroupIds: [securityGroup],
             subnetId: publicSubnetId,
             userDataReplaceOnChange: true,
+            keyName: keyPair.keyName,
             metadataOptions: {
                 httpTokens: "required",
                 httpEndpoint: "enabled",
@@ -54,6 +81,16 @@ export class EC2Stack extends Construct {
             tags: {
                 Name: 'primary-ec2-Instance-hrm',
             },
+        });
+
+        /**
+         * Save the private key to a local file
+         * check cdktf.out folder for the generated file
+         */
+        new File(this, "PrivateKeyFile", {
+            filename: "./my-private-key.pem",
+            content: privateKey.privateKeyPem,
+            filePermission: "600",
         });
     }
 }
