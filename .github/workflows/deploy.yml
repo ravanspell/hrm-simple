@@ -61,7 +61,7 @@ jobs:
 
     - name: Build application
       run: |
-        npm run build
+        npm run build --prefix ./
 
     # Create SSH key file
     - name: Create SSH key file
