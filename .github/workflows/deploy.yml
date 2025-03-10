@@ -61,7 +61,7 @@ jobs:
 
     - name: Build application
       run: |
-        npm run build --prefix ./
+        npm run build --ignore=my-hrm-infra
 
     # Create SSH key file
     - name: Create SSH key file
