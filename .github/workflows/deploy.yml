@@ -65,10 +65,25 @@ jobs:
 
     - name: EC2 deployment - Set up SSH key
       run: |
+        # Create the SSH directory
         mkdir -p ~/.ssh
+        echo "SSH directory created"
+        
+        # Write the key with line count check
         echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        echo "Key written to file, line count: $(wc -l < ~/.ssh/id_rsa)"
+        
+        # Set permissions
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+        echo "Key permissions set to 600"
+        
+        # Check key format (without revealing private data)
+        head -n 1 ~/.ssh/id_rsa | grep -q "BEGIN" && echo "Key appears to be in PEM format" || echo "ERROR: Key doesn't start with BEGIN line"
+        
+        # Add host to known_hosts
+        echo "Running ssh-keyscan for ${{ secrets.EC2_HOST }}"
+        ssh-keyscan ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts || echo "ssh-keyscan failed with code $?"
+        echo "Known hosts file now contains $(wc -l < ~/.ssh/known_hosts) lines"
       
     - name: EC2 deployment - Test SSH connection
       run: ssh -v -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
