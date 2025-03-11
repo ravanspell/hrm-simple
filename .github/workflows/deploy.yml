@@ -86,7 +86,9 @@ jobs:
         echo "Known hosts file now contains $(wc -l < ~/.ssh/known_hosts) lines"
       
     - name: EC2 deployment - Test SSH connection
-      run: ssh -v -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
+      run: |
+        echo "Testing SSH connection..."
+        ssh -vvv -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
       
     - name: EC2 deployment -  Stop existing PM2 process
       run: |
