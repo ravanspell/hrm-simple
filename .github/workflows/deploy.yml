@@ -63,46 +63,61 @@ jobs:
       run: |
         npm run build
 
-    - name: EC2 deployment -Install SSH key
-      uses: shimataro/ssh-key-action@v2
-      with:
-        key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-        known_hosts: ${{ secrets.EC2_HOST }}
-
-
+    - name: EC2 deployment - Set up SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+      
+    - name: EC2 deployment - Test SSH connection
+      run: ssh -v -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
+      
+    - name: EC2 deployment -  Stop existing PM2 process
+      run: |
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+          if pm2 describe the-hrm-api > /dev/null 2>&1; then
+            pm2 stop the-hrm-api
+            pm2 delete the-hrm-api
+          fi
+        '
     - name: EC2 deployment - Create deployment directory
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
           rm -rf ~/api
           mkdir -p ~/api
         '
-
+      
     - name: EC2 deployment - Copy application files to EC2
       run: |
-        scp -o StrictHostKeyChecking=no -r \
+        scp -i ~/.ssh/id_rsa -r \
           ./dist \
           ./package.json \
           ./package-lock.json \
           ./.env \
           ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/api/
-
+      
     - name: EC2 deployment - Install dependencies and run database sync
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
           cd ~/api
           if ! command -v pm2 &> /dev/null; then
             npm install -g pm2
           fi
           npm ci --production
-          
+            
           # Run TypeORM schema sync - Temporary disabled
           #node dist/typeorm-cli.js schema:sync
         '
-
+      
     - name: EC2 deployment - Start application with PM2
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
           cd ~/api
           pm2 start dist/main.js --name "the-hrm-api"
           pm2 save
         '
+      
+    - name: EC2 deployment - Clean up SSH key
+      if: always()
+      run: rm -f ~/.ssh/id_rsa
