@@ -99,8 +99,10 @@ jobs:
     - name: EC2 deployment - Extract archive
       run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          echo "Starting extraction..."
           tar -xzf ~/deploy.tar.gz -C ~/api/
           rm ~/deploy.tar.gz  # Cleanup
+          echo "Extraction completed successfully."
         EOF
 
     - name: EC2 deployment - Install dependencies and run database sync
