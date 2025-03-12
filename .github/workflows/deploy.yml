@@ -54,11 +54,11 @@ jobs:
         echo "FIREBASE_CLIENT_EMAIL='${{ secrets.FIREBASE_CLIENT_EMAIL }}'" >> .env
         echo "CLOUDFLARE_TURNSTILE_SECRET_KEY='${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}'" >> .env
 
-    - name: Ensure .env Exists and Set Permissions
+    - name: Ensure .env exists and set permissions
       run: |
         ls -la .env  # Check if the file exists
         chmod 644 .env
-        
+
     - name: Install dependencies
       run: npm ci
 
@@ -90,16 +90,19 @@ jobs:
           rm -rf ~/api
           mkdir -p ~/api
         '
-      
-    - name: EC2 deployment - Copy application files to EC2
+    - name: EC2 deployment - Compress build files
+      run: tar -czf deploy.tar.gz dist package.json package-lock.json .env
+
+    - name: Copy archive to EC2
+      run: scp -i ~/.ssh/id_rsa deploy.tar.gz ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/
+
+    - name: EC2 deployment - Extract archive
       run: |
-        scp -i ~/.ssh/id_rsa -r \
-          ./dist \
-          ./package.json \
-          ./package-lock.json \
-          .env \
-          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/api/
-      
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          tar -xzf ~/deploy.tar.gz -C ~/api/
+          rm ~/deploy.tar.gz  # Cleanup
+        EOF
+
     - name: EC2 deployment - Install dependencies and run database sync
       run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
