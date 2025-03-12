@@ -3,8 +3,6 @@ name: The deployment of the REST API
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
     
 # Define environment variables that will be used across jobs
 env:
@@ -23,90 +21,116 @@ jobs:
         node-version: ${{ env.NODE_VERSION }}
 
     # Create deployment .env file
-    - name: Create .env file
+    - name: Create .env File
       run: |
-        cat > .env << EOF
-        ENV='${{ env.ENV }}'
-        AWS_ACCESS_KEY_ID='${{ secrets.AWS_ACCESS_KEY_ID }}'
-        AWS_SECRET_ACCESS_KEY='${{ secrets.AWS_SECRET_ACCESS_KEY }}'
-        AWS_REGION='${{ secrets.AWS_REGION }}'
-        MYSQL_ALLOW_EMPTY_PASSWORD='${{ env.MYSQL_ALLOW_EMPTY_PASSWORD }}'
-        PRIMARY_DATABASE_TYPE='${{ env.PRIMARY_DATABASE_TYPE }}'
-        PRIMARY_DATABASE='${{ env.PRIMARY_DATABASE }}'
-        PRIMARY_DATABASE_PORT='${{ env.PRIMARY_DATABASE_PORT }}'
-        PRIMARY_DATABASE_CONNECTION_LIMIT='${{ env.PRIMARY_DATABASE_CONNECTION_LIMIT }}'
-        PRIMARY_DATABASE_PASSWORD='${{ secrets.PRIMARY_DATABASE_PASSWORD }}'
-        PRIMARY_DATABASE_HOST='${{ env.PRIMARY_DATABASE_HOST }}'
-        PRIMARY_DATABASE_USERNAME='${{ secrets.PRIMARY_DATABASE_USERNAME }}'
-        PRIMARY_DATABASE_TIMEZONE='${{ env.PRIMARY_DATABASE_TIMEZONE }}'
-        PRIMARY_DATABASE_LOGGING='${{ env.PRIMARY_DATABASE_LOGGING }}'
-        PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME='${{ env.PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME }}'
-        PRIMARY_DATABASE_IDLE_TIMEOUT='${{ env.PRIMARY_DATABASE_IDLE_TIMEOUT }}'
-        PRIMARY_DATABASE_CONNECTION_TIMEOUT='${{ env.PRIMARY_DATABASE_CONNECTION_TIMEOUT }}'
-        DATABASE_MIGRATIONS_RUN='${{ env.DATABASE_MIGRATIONS_RUN }}'
-        SESSION_TOKEN_SECRET='${{ env.SESSION_TOKEN_SECRET }}'
-        SESSION_TOKEN_SECRET_EXPIRATION_MS='${{ env.SESSION_TOKEN_SECRET_EXPIRATION_MS }}'
-        PERMANENT_BUCKET_NAME='${{ env.PERMANENT_BUCKET_NAME }}'
-        DIRTY_BUCKET_NAME='${{ env.DIRTY_BUCKET_NAME }}'
-        NOTIFICATION_QUEUE_URL='${{ secrets.NOTIFICATION_QUEUE_URL }}'
-        ENCRYPTION_KEY='${{ secrets.ENCRYPTION_KEY }}'
-        FIREBASE_PROJECT_ID='${{ secrets.FIREBASE_PROJECT_ID }}'
-        FIREBASE_PRIVATE_KEY='${{ secrets.FIREBASE_PRIVATE_KEY }}'
-        FIREBASE_CLIENT_EMAIL='${{ secrets.FIREBASE_CLIENT_EMAIL }}'
-        CLOUDFLARE_TURNSTILE_SECRET_KEY='${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}'
-        EOF 
+        echo "ENV='${{ vars.ENV }}'" > .env
+        echo "AWS_ACCESS_KEY_ID='${{ secrets.AWS_ACCESS_KEY_ID }}'" >> .env
+        echo "AWS_SECRET_ACCESS_KEY='${{ secrets.AWS_SECRET_ACCESS_KEY }}'" >> .env
+        echo "AWS_REGION='${{ secrets.AWS_REGION }}'" >> .env
+        echo "MYSQL_ALLOW_EMPTY_PASSWORD='${{ vars.MYSQL_ALLOW_EMPTY_PASSWORD }}'" >> .env
+        echo "PRIMARY_DATABASE_TYPE='${{ vars.PRIMARY_DATABASE_TYPE }}'" >> .env
+        echo "PRIMARY_DATABASE='${{ vars.PRIMARY_DATABASE }}'" >> .env
+        echo "PRIMARY_DATABASE_PORT='${{ vars.PRIMARY_DATABASE_PORT }}'" >> .env
+        echo "PRIMARY_DATABASE_CONNECTION_LIMIT='${{ vars.PRIMARY_DATABASE_CONNECTION_LIMIT }}'" >> .env
+        echo "PRIMARY_DATABASE_PASSWORD='${{ secrets.PRIMARY_DATABASE_PASSWORD }}'" >> .env
+        echo "PRIMARY_DATABASE_HOST='${{ vars.PRIMARY_DATABASE_HOST }}'" >> .env
+        echo "PRIMARY_DATABASE_USERNAME='${{ secrets.PRIMARY_DATABASE_USERNAME }}'" >> .env
+        echo "PRIMARY_DATABASE_TIMEZONE='${{ vars.PRIMARY_DATABASE_TIMEZONE }}'" >> .env
+        echo "PRIMARY_DATABASE_LOGGING='${{ vars.PRIMARY_DATABASE_LOGGING }}'" >> .env
+        echo "PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME='${{ vars.PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME }}'" >> .env
+        echo "PRIMARY_DATABASE_IDLE_TIMEOUT='${{ vars.PRIMARY_DATABASE_IDLE_TIMEOUT }}'" >> .env
+        echo "PRIMARY_DATABASE_CONNECTION_TIMEOUT='${{ vars.PRIMARY_DATABASE_CONNECTION_TIMEOUT }}'" >> .env
+        echo "DATABASE_MIGRATIONS_RUN='${{ vars.DATABASE_MIGRATIONS_RUN }}'" >> .env
+        echo "SESSION_TOKEN_SECRET='${{ secrets.SESSION_TOKEN_SECRET }}'" >> .env
+        echo "SESSION_TOKEN_SECRET_EXPIRATION_MS='${{ vars.SESSION_TOKEN_SECRET_EXPIRATION_MS }}'" >> .env
+        echo "PERMANENT_BUCKET_NAME='${{ vars.PERMANENT_BUCKET_NAME }}'" >> .env
+        echo "DIRTY_BUCKET_NAME='${{ vars.DIRTY_BUCKET_NAME }}'" >> .env
+        echo "NOTIFICATION_QUEUE_URL='${{ secrets.NOTIFICATION_QUEUE_URL }}'" >> .env
+        echo "ENCRYPTION_KEY='${{ secrets.ENCRYPTION_KEY }}'" >> .env
+        echo "FIREBASE_PROJECT_ID='${{ secrets.FIREBASE_PROJECT_ID }}'" >> .env
+        echo "FIREBASE_PRIVATE_KEY='${{ secrets.FIREBASE_PRIVATE_KEY }}'" >> .env
+        echo "FIREBASE_CLIENT_EMAIL='${{ secrets.FIREBASE_CLIENT_EMAIL }}'" >> .env
+        echo "CLOUDFLARE_TURNSTILE_SECRET_KEY='${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}'" >> .env
+
+    - name: Ensure .env exists and set permissions
+      run: |
+        ls -la .env  # Check if the file exists
+        chmod 644 .env
 
     - name: Install dependencies
       run: npm ci
 
     - name: Build application
-      run: npm run build
+      run: |
+        npm run build
 
-    # Create SSH key file
-    - name: Create SSH key file
+    - name: EC2 deployment - Set up SSH key
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-
-    # Deploy to EC2
-    - name: Deploy to EC2
+        ssh-keyscan ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+      
+    - name: Test SSH connection
+      run: ssh -v -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
+      
+    - name: EC2 deployment -  Stop existing PM2 process
       run: |
-        # Stop existing PM2 process if exists
-        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
-          if pm2 list | grep -q "api"; then
-            pm2 stop api
-            pm2 delete api
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          if pm2 describe the-hrm-api > /dev/null 2>&1; then
+            echo "Stopping existing PM2 process..."
+            pm2 stop the-hrm-api
+            echo "Deleting PM2 process..."
+            pm2 delete the-hrm-api
           fi
-        '
-        
-        # Create deployment directory
+        EOF
+    - name: EC2 deployment - Create deployment directory
+      run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
           rm -rf ~/api
           mkdir -p ~/api
         '
-        
-        # Copy only necessary files to EC2
-        scp -i ~/.ssh/id_rsa -r \
-          ./dist \
-          ./package.json \
-          ./package-lock.json \
-          ./.env \
-          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/api/
-        
-        # Install dependencies, run DB sync, and start application
-        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+    - name: EC2 deployment - Compress build files
+      run: tar -czf deploy.tar.gz dist package.json package-lock.json .env
+
+    - name: Copy archive to EC2
+      run: scp -i ~/.ssh/id_rsa deploy.tar.gz ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/
+
+    - name: EC2 deployment - Extract archive
+      run: |
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          echo "Starting extraction..."
+          tar -xzf ~/deploy.tar.gz -C ~/api/
+          rm ~/deploy.tar.gz  # Cleanup
+          echo "Extraction completed successfully."
+        EOF
+
+    - name: EC2 deployment - Install dependencies and run database sync
+      run: |
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
           cd ~/api
           if ! command -v pm2 &> /dev/null; then
+            echo "Installing PM2..."
             npm install -g pm2
           fi
+          echo "Installing dependencies..."
           npm ci --production
-          
-          # Run TypeORM schema sync
-          node dist/typeorm-cli.js schema:sync
-          
-          # Start the application with PM2
-          pm2 start dist/main.js --name "api"
+            
+          # Run TypeORM schema sync - Temporary disabled
+          #node dist/typeorm-cli.js schema:sync
+        EOF
+      
+    - name: EC2 deployment - Start application with PM2
+      run: |
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          cd ~/api
+          echo "Starting application..."
+          pm2 start dist/src/main.js --name "the-hrm-api" 
+          echo "Saving PM2 configuration..."
           pm2 save
-        '
+          echo "Deployment completed successfully."
+        EOF
+      
+    - name: EC2 deployment - Clean up SSH key
+      if: always()
+      run: rm -f ~/.ssh/id_rsa
