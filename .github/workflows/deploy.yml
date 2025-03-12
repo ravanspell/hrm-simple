@@ -29,24 +29,24 @@ jobs:
         echo "AWS_ACCESS_KEY_ID='${{ secrets.AWS_ACCESS_KEY_ID }}'" >> .env
         echo "AWS_SECRET_ACCESS_KEY='${{ secrets.AWS_SECRET_ACCESS_KEY }}'" >> .env
         echo "AWS_REGION='${{ secrets.AWS_REGION }}'" >> .env
-        echo "MYSQL_ALLOW_EMPTY_PASSWORD='${{ env.MYSQL_ALLOW_EMPTY_PASSWORD }}'" >> .env
-        echo "PRIMARY_DATABASE_TYPE='${{ env.PRIMARY_DATABASE_TYPE }}'" >> .env
-        echo "PRIMARY_DATABASE='${{ env.PRIMARY_DATABASE }}'" >> .env
-        echo "PRIMARY_DATABASE_PORT='${{ env.PRIMARY_DATABASE_PORT }}'" >> .env
-        echo "PRIMARY_DATABASE_CONNECTION_LIMIT='${{ env.PRIMARY_DATABASE_CONNECTION_LIMIT }}'" >> .env
+        echo "MYSQL_ALLOW_EMPTY_PASSWORD='${{ vars.MYSQL_ALLOW_EMPTY_PASSWORD }}'" >> .env
+        echo "PRIMARY_DATABASE_TYPE='${{ vars.PRIMARY_DATABASE_TYPE }}'" >> .env
+        echo "PRIMARY_DATABASE='${{ vars.PRIMARY_DATABASE }}'" >> .env
+        echo "PRIMARY_DATABASE_PORT='${{ vars.PRIMARY_DATABASE_PORT }}'" >> .env
+        echo "PRIMARY_DATABASE_CONNECTION_LIMIT='${{ vars.PRIMARY_DATABASE_CONNECTION_LIMIT }}'" >> .env
         echo "PRIMARY_DATABASE_PASSWORD='${{ secrets.PRIMARY_DATABASE_PASSWORD }}'" >> .env
-        echo "PRIMARY_DATABASE_HOST='${{ env.PRIMARY_DATABASE_HOST }}'" >> .env
+        echo "PRIMARY_DATABASE_HOST='${{ vars.PRIMARY_DATABASE_HOST }}'" >> .env
         echo "PRIMARY_DATABASE_USERNAME='${{ secrets.PRIMARY_DATABASE_USERNAME }}'" >> .env
-        echo "PRIMARY_DATABASE_TIMEZONE='${{ env.PRIMARY_DATABASE_TIMEZONE }}'" >> .env
-        echo "PRIMARY_DATABASE_LOGGING='${{ env.PRIMARY_DATABASE_LOGGING }}'" >> .env
-        echo "PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME='${{ env.PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME }}'" >> .env
-        echo "PRIMARY_DATABASE_IDLE_TIMEOUT='${{ env.PRIMARY_DATABASE_IDLE_TIMEOUT }}'" >> .env
-        echo "PRIMARY_DATABASE_CONNECTION_TIMEOUT='${{ env.PRIMARY_DATABASE_CONNECTION_TIMEOUT }}'" >> .env
-        echo "DATABASE_MIGRATIONS_RUN='${{ env.DATABASE_MIGRATIONS_RUN }}'" >> .env
-        echo "SESSION_TOKEN_SECRET='${{ env.SESSION_TOKEN_SECRET }}'" >> .env
-        echo "SESSION_TOKEN_SECRET_EXPIRATION_MS='${{ env.SESSION_TOKEN_SECRET_EXPIRATION_MS }}'" >> .env
-        echo "PERMANENT_BUCKET_NAME='${{ env.PERMANENT_BUCKET_NAME }}'" >> .env
-        echo "DIRTY_BUCKET_NAME='${{ env.DIRTY_BUCKET_NAME }}'" >> .env
+        echo "PRIMARY_DATABASE_TIMEZONE='${{ vars.PRIMARY_DATABASE_TIMEZONE }}'" >> .env
+        echo "PRIMARY_DATABASE_LOGGING='${{ vars.PRIMARY_DATABASE_LOGGING }}'" >> .env
+        echo "PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME='${{ vars.PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME }}'" >> .env
+        echo "PRIMARY_DATABASE_IDLE_TIMEOUT='${{ vars.PRIMARY_DATABASE_IDLE_TIMEOUT }}'" >> .env
+        echo "PRIMARY_DATABASE_CONNECTION_TIMEOUT='${{ vars.PRIMARY_DATABASE_CONNECTION_TIMEOUT }}'" >> .env
+        echo "DATABASE_MIGRATIONS_RUN='${{ vars.DATABASE_MIGRATIONS_RUN }}'" >> .env
+        echo "SESSION_TOKEN_SECRET='${{ vars.SESSION_TOKEN_SECRET }}'" >> .env
+        echo "SESSION_TOKEN_SECRET_EXPIRATION_MS='${{ vars.SESSION_TOKEN_SECRET_EXPIRATION_MS }}'" >> .env
+        echo "PERMANENT_BUCKET_NAME='${{ vars.PERMANENT_BUCKET_NAME }}'" >> .env
+        echo "DIRTY_BUCKET_NAME='${{ vars.DIRTY_BUCKET_NAME }}'" >> .env
         echo "NOTIFICATION_QUEUE_URL='${{ secrets.NOTIFICATION_QUEUE_URL }}'" >> .env
         echo "ENCRYPTION_KEY='${{ secrets.ENCRYPTION_KEY }}'" >> .env
         echo "FIREBASE_PROJECT_ID='${{ secrets.FIREBASE_PROJECT_ID }}'" >> .env
@@ -78,12 +78,14 @@ jobs:
       
     - name: EC2 deployment -  Stop existing PM2 process
       run: |
-        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
           if pm2 describe the-hrm-api > /dev/null 2>&1; then
+            echo "Stopping existing PM2 process..."
             pm2 stop the-hrm-api
+            echo "Deleting PM2 process..."
             pm2 delete the-hrm-api
           fi
-        '
+        EOF
     - name: EC2 deployment - Create deployment directory
       run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
@@ -107,24 +109,29 @@ jobs:
 
     - name: EC2 deployment - Install dependencies and run database sync
       run: |
-        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
           cd ~/api
           if ! command -v pm2 &> /dev/null; then
+            echo "Installing PM2..."
             npm install -g pm2
           fi
+          echo "Installing dependencies..."
           npm ci --production
             
           # Run TypeORM schema sync - Temporary disabled
           #node dist/typeorm-cli.js schema:sync
-        '
+        EOF
       
     - name: EC2 deployment - Start application with PM2
       run: |
-        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
           cd ~/api
-          pm2 start dist/src/main.js --name "the-hrm-api"
+          echo "Starting application..."
+          pm2 start dist/src/main.js --name "the-hrm-api" 
+          echo "Saving PM2 configuration..."
           pm2 save
-        '
+          echo "Deployment completed successfully."
+        EOF
       
     - name: EC2 deployment - Clean up SSH key
       if: always()
