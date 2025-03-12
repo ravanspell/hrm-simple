@@ -54,6 +54,11 @@ jobs:
         echo "FIREBASE_CLIENT_EMAIL='${{ secrets.FIREBASE_CLIENT_EMAIL }}'" >> .env
         echo "CLOUDFLARE_TURNSTILE_SECRET_KEY='${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}'" >> .env
 
+    - name: Ensure .env Exists and Set Permissions
+      run: |
+        ls -la .env  # Check if the file exists
+        chmod 644 .env
+        
     - name: Install dependencies
       run: npm ci
 
@@ -92,7 +97,7 @@ jobs:
           ./dist \
           ./package.json \
           ./package-lock.json \
-          ./.env \
+          .env \
           ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/api/
       
     - name: EC2 deployment - Install dependencies and run database sync
