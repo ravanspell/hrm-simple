@@ -23,38 +23,36 @@ jobs:
         node-version: ${{ env.NODE_VERSION }}
 
     # Create deployment .env file
-    - name: Create .env file
+    - name: Create .env File
       run: |
-        cat > .env << EOF
-        ENV='${{ env.ENV }}'
-        AWS_ACCESS_KEY_ID='${{ secrets.AWS_ACCESS_KEY_ID }}'
-        AWS_SECRET_ACCESS_KEY='${{ secrets.AWS_SECRET_ACCESS_KEY }}'
-        AWS_REGION='${{ secrets.AWS_REGION }}'
-        MYSQL_ALLOW_EMPTY_PASSWORD='${{ env.MYSQL_ALLOW_EMPTY_PASSWORD }}'
-        PRIMARY_DATABASE_TYPE='${{ env.PRIMARY_DATABASE_TYPE }}'
-        PRIMARY_DATABASE='${{ env.PRIMARY_DATABASE }}'
-        PRIMARY_DATABASE_PORT='${{ env.PRIMARY_DATABASE_PORT }}'
-        PRIMARY_DATABASE_CONNECTION_LIMIT='${{ env.PRIMARY_DATABASE_CONNECTION_LIMIT }}'
-        PRIMARY_DATABASE_PASSWORD='${{ secrets.PRIMARY_DATABASE_PASSWORD }}'
-        PRIMARY_DATABASE_HOST='${{ env.PRIMARY_DATABASE_HOST }}'
-        PRIMARY_DATABASE_USERNAME='${{ secrets.PRIMARY_DATABASE_USERNAME }}'
-        PRIMARY_DATABASE_TIMEZONE='${{ env.PRIMARY_DATABASE_TIMEZONE }}'
-        PRIMARY_DATABASE_LOGGING='${{ env.PRIMARY_DATABASE_LOGGING }}'
-        PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME='${{ env.PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME }}'
-        PRIMARY_DATABASE_IDLE_TIMEOUT='${{ env.PRIMARY_DATABASE_IDLE_TIMEOUT }}'
-        PRIMARY_DATABASE_CONNECTION_TIMEOUT='${{ env.PRIMARY_DATABASE_CONNECTION_TIMEOUT }}'
-        DATABASE_MIGRATIONS_RUN='${{ env.DATABASE_MIGRATIONS_RUN }}'
-        SESSION_TOKEN_SECRET='${{ env.SESSION_TOKEN_SECRET }}'
-        SESSION_TOKEN_SECRET_EXPIRATION_MS='${{ env.SESSION_TOKEN_SECRET_EXPIRATION_MS }}'
-        PERMANENT_BUCKET_NAME='${{ env.PERMANENT_BUCKET_NAME }}'
-        DIRTY_BUCKET_NAME='${{ env.DIRTY_BUCKET_NAME }}'
-        NOTIFICATION_QUEUE_URL='${{ secrets.NOTIFICATION_QUEUE_URL }}'
-        ENCRYPTION_KEY='${{ secrets.ENCRYPTION_KEY }}'
-        FIREBASE_PROJECT_ID='${{ secrets.FIREBASE_PROJECT_ID }}'
-        FIREBASE_PRIVATE_KEY='${{ secrets.FIREBASE_PRIVATE_KEY }}'
-        FIREBASE_CLIENT_EMAIL='${{ secrets.FIREBASE_CLIENT_EMAIL }}'
-        CLOUDFLARE_TURNSTILE_SECRET_KEY='${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}'
-        EOF 
+        echo "ENV='${{ env.ENV }}'" > .env
+        echo "AWS_ACCESS_KEY_ID='${{ secrets.AWS_ACCESS_KEY_ID }}'" >> .env
+        echo "AWS_SECRET_ACCESS_KEY='${{ secrets.AWS_SECRET_ACCESS_KEY }}'" >> .env
+        echo "AWS_REGION='${{ secrets.AWS_REGION }}'" >> .env
+        echo "MYSQL_ALLOW_EMPTY_PASSWORD='${{ env.MYSQL_ALLOW_EMPTY_PASSWORD }}'" >> .env
+        echo "PRIMARY_DATABASE_TYPE='${{ env.PRIMARY_DATABASE_TYPE }}'" >> .env
+        echo "PRIMARY_DATABASE='${{ env.PRIMARY_DATABASE }}'" >> .env
+        echo "PRIMARY_DATABASE_PORT='${{ env.PRIMARY_DATABASE_PORT }}'" >> .env
+        echo "PRIMARY_DATABASE_CONNECTION_LIMIT='${{ env.PRIMARY_DATABASE_CONNECTION_LIMIT }}'" >> .env
+        echo "PRIMARY_DATABASE_PASSWORD='${{ secrets.PRIMARY_DATABASE_PASSWORD }}'" >> .env
+        echo "PRIMARY_DATABASE_HOST='${{ env.PRIMARY_DATABASE_HOST }}'" >> .env
+        echo "PRIMARY_DATABASE_USERNAME='${{ secrets.PRIMARY_DATABASE_USERNAME }}'" >> .env
+        echo "PRIMARY_DATABASE_TIMEZONE='${{ env.PRIMARY_DATABASE_TIMEZONE }}'" >> .env
+        echo "PRIMARY_DATABASE_LOGGING='${{ env.PRIMARY_DATABASE_LOGGING }}'" >> .env
+        echo "PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME='${{ env.PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME }}'" >> .env
+        echo "PRIMARY_DATABASE_IDLE_TIMEOUT='${{ env.PRIMARY_DATABASE_IDLE_TIMEOUT }}'" >> .env
+        echo "PRIMARY_DATABASE_CONNECTION_TIMEOUT='${{ env.PRIMARY_DATABASE_CONNECTION_TIMEOUT }}'" >> .env
+        echo "DATABASE_MIGRATIONS_RUN='${{ env.DATABASE_MIGRATIONS_RUN }}'" >> .env
+        echo "SESSION_TOKEN_SECRET='${{ env.SESSION_TOKEN_SECRET }}'" >> .env
+        echo "SESSION_TOKEN_SECRET_EXPIRATION_MS='${{ env.SESSION_TOKEN_SECRET_EXPIRATION_MS }}'" >> .env
+        echo "PERMANENT_BUCKET_NAME='${{ env.PERMANENT_BUCKET_NAME }}'" >> .env
+        echo "DIRTY_BUCKET_NAME='${{ env.DIRTY_BUCKET_NAME }}'" >> .env
+        echo "NOTIFICATION_QUEUE_URL='${{ secrets.NOTIFICATION_QUEUE_URL }}'" >> .env
+        echo "ENCRYPTION_KEY='${{ secrets.ENCRYPTION_KEY }}'" >> .env
+        echo "FIREBASE_PROJECT_ID='${{ secrets.FIREBASE_PROJECT_ID }}'" >> .env
+        echo "FIREBASE_PRIVATE_KEY='${{ secrets.FIREBASE_PRIVATE_KEY }}'" >> .env
+        echo "FIREBASE_CLIENT_EMAIL='${{ secrets.FIREBASE_CLIENT_EMAIL }}'" >> .env
+        echo "CLOUDFLARE_TURNSTILE_SECRET_KEY='${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}'" >> .env
 
     - name: Install dependencies
       run: npm ci
@@ -65,30 +63,13 @@ jobs:
 
     - name: EC2 deployment - Set up SSH key
       run: |
-        # Create the SSH directory
         mkdir -p ~/.ssh
-        echo "SSH directory created"
-        
-        # Write the key with line count check
         echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        echo "Key written to file, line count: $(wc -l < ~/.ssh/id_rsa)"
-        
-        # Set permissions
         chmod 600 ~/.ssh/id_rsa
-        echo "Key permissions set to 600"
-        
-        # Check key format (without revealing private data)
-        head -n 1 ~/.ssh/id_rsa | grep -q "BEGIN" && echo "Key appears to be in PEM format" || echo "ERROR: Key doesn't start with BEGIN line"
-        
-        # Add host to known_hosts
-        echo "Running ssh-keyscan for ${{ secrets.EC2_HOST }}"
-        ssh-keyscan ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts || echo "ssh-keyscan failed with code $?"
-        echo "Known hosts file now contains $(wc -l < ~/.ssh/known_hosts) lines"
+        ssh-keyscan ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
       
-    - name: EC2 deployment - Test SSH connection
-      run: |
-        echo "Testing SSH connection..."
-        ssh -vvv -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
+    - name: Test SSH connection
+      run: ssh -v -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} 'echo "Connection successful"'
       
     - name: EC2 deployment -  Stop existing PM2 process
       run: |
@@ -131,7 +112,7 @@ jobs:
       run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} '
           cd ~/api
-          pm2 start dist/main.js --name "the-hrm-api"
+          pm2 start dist/src/main.js --name "the-hrm-api"
           pm2 save
         '
       
