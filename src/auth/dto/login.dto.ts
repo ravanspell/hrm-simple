@@ -51,7 +51,8 @@ export class LoginDto {
     example: 'turnstile_token_12345',
   })
   @IsString()
-  @IsNotEmpty()
+  // TODO: remove this once we have a way to verify the turnstile token
+  // @IsNotEmpty()
   @IsString({ message: 'The turnstile token must be a string.' })
   turnstileToken?: string;
 }
