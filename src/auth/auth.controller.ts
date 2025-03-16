@@ -60,9 +60,11 @@ export class AuthController {
   async login(@Body() body: LoginDto, @Req() req: RequestWithTenant) {
     const user = req.user;
     const notificationToken = body?.notificationToken;
-    const turnstileToken = body.turnstileToken;
+    const turnstileToken = body?.turnstileToken;
     // verify turnstile token - turnstile is similar to reCAPTCHA
-    await this.turnstileService.verify(turnstileToken);
+    if (turnstileToken) {
+      await this.turnstileService.verify(turnstileToken);
+    }
     // TODO: to be moved to service
     if (notificationToken) {
       await this.pushNotificationTokenRepository.upsertToken(

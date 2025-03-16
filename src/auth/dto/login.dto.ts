@@ -53,5 +53,5 @@ export class LoginDto {
   @IsString()
   @IsNotEmpty()
   @IsString({ message: 'The turnstile token must be a string.' })
-  turnstileToken: string;
+  turnstileToken?: string;
 }
