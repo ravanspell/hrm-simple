@@ -1,6 +1,6 @@
 /**
  * DatabaseModule is responsible for configuring and initializing the TypeORM
- * connection to the MySQL database. It uses the ConfigModule to inject
+ * connection to the PostgreSQL database. It uses the ConfigModule to inject
  * configuration values and sets up the DataSource with transactional support.
  */
 import { Module } from '@nestjs/common';
@@ -18,13 +18,12 @@ import { DataSource, DataSourceOptions } from 'typeorm';
         const isDevelopment = configService.get('ENV') === 'dev';
         return {
           name: 'default',
-          type: configService.get('PRIMARY_DATABASE_TYPE') as any,
+          type: 'postgres',
           host: configService.get('PRIMARY_DATABASE_HOST'),
           port: +configService.get('PRIMARY_DATABASE_PORT'),
           username: configService.get('PRIMARY_DATABASE_USERNAME'),
           password: configService.get<string>('PRIMARY_DATABASE_PASSWORD'),
           database: configService.get<string>('PRIMARY_DATABASE'),
-          timezone: configService.get<string>('PRIMARY_DATABASE_TIMEZONE'),
           logging: isDevelopment,
           maxQueryExecutionTime: +configService.get('PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME'),
           entities: [__dirname + '/../**/*.entity.{js,ts}'],

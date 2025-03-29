@@ -23,7 +23,7 @@ if (!process.env.PRIMARY_DATABASE_HOST) {
 
 // Database connection options
 const dbConfig = {
-  type: process.env.PRIMARY_DATABASE_TYPE,
+  type: 'postgres',
   host: process.env.PRIMARY_DATABASE_HOST,
   port: parseInt(process.env.PRIMARY_DATABASE_PORT, 10),
   username: process.env.PRIMARY_DATABASE_USERNAME,

@@ -7,6 +7,7 @@ on:
 # Define environment variables that will be used across jobs
 env:
   NODE_VERSION: '18'
+  TZ: 'UTC'
 
 jobs:
   deploy:
@@ -35,7 +36,6 @@ jobs:
         echo "PRIMARY_DATABASE_PASSWORD='${{ secrets.PRIMARY_DATABASE_PASSWORD }}'" >> .env
         echo "PRIMARY_DATABASE_HOST='${{ vars.PRIMARY_DATABASE_HOST }}'" >> .env
         echo "PRIMARY_DATABASE_USERNAME='${{ secrets.PRIMARY_DATABASE_USERNAME }}'" >> .env
-        echo "PRIMARY_DATABASE_TIMEZONE='${{ vars.PRIMARY_DATABASE_TIMEZONE }}'" >> .env
         echo "PRIMARY_DATABASE_LOGGING='${{ vars.PRIMARY_DATABASE_LOGGING }}'" >> .env
         echo "PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME='${{ vars.PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME }}'" >> .env
         echo "PRIMARY_DATABASE_IDLE_TIMEOUT='${{ vars.PRIMARY_DATABASE_IDLE_TIMEOUT }}'" >> .env
@@ -51,6 +51,7 @@ jobs:
         echo "FIREBASE_PRIVATE_KEY='${{ secrets.FIREBASE_PRIVATE_KEY }}'" >> .env
         echo "FIREBASE_CLIENT_EMAIL='${{ secrets.FIREBASE_CLIENT_EMAIL }}'" >> .env
         echo "CLOUDFLARE_TURNSTILE_SECRET_KEY='${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}'" >> .env
+        echo "TZ='UTC'" >> .env
 
     - name: Ensure .env exists and set permissions
       run: |
