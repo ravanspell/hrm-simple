@@ -13,7 +13,7 @@ export class EmailStrategy implements NotificationStrategy {
   constructor(
     private readonly emailSettingsService: EmailSettingsService,
     private readonly userService: UserService,
-  ) { }
+  ) {}
 
   /**
    * Sends an email notification to a user.

@@ -14,7 +14,9 @@ import { DataSource, DataSourceOptions } from 'typeorm';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => {
+      useFactory: async (
+        configService: ConfigService,
+      ): Promise<TypeOrmModuleOptions> => {
         const isDevelopment = configService.get('ENV') === 'dev';
         return {
           name: 'default',
@@ -25,23 +27,30 @@ import { DataSource, DataSourceOptions } from 'typeorm';
           password: configService.get<string>('PRIMARY_DATABASE_PASSWORD'),
           database: configService.get<string>('PRIMARY_DATABASE'),
           logging: isDevelopment,
-          maxQueryExecutionTime: +configService.get('PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME'),
+          maxQueryExecutionTime: +configService.get(
+            'PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME',
+          ),
           entities: [__dirname + '/../**/*.entity.{js,ts}'],
           migrations: [__dirname + '/../migrations/**/*{.ts,js}'],
           subscribers: [__dirname + '/../**/*.subscriber.{js,ts}'],
           synchronize: isDevelopment,
-          migrationsRun: configService.get('DATABASE_MIGRATIONS_RUN') === 'true',
+          migrationsRun:
+            configService.get('DATABASE_MIGRATIONS_RUN') === 'true',
           migrationsTableName: 'migrations',
           extra: {
-            connectionLimit: +configService.get('PRIMARY_DATABASE_CONNECTION_LIMIT'),
-            idleTimeoutMillis: +configService.get('PRIMARY_DATABASE_IDLE_TIMEOUT'),
-            connectionTimeoutMillis: +configService.get('PRIMARY_DATABASE_CONNECTION_TIMEOUT'),
-          }
+            connectionLimit: +configService.get(
+              'PRIMARY_DATABASE_CONNECTION_LIMIT',
+            ),
+            idleTimeoutMillis: +configService.get(
+              'PRIMARY_DATABASE_IDLE_TIMEOUT',
+            ),
+            connectionTimeoutMillis: +configService.get(
+              'PRIMARY_DATABASE_CONNECTION_TIMEOUT',
+            ),
+          },
         };
       },
-      dataSourceFactory: async (
-        options: DataSourceOptions,
-      ) => {
+      dataSourceFactory: async (options: DataSourceOptions) => {
         const dataSource = new DataSource(options);
         // add transactional support to the DataSource
         addTransactionalDataSource(dataSource);
@@ -53,4 +62,4 @@ import { DataSource, DataSourceOptions } from 'typeorm';
     }),
   ],
 })
-export class DatabaseModule { }
+export class DatabaseModule {}
