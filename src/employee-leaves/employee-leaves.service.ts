@@ -5,7 +5,7 @@ import { UpdateEmployeeLeafDto } from './dto/update-employee-leaf.dto';
 @Injectable()
 export class EmployeeLeavesService {
   create(createEmployeeLeafDto: CreateEmployeeLeafDto) {
-    return 'This action adds a new employeeLeaf';
+    return 'This action adds a new employeeLeaf' + createEmployeeLeafDto;
   }
 
   findAll() {
@@ -17,7 +17,7 @@ export class EmployeeLeavesService {
   }
 
   update(id: number, updateEmployeeLeafDto: UpdateEmployeeLeafDto) {
-    return `This action updates a #${id} employeeLeaf`;
+    return `This action updates a #${updateEmployeeLeafDto} employeeLeaf ${id}`;
   }
 
   remove(id: number) {

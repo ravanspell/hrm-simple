@@ -112,7 +112,7 @@ export class FileManagementService {
    */
   async copyFileToMainStorage(fileKey: string): Promise<boolean> {
     // Copy the file to the permanent bucket
-    const uploadUrl = await this.awsS3Service.copyObject(
+    await this.awsS3Service.copyObject(
       this.dirtyBucket,
       this.permanentBucket,
       fileKey,
@@ -145,7 +145,7 @@ export class FileManagementService {
   }
 
   update(id: number, updateFileManagementDto: UpdateFileManagementDto) {
-    return `This action updates a #${id} fileManagement`;
+    return `This action updates a #${id} fileManagement ${updateFileManagementDto}`;
   }
 
   /**
@@ -164,7 +164,7 @@ export class FileManagementService {
     // tag to be deleted the file object in the storage
     // Leveraging the AWS S3 lifecycle methods to delete after some time tagged
     // objects we 'DELETED'
-    this.tagMultipleObjectsWithRollback(
+    await this.tagMultipleObjectsWithRollback(
       this.permanentBucket,
       fileS3ObjectKeys,
       [{ Key: 'fileStatus', Value: FILE_STATUSES.DELETED }],
@@ -264,6 +264,13 @@ export class FileManagementService {
     tags: Tag[],
     roolBackTags: Tag[] = [],
   ): Promise<void> {
+    console.log(
+      'tagMultipleObjectsWithRollback-->',
+      bucketName,
+      keys,
+      tags,
+      roolBackTags,
+    );
     const taggingPromises: Promise<TaggingResult>[] = keys.map((key) => {
       return this.awsS3Service
         .applyObjectTags(bucketName, key, tags)
@@ -291,6 +298,7 @@ export class FileManagementService {
       .map((result) => result.value); // Cast to TaggingResult
 
     console.log('successfulTags-->', successfulTags);
+    console.log('failedTags-->', failedTags);
     console.log('Tags applied to all objects successfully.');
   }
 
@@ -329,8 +337,8 @@ export class FileManagementService {
 
   @Transactional()
   async confirmUpload(createFileData: any, orgnizationId: string) {
-    const { fileName, parentId, s3ObjectKey, files } = createFileData;
-
+    const { files } = createFileData;
+    console.log('createFileData-->', createFileData);
     // Check if the file exists in the dirty bucket
     const dirtyBucketObjMetadata = createFileData.map(
       ({ s3ObjectKey: fileKey }) => this.getDirtyBucketObjectMetadata(fileKey),

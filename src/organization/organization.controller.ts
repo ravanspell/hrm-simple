@@ -70,7 +70,7 @@ export class OrganizationController {
   @ApiResponse({ status: 404, description: 'Organization not found.' })
   @Get(':id')
   findOne(@Param('id') id: string) {
-    // return this.organizationService.findOne(+id);
+    return id;
   }
 
   /**

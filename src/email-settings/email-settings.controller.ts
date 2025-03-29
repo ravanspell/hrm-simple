@@ -45,7 +45,6 @@ export class EmailSettingsController {
     @Body() createDto: CreateEmailSettingsDto,
     @Req() req: RequestWithTenant,
   ) {
-    console.log('req.user-->', req.user);
     const createEmailSettingsData = {
       ...createDto,
       organizationId: req.user.organizationId,
@@ -66,12 +65,6 @@ export class EmailSettingsController {
       userId: req?.user.id,
       subject: 'this is test notification',
       body: '',
-    };
-    const email = {
-      body: '',
-      templateId: '',
-      subject: '',
-      userId: '',
     };
     await this.notificationService.publishNotification(
       NOTIFICATION_TYPE.WEB_PUSH,
@@ -128,8 +121,6 @@ export class EmailSettingsController {
   })
   @ApiResponse({ status: 404, description: 'Email settings not found.' })
   remove(@Param('id') id: string) {
-    return '';
-
-    //this.emailSettingsService.remove(id);
+    return id;
   }
 }

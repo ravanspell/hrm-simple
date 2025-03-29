@@ -281,7 +281,10 @@ export class FileManagementController {
     @Body('files') files: createFileData[],
     @Req() req: RequestWithTenant,
   ) {
-    const organizationId = '69fb3a34-1bcc-477d-8a22-99c194ea468d'; //req.user.organizationId;
-    this.fileManagementService.confirmUpload(files, organizationId);
+    const organizationId = req.user.organizationId;
+    return await this.fileManagementService.confirmUpload(
+      files,
+      organizationId,
+    );
   }
 }
