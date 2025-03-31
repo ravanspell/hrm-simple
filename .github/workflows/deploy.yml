@@ -4,8 +4,10 @@ on:
   push:
     branches: [ master ]
 
-  pull_request:
-    branches: [ master ]
+# Add concurrency to cancel in-progress runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
     
 # Define environment variables that will be used across jobs
 env:
