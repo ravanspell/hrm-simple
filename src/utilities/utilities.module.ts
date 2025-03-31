@@ -18,11 +18,11 @@ import { HttpModule } from '@nestjs/axios';
     TurnstileService,
   ],
   exports: [
-    EncryptionService, 
-    CacheService, 
-    AwsSqsService, 
-    AwsS3Service, 
-    TurnstileService
+    EncryptionService,
+    CacheService,
+    AwsSqsService,
+    AwsS3Service,
+    TurnstileService,
   ],
 })
 export class UtilitiesModule {}

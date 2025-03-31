@@ -14,7 +14,7 @@ export class RoleService {
   constructor(
     private readonly roleRepository: RoleRepository,
     private readonly userRoleRepository: UserRoleRepository,
-  ) { }
+  ) {}
 
   /**
    * Create a new role.
@@ -22,7 +22,10 @@ export class RoleService {
    * @param organizationId - The ID of the organization.
    * @returns The created role.
    */
-  async createRole(createRoleData: CreateRoleRequest, organizationId: string): Promise<Role> {
+  async createRole(
+    createRoleData: CreateRoleRequest,
+    organizationId: string,
+  ): Promise<Role> {
     const role = new Role();
     role.name = createRoleData.name;
     role.description = createRoleData.description;
@@ -91,6 +94,7 @@ export class RoleService {
     isolationLevel: IsolationLevel.READ_COMMITTED,
   })
   async assignPermissionsToRole(roleId: string, permissionIds: string[]) {
+    console.log('assignPermissionsToRole-->', roleId, permissionIds);
     // Step 1: Assign permissions to the role
     // await this.rolePermissionsRepo.assignPermissions(roleId, permissionIds);
     // // Step 2: Get all users assigned to this role

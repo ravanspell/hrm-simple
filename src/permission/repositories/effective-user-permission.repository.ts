@@ -1,4 +1,4 @@
-import { DataSource, Raw, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { UserDirectPermission } from '../entities/user-direct-permission.entity';
 import { EffectiveUserPermission } from '../entities/effective-user-permissions.entity';

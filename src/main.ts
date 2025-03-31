@@ -21,10 +21,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
-    .setTitle('Cats example')
-    .setDescription('The cats API description')
+    .setTitle('MyHRM API')
+    .setDescription('The comprehensive open API documentation for MyHRM')
     .setVersion('1.0')
-    .addTag('cats')
+    .addTag('myhrm')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory, {});
@@ -46,7 +46,7 @@ async function bootstrap() {
   }).connect(sessionRepository);
 
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: process.env.REQUEST_ORIGIN,
     credentials: true, // Allow cookies or authorization headers
   });
   app.use(
@@ -56,7 +56,7 @@ async function bootstrap() {
       saveUninitialized: false,
       store: sessionStore,
       cookie: {
-        secure: process.env.ENV === 'production',
+        secure: process.env.ENV === 'prod',
         httpOnly: true,
         sameSite: false,
         maxAge: 1000 * 60 * 60 * 24,

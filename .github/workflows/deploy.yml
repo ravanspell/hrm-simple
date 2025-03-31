@@ -51,6 +51,7 @@ jobs:
         echo "FIREBASE_PRIVATE_KEY='${{ secrets.FIREBASE_PRIVATE_KEY }}'" >> .env
         echo "FIREBASE_CLIENT_EMAIL='${{ secrets.FIREBASE_CLIENT_EMAIL }}'" >> .env
         echo "CLOUDFLARE_TURNSTILE_SECRET_KEY='${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}'" >> .env
+        echo "REQUEST_ORIGIN='${{ vars.REQUEST_ORIGIN }}'" >> .env
         echo "TZ='UTC'" >> .env
 
     - name: Ensure .env exists and set permissions

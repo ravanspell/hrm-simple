@@ -25,7 +25,10 @@ export class PermissionController {
   @Get('user-permissions')
   @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Get system permissions with filters' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Returns filtered permissions' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Returns filtered permissions',
+  })
   async getPermissions(@Req() req: RequestWithTenant) {
     const userId = req.user.id;
     return this.permissionService.getUserEffectivePermissions(userId);

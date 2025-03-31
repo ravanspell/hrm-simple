@@ -23,13 +23,13 @@ describe('UserRepository', () => {
       findOne: jest.fn(),
     };
 
-    // dataSourceMock = {
-    //   createEntityManager: jest.fn().mockReturnValue(entityManagerMock),
-    //   getMetadata: jest.fn().mockReturnValue({
-    //     columns: [],
-    //     relations: [],
-    //   }),
-    // } as Partial<DataSource>;
+    dataSourceMock = {
+      createEntityManager: jest.fn().mockReturnValue(entityManagerMock),
+      getMetadata: jest.fn().mockReturnValue({
+        columns: [],
+        relations: [],
+      }),
+    } as Partial<DataSource>;
 
     userRepository = new UserRepository(dataSourceMock as DataSource);
   });

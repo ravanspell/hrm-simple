@@ -231,12 +231,12 @@ export class PermissionService {
     id: string,
     dto: UpdateOrganizationLicensedPermissionDto,
   ) {
-    // const license = await this.orgLicenseRepo.findOne(id);
-    // if (!license) {
-    //     throw new NotFoundException('License not found');
-    // }
-    // Object.assign(license, dto);
-    // return this.orgLicenseRepo.save(license);
+    const license = await this.orgLicenseRepo.findOne({ where: { id } });
+    if (!license) {
+      throw new NotFoundException('License not found');
+    }
+    Object.assign(license, dto);
+    return this.orgLicenseRepo.save(license);
   }
 
   /**
@@ -294,6 +294,7 @@ export class PermissionService {
         origin: 'ROLE',
       })),
     );
+    console.log('newPermissions-->', newPermissions);
     // await this.effectiveUserPermissionRepo.addPermissionsForUsers(newPermissions);
   }
   /**
@@ -355,6 +356,7 @@ export class PermissionService {
     id: number,
     dto: UpdateUserDirectPermissionDto,
   ) {
+    console.log('updateUserDirectPermission-->', id, dto);
     // const permission = await this.userDirectPermissionRepo.findOne(id);
     // if (!permission) {
     //     throw new NotFoundException('Direct permission not found');

@@ -45,13 +45,16 @@ export class RoleController {
   @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Create a new role' })
   @ApiBody({ type: CreateRoleRequest })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Role successfully created' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Role successfully created',
+  })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request' })
   createRole(
     @Body() createRoleData: CreateRoleRequest,
     @Req() requestWithTenant: RequestWithTenant,
   ) {
-    const organizationId = requestWithTenant.organization.id
+    const organizationId = requestWithTenant.organization.id;
     this.roleService.createRole(createRoleData, organizationId);
   }
 
@@ -67,8 +70,12 @@ export class RoleController {
   @ApiBody({ type: UpdateRoleRequest })
   @ApiResponse({ status: 200, description: 'Role successfully updated' })
   @ApiResponse({ status: 404, description: 'Role not found' })
-  updateRole(@Param('id') id: string, @Body() updateRoleData: UpdateRoleRequest) {
-    return;
+  updateRole(
+    @Param('id') id: string,
+    @Body() updateRoleData: UpdateRoleRequest,
+  ) {
+    console.log('updateRole-->', id, updateRoleData);
+    return id;
     // this.roleService.updateRole(id, updateRoleData);
   }
 }

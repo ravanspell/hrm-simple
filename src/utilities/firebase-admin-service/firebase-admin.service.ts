@@ -110,6 +110,7 @@ export class FirebaseService implements OnModuleInit {
         failedTokens: retryResponse.failedTokens,
       };
     } catch (error) {
+      console.log('error-->', error);
       return {
         success: false,
         successCount: 0,
