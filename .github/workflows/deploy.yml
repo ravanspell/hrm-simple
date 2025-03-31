@@ -119,6 +119,8 @@ jobs:
             npm install -g pm2
           fi
           echo "Installing dependencies..."
+          # --ignore-scripts for avoiding running npm lifecycle scripts.
+          # --omit=dev for avoiding installing dev dependencies.
           npm ci --omit=dev --ignore-scripts
             
           # Run TypeORM schema sync - Temporary disabled
