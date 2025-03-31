@@ -3,6 +3,11 @@ name: The deployment of the REST API
 on:
   push:
     branches: [ master ]
+
+# Add concurrency to cancel in-progress runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
     
 # Define environment variables that will be used across jobs
 env:
@@ -116,7 +121,9 @@ jobs:
             npm install -g pm2
           fi
           echo "Installing dependencies..."
-          npm ci --production
+          # --ignore-scripts for avoiding running npm lifecycle scripts.
+          # --omit=dev for avoiding installing dev dependencies.
+          npm ci --omit=dev --ignore-scripts
             
           # Run TypeORM schema sync - Temporary disabled
           #node dist/typeorm-cli.js schema:sync
