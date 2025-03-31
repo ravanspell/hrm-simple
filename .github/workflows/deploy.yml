@@ -3,6 +3,9 @@ name: The deployment of the REST API
 on:
   push:
     branches: [ master ]
+
+  pull_request:
+    branches: [ master ]
     
 # Define environment variables that will be used across jobs
 env:
@@ -116,7 +119,7 @@ jobs:
             npm install -g pm2
           fi
           echo "Installing dependencies..."
-          npm ci --production
+          npm ci --omit=dev
             
           # Run TypeORM schema sync - Temporary disabled
           #node dist/typeorm-cli.js schema:sync
