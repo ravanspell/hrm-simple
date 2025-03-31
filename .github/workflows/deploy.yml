@@ -119,7 +119,7 @@ jobs:
             npm install -g pm2
           fi
           echo "Installing dependencies..."
-          npm ci --omit=dev
+          npm ci --omit=dev --ignore-scripts
             
           # Run TypeORM schema sync - Temporary disabled
           #node dist/typeorm-cli.js schema:sync
