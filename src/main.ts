@@ -46,9 +46,24 @@ async function bootstrap() {
   }).connect(sessionRepository);
 
   app.enableCors({
-    origin: process.env.REQUEST_ORIGIN,
-    credentials: true, // Allow cookies or authorization headers
+    origin: (origin, callback) => {
+      const allowedOrigins = process.env.REQUEST_ORIGIN?.split(',');
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, origin);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Accept', 'Cookie'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range', 'Set-Cookie'],
+    maxAge: 600,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
+
+  // Session configuration should be before passport initialization
   app.use(
     session({
       secret: process.env.SESSION_TOKEN_SECRET,
@@ -58,7 +73,7 @@ async function bootstrap() {
       cookie: {
         secure: process.env.ENV === 'prod',
         httpOnly: true,
-        sameSite: false,
+        sameSite: 'lax', // Changed from false to 'lax' for better security
         maxAge: 1000 * 60 * 60 * 24,
       },
     }),
