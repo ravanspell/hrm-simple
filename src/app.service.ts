@@ -42,6 +42,14 @@ export class AppService implements OnModuleInit {
   }
 
   /**
+   * Basic health check to verify service is running
+   * @returns Simple status message
+   */
+  getHealthCheck(): { status: string } {
+    return { status: 'ok' };
+  }
+
+  /**
    * Updates the inactivity timer. This method should be called whenever there is API activity
    * to prevent the EC2 instance from shutting down.
    * @returns Object containing status message and time until next shutdown
