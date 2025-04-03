@@ -17,6 +17,7 @@ import { DatabaseModule } from './database/database.module';
 import { NotificationModule } from './notification/notification.module';
 import { PermissionModule } from './permission/permission.module';
 import { RoleModule } from './role/role.module';
+import { TerminusModule } from '@nestjs/terminus';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { RoleModule } from './role/role.module';
     NotificationModule,
     PermissionModule,
     RoleModule,
+    TerminusModule,
   ],
   controllers: [AppController],
   providers: [

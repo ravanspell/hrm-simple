@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { EC2Client, StopInstancesCommand } from '@aws-sdk/client-ec2';
-
+import { ConfigService } from '@nestjs/config';
 /**
  * Service responsible for managing EC2 instance auto-shutdown functionality.
  * This service implements an inactivity timer that will shutdown the EC2 instance
@@ -12,13 +12,15 @@ export class AppService implements OnModuleInit {
   private timer: NodeJS.Timeout;
   private ec2Client: EC2Client;
 
-  constructor() {
+  constructor(private configService: ConfigService) {
     // Initialize EC2 client with credentials from .env
     this.ec2Client = new EC2Client({
-      region: process.env.AWS_REGION,
+      region: this.configService.get<string>('AWS_REGION'),
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
+        secretAccessKey: this.configService.get<string>(
+          'AWS_SECRET_ACCESS_KEY',
+        ),
       },
     });
   }
@@ -39,14 +41,6 @@ export class AppService implements OnModuleInit {
 
   getHello(): string {
     return `Hello World! ${process.env.DATABASE_URL}`;
-  }
-
-  /**
-   * Basic health check to verify service is running
-   * @returns Simple status message
-   */
-  getHealthCheck(): { status: string } {
-    return { status: 'ok' };
   }
 
   /**

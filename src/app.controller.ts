@@ -1,9 +1,18 @@
 import { Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
+import {
+  HealthCheck,
+  HealthCheckService,
+  TypeOrmHealthIndicator,
+} from '@nestjs/terminus';
 
-@Controller()
+@Controller('app')
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly health: HealthCheckService,
+    private db: TypeOrmHealthIndicator,
+  ) {}
 
   @Get()
   getHello(): string {
@@ -15,8 +24,9 @@ export class AppController {
    * @returns Simple status message
    */
   @Get('health-check')
-  getHealthCheck() {
-    return this.appService.getHealthCheck();
+  @HealthCheck()
+  check() {
+    return this.health.check([() => this.db.pingCheck('database')]);
   }
 
   /**
