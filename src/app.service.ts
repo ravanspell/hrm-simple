@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { EC2Client, StopInstancesCommand } from '@aws-sdk/client-ec2';
 import { ConfigService } from '@nestjs/config';
+
 /**
  * Service responsible for managing EC2 instance auto-shutdown functionality.
  * This service implements an inactivity timer that will shutdown the EC2 instance
@@ -40,7 +41,7 @@ export class AppService implements OnModuleInit {
   }
 
   getHello(): string {
-    return `Hello World! ${process.env.DATABASE_URL}`;
+    return `Hello World!`;
   }
 
   /**
@@ -75,10 +76,8 @@ export class AppService implements OnModuleInit {
     }
 
     this.timer = setTimeout(
-      async () => {
-        await this.shutdownEC2Instance();
-      },
-      this.TIMEOUT_MINUTES * 60 * 1000,
+      () => this.shutdownEC2Instance(),
+      this.TIMEOUT_MINUTES * 60 * 1000, // 10 minutes
     );
   }
 
@@ -89,13 +88,12 @@ export class AppService implements OnModuleInit {
    */
   private async shutdownEC2Instance(): Promise<void> {
     try {
-      // You should replace 'your-instance-id' with the actual EC2 instance ID
+      console.log('EC2 instance shutdown initiated due to inactivity');
       const command = new StopInstancesCommand({
-        InstanceIds: [process.env.EC2_INSTANCE_ID],
+        InstanceIds: [this.configService.get<string>('EC2_INSTANCE_ID')],
       });
 
       await this.ec2Client.send(command);
-      console.log('EC2 instance shutdown initiated due to inactivity');
     } catch (error) {
       console.error('Failed to shutdown EC2 instance:', error);
     }
