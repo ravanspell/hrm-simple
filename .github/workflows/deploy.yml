@@ -57,6 +57,9 @@ jobs:
         echo "FIREBASE_CLIENT_EMAIL='${{ secrets.FIREBASE_CLIENT_EMAIL }}'" >> .env
         echo "CLOUDFLARE_TURNSTILE_SECRET_KEY='${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}'" >> .env
         echo "REQUEST_ORIGIN='${{ vars.REQUEST_ORIGIN }}'" >> .env
+        echo "SENTRY_DSN='${{ secrets.SENTRY_DSN }}'" >> .env
+        echo "SENTRY_TRACES_SAMPLE_RATE='${{ vars.SENTRY_TRACES_SAMPLE_RATE }}'" >> .env
+        echo "SENTRY_PROFILES_SAMPLE_RATE='${{ vars.SENTRY_PROFILES_SAMPLE_RATE }}'" >> .env
         echo "TZ='UTC'" >> .env
 
     - name: Ensure .env exists and set permissions
