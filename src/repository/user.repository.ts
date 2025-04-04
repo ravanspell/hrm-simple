@@ -71,8 +71,6 @@ export class UserRepository extends Repository<User> {
    * methods that process and deduplicate scopes for authorization purposes.
    */
   async findUserWithScopes(userId: string): Promise<User | null> {
-    console.log('im workedddd------->');
-
     return this.findOne({
       where: { id: userId },
       // relations: [
