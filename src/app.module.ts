@@ -18,6 +18,7 @@ import { NotificationModule } from './notification/notification.module';
 import { PermissionModule } from './permission/permission.module';
 import { RoleModule } from './role/role.module';
 import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
+import { TerminusModule } from '@nestjs/terminus';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
     PermissionModule,
     RoleModule,
     SentryModule.forRoot(),
+    TerminusModule,
   ],
   controllers: [AppController],
   providers: [
