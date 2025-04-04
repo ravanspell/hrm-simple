@@ -113,7 +113,6 @@ export class UserService {
    */
   async findUserWithScopes(userId?: string): Promise<UserWithScopes> {
     const user = await this.userRepository.findUserWithScopes(userId);
-    console.log('user--->', user);
 
     if (!user) {
       throw new BadRequestException('User with ID not found.');

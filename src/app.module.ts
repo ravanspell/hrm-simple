@@ -6,7 +6,7 @@ import { UserModule } from './user/user.module';
 import { LoggerModule } from './logger/logger.module';
 import { EmployeeLeavesModule } from './employee-leaves/employee-leaves.module';
 import { AuthModule } from './auth/auth.module';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { PermissionsGuard } from './auth/guards/permissions.guard';
 import { AuthenticatedGuard } from './auth/guards/authenticated.guard';
 import { FileManagementModule } from './file-management/file-management.module';
@@ -17,6 +17,7 @@ import { DatabaseModule } from './database/database.module';
 import { NotificationModule } from './notification/notification.module';
 import { PermissionModule } from './permission/permission.module';
 import { RoleModule } from './role/role.module';
+import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { TerminusModule } from '@nestjs/terminus';
 
 @Module({
@@ -34,6 +35,7 @@ import { TerminusModule } from '@nestjs/terminus';
     NotificationModule,
     PermissionModule,
     RoleModule,
+    SentryModule.forRoot(),
     TerminusModule,
   ],
   controllers: [AppController],
@@ -48,6 +50,10 @@ import { TerminusModule } from '@nestjs/terminus';
       provide: APP_GUARD,
       // apply permission guard for all endpoint routes.
       useClass: PermissionsGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
     },
   ],
 })

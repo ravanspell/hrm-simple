@@ -1,3 +1,6 @@
+// sentry integration
+import './instrument';
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
@@ -13,6 +16,8 @@ import {
 } from 'typeorm-transactional';
 import { TypeormStore } from 'connect-typeorm';
 import { Session } from './auth/entities/session.entity';
+import { SentryInterceptor } from './interceptors/sentry.interceptor';
+import { SentryService } from './utilities/sentry/sentry.service';
 
 async function bootstrap() {
   // initialize transactional context to handle transactions
@@ -81,7 +86,14 @@ async function bootstrap() {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  app.useGlobalInterceptors(new TransformInterceptor());
+  // Get SentryService instance
+  const sentryService = app.get(SentryService);
+
+  app.useGlobalInterceptors(
+    new TransformInterceptor(),
+    new SentryInterceptor(sentryService),
+  );
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
