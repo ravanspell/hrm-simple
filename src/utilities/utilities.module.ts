@@ -6,6 +6,7 @@ import { AwsSqsService } from './aws-sqs-service/aws-sqs.service';
 import { MemoryCacheService } from './cache/memory-cache.service';
 import { TurnstileService } from './turnstile-service/turnstile-service';
 import { HttpModule } from '@nestjs/axios';
+import { SentryService } from './sentry/sentry.service';
 
 @Module({
   imports: [HttpModule],
@@ -16,6 +17,7 @@ import { HttpModule } from '@nestjs/axios';
     AwsS3Service,
     MemoryCacheService,
     TurnstileService,
+    SentryService,
   ],
   exports: [
     EncryptionService,
@@ -23,6 +25,7 @@ import { HttpModule } from '@nestjs/axios';
     AwsSqsService,
     AwsS3Service,
     TurnstileService,
+    SentryService,
   ],
 })
 export class UtilitiesModule {}
