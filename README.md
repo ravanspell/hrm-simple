@@ -45,7 +45,7 @@ The HR Management System is a multi-tenant **SaaS application** designed to cent
 
 **Purpose of the Documentation**
 
-This documentation is intended for **developers**, **solution architects**, and **stakeholders**. It provides a detailed breakdown of the system’s architecture, including the rationale behind design decisions, security mechanisms, scalability strategies, and potential enhancements. The document aims to offer a solid understanding of how the system operates, why specific AWS components were chosen, and how they contribute to achieving the goals of the application.
+This documentation is intended for **developers**, **solution architects**, and **stakeholders**. It provides a detailed breakdown of the system's architecture, including the rationale behind design decisions, security mechanisms, scalability strategies, and potential enhancements. The document aims to offer a solid understanding of how the system operates, why specific AWS components were chosen, and how they contribute to achieving the goals of the application.
 
 ---
 
@@ -129,11 +129,11 @@ The Virtual Private Cloud (VPC) is a logically isolated network in AWS. The arch
 
  • **Shared VPC**: Useful in multi-account setups but lacks the granular control of a dedicated VPC.
 
- • **On-premises Network**: Would require significant infrastructure investment and lacks AWS’s scalability.
+ • **On-premises Network**: Would require significant infrastructure investment and lacks AWS's scalability.
 
 **Why VPC?**
 
-A VPC ensures **secure, isolated networking** while leveraging AWS’s managed network services like NAT Gateway and VPC endpoints.
+A VPC ensures **secure, isolated networking** while leveraging AWS's managed network services like NAT Gateway and VPC endpoints.
 
 ---
 
@@ -177,7 +177,7 @@ S3 is an object storage service used for **temporary** and **permanent file stor
 
 **Alternatives Considered**
 
- • **Azure Blob Storage**: Great for Microsoft environments but lacks S3’s mature ecosystem.
+ • **Azure Blob Storage**: Great for Microsoft environments but lacks S3's mature ecosystem.
 
  • **Google Cloud Storage**: Strong contender but less flexible for AWS-native applications.
 
@@ -241,7 +241,7 @@ Protect the infrastructure and resources from unauthorized access and attacks by
 
  3. **Application-Level Restrictions:**
 
-In the provided **EmployeesPage** component, tabs, tables, and dropdown menus demonstrate how the frontend respects network security principles by only presenting data that the user’s role and permissions allow.
+In the provided **EmployeesPage** component, tabs, tables, and dropdown menus demonstrate how the frontend respects network security principles by only presenting data that the user's role and permissions allow.
 
 **Why this is important:**
 
@@ -273,7 +273,7 @@ Ensure tenant data is stored securely, protected against breaches, and available
 
  • Fine-grained bucket policies ensure that only authorized services and IAM roles can access S3 objects.
 
- • Example: Temporary and permanent storage for candidates’ resumes (seen in the application’s dropdowns and tabs) is tightly secured.
+ • Example: Temporary and permanent storage for candidates' resumes (seen in the application's dropdowns and tabs) is tightly secured.
 
  4. **Frontend Data Presentation:**
 
@@ -283,7 +283,7 @@ Ensure tenant data is stored securely, protected against breaches, and available
 
  • Prevents data theft and unauthorized access to sensitive HR data.
 
- • Ensures compliance with GDPR’s requirements for encryption and access control.
+ • Ensures compliance with GDPR's requirements for encryption and access control.
 
 ---
 
@@ -307,7 +307,7 @@ Restrict access to critical resources based on user roles and permissions, ensur
 
  3. **Tenant-Specific Access Control:**
 
- • Data in the **EmployeesPage** (e.g., tabs like FutureForce Recruitment and HR Manager) is segregated by tenant, ensuring one tenant cannot access another’s data.
+ • Data in the **EmployeesPage** (e.g., tabs like FutureForce Recruitment and HR Manager) is segregated by tenant, ensuring one tenant cannot access another's data.
 
 **Why this is important:**
 
@@ -350,4 +350,68 @@ Conduct periodic penetration tests and audits to identify vulnerabilities.
  2. **Real-Time Anomaly Detection:**
 
 Integrate AWS **Machine Learning services** for real-time anomaly detection in data access patterns.
+
+## Environment Configuration
+
+This project supports multiple environments:
+
+- **local**: For local development on your machine
+- **development**: For development server environment
+
+### Setting Up Environments
+
+1. Copy the `.env.example` file to create your environment-specific files:
+   ```
+   cp .env.example .env.local
+   cp .env.example .env.development
+   ```
+
+2. Set the `ENV` variable in each file:
+   - For local: `ENV=local`
+   - For development: `ENV=development`
+
+3. Configure environment-specific variables in each file.
+
+### Using Environment Utilities
+
+The project provides utility functions to work with environments:
+
+```typescript
+import { 
+  getCurrentEnvironment, 
+  isLocalEnvironment, 
+  isDevelopmentEnvironment,
+  getEnvironmentName
+} from './utilities/environment';
+
+// Get the current environment
+const currentEnv = getCurrentEnvironment(); // Returns Environment enum value
+const envName = getEnvironmentName(); // Returns 'local' or 'development' as string
+
+// Check environment type
+if (isLocalEnvironment()) {
+  // Do something specific to local environment
+}
+
+if (isDevelopmentEnvironment()) {
+  // Do something specific to development environment
+}
+```
+
+### Environment-Specific Configuration
+
+The environment utilities can be used throughout the application to provide environment-specific behavior:
+
+```typescript
+// Example: Configuring a service based on environment
+import { getEnvironmentName } from './utilities/environment';
+
+const config = {
+  apiUrl: isLocalEnvironment() 
+    ? 'http://localhost:3000/api' 
+    : 'https://api.example.com',
+  debugMode: isLocalEnvironment(),
+  // Other environment-specific settings
+};
+```
 
