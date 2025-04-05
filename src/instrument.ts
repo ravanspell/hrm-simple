@@ -8,10 +8,10 @@ dotenv.config({ path: join(__dirname, '../../.env') });
 import * as Sentry from '@sentry/nestjs';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { expressIntegration, httpIntegration } from '@sentry/node';
-
+import { ENVIRONMENT } from './constants/common';
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  environment: process.env.ENV || 'development',
+  environment: process.env.ENV || ENVIRONMENT.DEVELOPMENT,
 
   integrations: [
     // Enable HTTP calls tracing
@@ -34,7 +34,7 @@ Sentry.init({
 console.log('\n=== SENTRY STATUS ===');
 console.log({
   initialized: Sentry.isInitialized(), // This is the correct way to check
-  environment: process.env.ENV || 'development',
+  environment: process.env.ENV || ENVIRONMENT.DEVELOPMENT,
   hasDSN: !!process.env.SENTRY_DSN,
   tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE,
   profilesSampleRate: process.env.SENTRY_PROFILES_SAMPLE_RATE,

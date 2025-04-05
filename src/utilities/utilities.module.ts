@@ -7,6 +7,7 @@ import { MemoryCacheService } from './cache/memory-cache.service';
 import { TurnstileService } from './turnstile-service/turnstile-service';
 import { HttpModule } from '@nestjs/axios';
 import { SentryService } from './sentry/sentry.service';
+import { CommonUtilitiesService } from './environment/common.utilities.service';
 
 @Module({
   imports: [HttpModule],
@@ -18,6 +19,7 @@ import { SentryService } from './sentry/sentry.service';
     MemoryCacheService,
     TurnstileService,
     SentryService,
+    CommonUtilitiesService,
   ],
   exports: [
     EncryptionService,
@@ -26,6 +28,7 @@ import { SentryService } from './sentry/sentry.service';
     AwsS3Service,
     TurnstileService,
     SentryService,
+    CommonUtilitiesService,
   ],
 })
 export class UtilitiesModule {}

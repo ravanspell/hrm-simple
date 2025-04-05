@@ -1,6 +1,8 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { EC2Client, StopInstancesCommand } from '@aws-sdk/client-ec2';
 import { ConfigService } from '@nestjs/config';
+import { CommonUtilitiesService } from './utilities/environment/common.utilities.service';
+import { ENVIRONMENT } from './constants/common';
 
 /**
  * Service responsible for managing EC2 instance auto-shutdown functionality.
@@ -13,7 +15,10 @@ export class AppService implements OnModuleInit {
   private timer: NodeJS.Timeout;
   private ec2Client: EC2Client;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private commonUtilitiesService: CommonUtilitiesService,
+  ) {
     // Initialize EC2 client with credentials from .env
     this.ec2Client = new EC2Client({
       region: this.configService.get<string>('AWS_REGION'),
@@ -31,7 +36,10 @@ export class AppService implements OnModuleInit {
    * Starts the inactivity timer if in development environment.
    */
   onModuleInit(): void {
-    if (process.env.ENV !== 'dev') {
+    if (
+      this.commonUtilitiesService.getCurrentEnvironment() !==
+      ENVIRONMENT.DEVELOPMENT
+    ) {
       console.log(
         'Timer shutdown functionality is disabled in non-dev environments',
       );
@@ -53,7 +61,10 @@ export class AppService implements OnModuleInit {
     message: string;
     nextShutdownIn?: string;
   }> {
-    if (process.env.ENV !== 'dev') {
+    if (
+      this.commonUtilitiesService.getCurrentEnvironment() !==
+      ENVIRONMENT.DEVELOPMENT
+    ) {
       return {
         message: 'Timer functionality is only available in dev environment',
       };

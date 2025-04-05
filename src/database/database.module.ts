@@ -8,6 +8,7 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { ENVIRONMENT } from '../constants/common';
 
 @Module({
   imports: [
@@ -17,7 +18,9 @@ import { DataSource, DataSourceOptions } from 'typeorm';
       useFactory: async (
         configService: ConfigService,
       ): Promise<TypeOrmModuleOptions> => {
-        const isDevelopment = configService.get('ENV') === 'dev';
+        const isDevelopment =
+          configService.get('ENV') === ENVIRONMENT.DEVELOPMENT;
+        const isLocal = configService.get('ENV') === ENVIRONMENT.LOCAL;
         return {
           name: 'default',
           type: 'postgres',
@@ -26,14 +29,16 @@ import { DataSource, DataSourceOptions } from 'typeorm';
           username: configService.get('PRIMARY_DATABASE_USERNAME'),
           password: configService.get<string>('PRIMARY_DATABASE_PASSWORD'),
           database: configService.get<string>('PRIMARY_DATABASE'),
-          logging: isDevelopment,
+          // database query logging only in local environment
+          logging: isLocal,
           maxQueryExecutionTime: +configService.get(
             'PRIMARY_DATABASE_MAX_QUERY_EXECUTION_TIME',
           ),
           entities: [__dirname + '/../**/*.entity.{js,ts}'],
           migrations: [__dirname + '/../migrations/**/*{.ts,js}'],
           subscribers: [__dirname + '/../**/*.subscriber.{js,ts}'],
-          synchronize: isDevelopment,
+          // only synchronize in local or development environment
+          synchronize: isDevelopment || isLocal,
           migrationsRun:
             configService.get('DATABASE_MIGRATIONS_RUN') === 'true',
           migrationsTableName: 'migrations',

@@ -18,7 +18,7 @@ export class LoginDto {
    * The password of the user.
    *
    * This is the password the user uses to authenticate.
-   * @example "P@ssw0rd!"
+   * @example "P@sswrd!"
    */
   @ApiProperty({
     description: 'The password of the user.',
