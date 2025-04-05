@@ -2,16 +2,6 @@ import * as Sentry from '@sentry/nestjs';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { expressIntegration, httpIntegration } from '@sentry/node';
 
-console.log('process.env.SENTRY_DSN -->', process.env.SENTRY_DSN);
-console.log(
-  'process.env.SENTRY_TRACES_SAMPLE_RATE -->',
-  process.env.SENTRY_TRACES_SAMPLE_RATE,
-);
-console.log(
-  'process.env.SENTRY_PROFILES_SAMPLE_RATE -->',
-  process.env.SENTRY_PROFILES_SAMPLE_RATE,
-);
-
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.ENV || 'development',
@@ -34,4 +24,13 @@ Sentry.init({
   profilesSampleRate: Number(process.env.SENTRY_PROFILES_SAMPLE_RATE) || 1.0,
 
   debug: true,
+});
+
+console.log('\n=== SENTRY STATUS ===');
+console.log({
+  initialized: Sentry.isInitialized(), // This is the correct way to check
+  environment: process.env.ENV || 'development',
+  hasDSN: process.env.SENTRY_DSN,
+  tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE || '1.0',
+  profilesSampleRate: process.env.SENTRY_PROFILES_SAMPLE_RATE || '1.0',
 });
