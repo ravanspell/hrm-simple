@@ -8,6 +8,7 @@ import {
   Delete,
   Version,
   Req,
+  HttpStatus,
 } from '@nestjs/common';
 import { EmailSettingsService } from './email-settings.service';
 import { CreateEmailSettingsDto } from './dto/create-email-setting.dto';
@@ -17,6 +18,7 @@ import { RequestWithTenant } from 'src/coretypes';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { NotificationService } from '@/notification/notification.service';
 import { NOTIFICATION_TYPE } from '@/constants/notifications';
+import { API_VERSION } from '@/constants/common';
 
 @ApiTags('email-settings')
 @Controller('email-settings')
@@ -33,14 +35,14 @@ export class EmailSettingsController {
    * @returns The created email settings.
    */
   @Post()
-  @Version('1')
+  @Version(API_VERSION.V1)
   @Authentication()
   @ApiOperation({ summary: 'Create email settings' })
   @ApiResponse({
-    status: 201,
+    status: HttpStatus.CREATED,
     description: 'The email settings have been successfully created.',
   })
-  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden.' })
   create(
     @Body() createDto: CreateEmailSettingsDto,
     @Req() req: RequestWithTenant,
@@ -58,7 +60,7 @@ export class EmailSettingsController {
    * @returns all email settings for the organization
    */
   @Get()
-  @Version('1')
+  @Version(API_VERSION.V1)
   @Authentication()
   async findAllByOrganization(@Req() req: RequestWithTenant) {
     const webPush = {
@@ -81,7 +83,7 @@ export class EmailSettingsController {
    * @returns organization's primary email settings
    */
   @Get('primary/organization/:orgId')
-  @Version('1')
+  @Version(API_VERSION.V1)
   @Authentication()
   findPrimaryByOrganization(@Param('orgId') orgId: string) {
     return this.emailSettingsService.getPrimaryEmailSettings(orgId);
@@ -94,14 +96,17 @@ export class EmailSettingsController {
    * @returns The updated email settings.
    */
   @Patch(':id')
-  @Version('1')
+  @Version(API_VERSION.V1)
   @Authentication()
   @ApiOperation({ summary: 'Update email settings by ID' })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'The email settings have been successfully updated.',
   })
-  @ApiResponse({ status: 404, description: 'Email settings not found.' })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Email settings not found.',
+  })
   update(@Param('id') id: string, @Body() updateDto: UpdateEmailSettingDto) {
     return this.emailSettingsService.update(id, updateDto);
   }
@@ -112,15 +117,22 @@ export class EmailSettingsController {
    * @returns The result of the deletion.
    */
   @Delete(':id')
-  @Version('1')
+  @Version(API_VERSION.V1)
   @Authentication()
   @ApiOperation({ summary: 'Delete email settings by ID' })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.OK,
     description: 'The email settings have been successfully deleted.',
   })
-  @ApiResponse({ status: 404, description: 'Email settings not found.' })
-  remove(@Param('id') id: string) {
-    return id;
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Email settings not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Cannot delete primary email settings.',
+  })
+  async remove(@Param('id') id: string) {
+    return this.emailSettingsService.remove(id);
   }
 }
