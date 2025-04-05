@@ -24,7 +24,7 @@ interface TaggingResult {
 
 export interface createFileData {
   fileName: string;
-  parentId: string;
+  parentId?: string | null;
   s3ObjectKey: string;
   fileSize: number;
 }
@@ -332,31 +332,62 @@ export class FileManagementService {
   async getDirtyBucketObjectMetadata(
     fileKey: string,
   ): Promise<HeadObjectCommandOutput> {
-    return this.awsS3Service.getObjectMetadata(this.permanentBucket, fileKey);
+    return this.awsS3Service.getObjectMetadata(this.dirtyBucket, fileKey);
   }
 
+  /**
+   * Confirms file uploads by moving files from temporary storage to permanent storage
+   * and creating corresponding database records.
+   *
+   * @param createFileData - Array of file data objects containing information about uploaded files
+   * @param organizationId - ID of the organization that owns the files
+   * @returns Array of created file records with updated file sizes
+   *
+   * @example
+   * // Usage in another service
+   * const fileRecords = await fileManagementService.confirmUpload(
+   *   [
+   *     {
+   *       fileName: 'document.pdf',
+   *       parentId: 'folder-uuid',
+   *       s3ObjectKey: 'temp/uuid/document.pdf',
+   *       fileSize: 0 // Will be updated with actual size
+   *     }
+   *   ],
+   *   'organization-uuid'
+   * );
+   */
   @Transactional()
-  async confirmUpload(createFileData: any, orgnizationId: string) {
-    const { files } = createFileData;
+  async confirmUpload(
+    createFileData: createFileData[],
+    organizationId: string,
+    userId: string,
+  ) {
     console.log('createFileData-->', createFileData);
-    // Check if the file exists in the dirty bucket
+
+    // Check if the files exist in the dirty bucket and get their metadata
     const dirtyBucketObjMetadata = createFileData.map(
       ({ s3ObjectKey: fileKey }) => this.getDirtyBucketObjectMetadata(fileKey),
     );
 
     const fileData = await Promise.all(dirtyBucketObjMetadata);
 
+    // Update file records with actual file sizes from S3
     const fileRecordData = createFileData.map((file, index) => ({
       ...file,
       fileSize: fileData[index].ContentLength,
     }));
 
-    await this.createFileRecords(fileRecordData, orgnizationId);
+    // Create file records in the database
+    await this.createFileRecords(fileRecordData, organizationId, userId);
 
-    const moveFileToPermemntStoragePromises = files.map((fileKey: string) =>
-      this.copyFileToMainStorage(fileKey),
+    // Move files from dirty bucket to permanent storage
+    const moveFileToPermanentStoragePromises = createFileData.map(
+      ({ s3ObjectKey }) => this.copyFileToMainStorage(s3ObjectKey),
     );
-    await Promise.all(moveFileToPermemntStoragePromises);
+    await Promise.all(moveFileToPermanentStoragePromises);
+
+    return fileRecordData;
   }
 
   /**
@@ -364,12 +395,18 @@ export class FileManagementService {
    * @param createFileData - An array of file creation data.
    * @returns The created file records.
    */
-  async createFileRecords(createFileData: any[], orgnizationId: string) {
+  async createFileRecords(
+    createFileData: any[],
+    orgnizationId: string,
+    userId: string,
+  ) {
     return this.fileMgtRepository.createFileRecords(
       createFileData,
       orgnizationId,
+      userId,
     );
   }
+
   /**
    * Get S3 object as a readable stream for a file.
    * @param s3ObjectKey - The S3 object key of the file.

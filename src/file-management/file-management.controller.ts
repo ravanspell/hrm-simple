@@ -12,22 +12,24 @@ import {
   UnprocessableEntityException,
   NotFoundException,
   Res,
+  Version,
+  HttpStatus,
 } from '@nestjs/common';
-import {
-  createFileData,
-  FileManagementService,
-} from './file-management.service';
-import { UpdateFileManagementDto } from './dto/update-file-management.dto';
-import { IsString } from 'class-validator';
-import { RequestWithTenant } from 'src/coretypes';
-import { RenameFileDto } from './dto/rename-file.dto';
-import { RenameFolderDto } from './dto/rename-folder.dto';
+import { FileManagementService } from './file-management.service';
+import { RequestWithTenant } from '@/coretypes';
+import { Authentication } from '@/decorators/auth.decorator';
+import { API_VERSION } from '@/constants/common';
+import { ConfirmUploadDto } from './dto/confirm-upload.dto';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CreateFolderDto } from './dto/create-folder.dto';
 import { DeleteFilesDto } from './dto/delete-files.dto';
+import { UpdateFileManagementDto } from './dto/update-file-management.dto';
+import { IsString } from 'class-validator';
+import { RenameFileDto } from './dto/rename-file.dto';
+import { RenameFolderDto } from './dto/rename-folder.dto';
 import { Response } from 'express';
 import * as archiver from 'archiver';
 import { Folder } from './entities/folder.entity';
-import { Authentication } from '@/decorators/auth.decorator';
 
 class InitUploadDto {
   @IsString()
@@ -39,6 +41,8 @@ export class FileManagementController {
   constructor(private readonly fileManagementService: FileManagementService) {}
 
   @Post('upload/init')
+  @Authentication()
+  @Version(API_VERSION.V1)
   async initUpload(@Body() initUploadDto: InitUploadDto) {
     const { fileName } = initUploadDto;
     // get the file extension out of the file name
@@ -272,19 +276,38 @@ export class FileManagementController {
   }
 
   /**
-   * Retrieves the hierarchy of parent folder IDs for breadcrumb navigation.
-   * @param folderId - ID of the folder.
-   * @returns Array of parent folder IDs from root to the specified folder's parent.
+   * Confirms file uploads by moving files from temporary storage to permanent storage
+   * and creating corresponding database records.
+   *
+   * @param confirmUploadDto - DTO containing the files to confirm upload
+   * @param req - Request object containing user information
+   * @returns Array of created file records with updated file sizes
    */
   @Post('upload/confirm')
+  @Authentication()
+  @Version(API_VERSION.V1)
+  @ApiOperation({ summary: 'Confirm file uploads' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description:
+      'Files have been successfully confirmed and moved to permanent storage.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid request data.',
+  })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden.' })
   async uploadConfirmation(
-    @Body('files') files: createFileData[],
+    @Body() confirmUploadDto: ConfirmUploadDto,
     @Req() req: RequestWithTenant,
   ) {
     const organizationId = req.user.organizationId;
+    const userId = req.user.id;
+
     return await this.fileManagementService.confirmUpload(
-      files,
+      confirmUploadDto.files,
       organizationId,
+      userId,
     );
   }
 }

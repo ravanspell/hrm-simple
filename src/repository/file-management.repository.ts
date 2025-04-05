@@ -19,24 +19,18 @@ export class FileMgtRepository extends Repository<FileMgt> {
   async createFileRecords(
     createFileData: Partial<FileMgt[]>,
     organizationId: string,
+    userId: string,
   ): Promise<FileMgt[]> {
     const files = createFileData.map((data: Partial<FileMgt>) => {
-      const {
-        fileName,
-        fileSize,
-        s3ObjectKey,
-        folderId,
-        createdBy,
-        updatedBy,
-      } = data;
+      const { fileName, fileSize, s3ObjectKey, folderId } = data;
       return {
         fileName,
         fileSize,
         s3ObjectKey,
         organization: { id: organizationId },
         folder: folderId ? { id: folderId } : null,
-        creator: { id: createdBy },
-        updater: { id: updatedBy },
+        creator: { id: userId },
+        updater: { id: userId },
       };
     });
     const fileRecordsObj = this.create(files);
