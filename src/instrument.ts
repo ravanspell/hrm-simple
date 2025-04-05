@@ -2,7 +2,8 @@ import * as dotenv from 'dotenv';
 import { join } from 'path';
 // dot env config not loaded since
 // we initlize the sentry before the app config
-dotenv.config({ path: join(__dirname, '../.env') });
+// this path for server
+dotenv.config({ path: join(__dirname, '../../.env') });
 
 import * as Sentry from '@sentry/nestjs';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
