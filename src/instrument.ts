@@ -1,3 +1,9 @@
+import * as dotenv from 'dotenv';
+import { join } from 'path';
+// dot env config not loaded since
+// we initlize the sentry before the app config
+dotenv.config({ path: join(__dirname, '../.env') });
+
 import * as Sentry from '@sentry/nestjs';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { expressIntegration, httpIntegration } from '@sentry/node';
@@ -22,15 +28,13 @@ Sentry.init({
   // Set sampling rate for profiling
   // This is relative to tracesSampleRate
   profilesSampleRate: Number(process.env.SENTRY_PROFILES_SAMPLE_RATE) || 1.0,
-
-  debug: true,
 });
 
 console.log('\n=== SENTRY STATUS ===');
 console.log({
   initialized: Sentry.isInitialized(), // This is the correct way to check
   environment: process.env.ENV || 'development',
-  hasDSN: process.env.SENTRY_DSN,
-  tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE || '1.0',
-  profilesSampleRate: process.env.SENTRY_PROFILES_SAMPLE_RATE || '1.0',
+  hasDSN: !!process.env.SENTRY_DSN,
+  tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE,
+  profilesSampleRate: process.env.SENTRY_PROFILES_SAMPLE_RATE,
 });
