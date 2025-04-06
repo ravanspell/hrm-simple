@@ -116,6 +116,17 @@ export class FileManagementController {
    */
   @Get()
   @Authentication()
+  @Version(API_VERSION.V1)
+  @ApiOperation({ summary: 'List files and folders' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Files and folders listed successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid request data.',
+  })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden.' })
   async listFilesAndFolders(
     @Query('folderId') folderId: string | null,
     @Query('page') page: number = 1, // Default to page 1

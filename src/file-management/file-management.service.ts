@@ -375,6 +375,7 @@ export class FileManagementService {
     // Update file records with actual file sizes from S3
     const fileRecordData = createFileData.map((file, index) => ({
       ...file,
+      folderId: file.parentId,
       fileSize: fileData[index].ContentLength,
     }));
 

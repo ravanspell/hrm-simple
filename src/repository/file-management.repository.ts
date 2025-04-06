@@ -78,9 +78,10 @@ export class FileMgtRepository extends Repository<FileMgt> {
       .take(take);
 
     if (folderId) {
-      getFileQuery.where('file.folderId = :folderId', { folderId });
+      getFileQuery.andWhere('file.folderId = :folderId', { folderId });
+    } else {
+      getFileQuery.andWhere('file.folderId IS NULL');
     }
-
     return getFileQuery.getManyAndCount();
   }
   /**
