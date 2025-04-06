@@ -14,13 +14,14 @@ import {
   Res,
   Version,
   HttpStatus,
+  HttpCode,
 } from '@nestjs/common';
 import { FileManagementService } from './file-management.service';
 import { RequestWithTenant } from '@/coretypes';
 import { Authentication } from '@/decorators/auth.decorator';
 import { API_VERSION } from '@/constants/common';
 import { ConfirmUploadDto } from './dto/confirm-upload.dto';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateFolderDto } from './dto/create-folder.dto';
 import { DeleteFilesDto } from './dto/delete-files.dto';
 import { UpdateFileManagementDto } from './dto/update-file-management.dto';
@@ -37,6 +38,7 @@ class InitUploadDto {
 }
 
 @Controller('file-management')
+@ApiTags('File Management')
 export class FileManagementController {
   constructor(private readonly fileManagementService: FileManagementService) {}
 
@@ -65,7 +67,25 @@ export class FileManagementController {
    * @returns The created folder record.
    */
   @Post('create-folder')
-  async createFolder(@Body() createFolderDto: CreateFolderDto) {
+  @Authentication()
+  @Version(API_VERSION.V1)
+  @ApiOperation({ summary: 'Create a new folder' })
+  @HttpCode(HttpStatus.CREATED)
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Folder created successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid request data.',
+  })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden.' })
+  async createFolder(
+    @Body() createFolderDto: CreateFolderDto,
+    @Req() req: RequestWithTenant,
+  ) {
+    const userId = req.user.id;
+    const organizationId = req.user.organizationId;
     const { parentId, name } = createFolderDto;
     let path = `/${name}`;
     // Determine the path based on parent folder (if any)
@@ -77,10 +97,10 @@ export class FileManagementController {
     const folderData: Partial<Folder> = {
       name,
       parentId,
-      organizationId: '69fb3a34-1bcc-477d-8a22-99c194ea468d',
+      organizationId,
       path,
-      createdBy: '69fb3a34-1bcc-477d-8a22-99c194ea468d',
-      updatedBy: '69fb3a34-1bcc-477d-8a22-99c194ea468d',
+      createdBy: userId,
+      updatedBy: userId,
     };
     return this.fileManagementService.createFolder(folderData);
   }
@@ -96,6 +116,17 @@ export class FileManagementController {
    */
   @Get()
   @Authentication()
+  @Version(API_VERSION.V1)
+  @ApiOperation({ summary: 'List files and folders' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Files and folders listed successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid request data.',
+  })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden.' })
   async listFilesAndFolders(
     @Query('folderId') folderId: string | null,
     @Query('page') page: number = 1, // Default to page 1

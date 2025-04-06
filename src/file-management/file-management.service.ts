@@ -363,8 +363,6 @@ export class FileManagementService {
     organizationId: string,
     userId: string,
   ) {
-    console.log('createFileData-->', createFileData);
-
     // Check if the files exist in the dirty bucket and get their metadata
     const dirtyBucketObjMetadata = createFileData.map(
       ({ s3ObjectKey: fileKey }) => this.getDirtyBucketObjectMetadata(fileKey),
@@ -375,6 +373,7 @@ export class FileManagementService {
     // Update file records with actual file sizes from S3
     const fileRecordData = createFileData.map((file, index) => ({
       ...file,
+      folderId: file.parentId,
       fileSize: fileData[index].ContentLength,
     }));
 

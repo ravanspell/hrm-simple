@@ -42,7 +42,9 @@ export class FolderRepository extends Repository<Folder> {
       .take(take);
 
     if (folderId) {
-      getFoldersQuery.where('folder.parentId = :folderId', { folderId });
+      getFoldersQuery.andWhere('folder.parentId = :folderId', { folderId });
+    } else {
+      getFoldersQuery.andWhere('folder.parentId IS NULL');
     }
     return getFoldersQuery.getManyAndCount();
   }
