@@ -9,9 +9,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { ENVIRONMENT } from '../constants/common';
+import { DatabaseInitService } from './database-init.service';
 
 @Module({
   imports: [
+    ConfigModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -66,5 +68,6 @@ import { ENVIRONMENT } from '../constants/common';
       },
     }),
   ],
+  providers: [DatabaseInitService],
 })
 export class DatabaseModule {}
