@@ -32,3 +32,4 @@ export const ORGANIZATION_LICENSED_PERMISSIONS_TABLE =
 export const USER_DIRECT_PERMISSIONS_TABLE = 'user_direct_permissions';
 export const EFFECTIVE_USER_PERMISSIONS_VIEW = 'effective_user_permissions';
 export const PERMISSION_PREFIXES_TABLE = 'permission_prefixes';
+export const CANDIDATE_TABLE = 'candidate';
