@@ -8,6 +8,60 @@ import { Readable } from 'stream';
 import Anthropic from '@anthropic-ai/sdk';
 
 /**
+ * Interface for work experience entry
+ */
+interface WorkExperience {
+  company: string;
+  jobTitle: string;
+  duration: string;
+  responsibilities: string[];
+}
+
+/**
+ * Interface for education entry
+ */
+interface Education {
+  institution: string;
+  degree: string;
+  graduationYear: string;
+}
+
+/**
+ * Interface for project entry
+ */
+interface Project {
+  projectTitle: string;
+  description: string;
+}
+
+/**
+ * Interface for job matching analysis
+ */
+interface JobMatching {
+  matchingScore: number;
+  skillGap: string[];
+}
+
+/**
+ * Interface for recommendations
+ */
+interface Recommendations {
+  resumeOptimization: string;
+  jobRecommendations: string[];
+}
+
+/**
+ * Interface for structured resume data
+ */
+interface StructuredResume {
+  workExperience: WorkExperience[];
+  education: Education[];
+  skills: string[];
+  certifications: string[];
+  projects: Project[];
+}
+
+/**
  * Interface for parsed resume data
  */
 export interface ParsedResumeData {
@@ -18,6 +72,9 @@ export interface ParsedResumeData {
   currentPosition?: string;
   expectedPosition?: string;
   resume: string;
+  structuredResume: StructuredResume;
+  jobMatching: JobMatching;
+  recommendations: Recommendations;
   metadata?: Record<string, any>;
 }
 
@@ -184,21 +241,87 @@ export class ResumeParserService {
     text: string,
   ): Promise<ParsedResumeData> {
     try {
-      const prompt = `Please analyze this resume and extract the following information in JSON format:
-      - firstName (string)
-      - lastName (string)
-      - email (string)
-      - phone (string)
-      - currentPosition (string)
-      - expectedPosition (string)
-      - skills (array of strings)
-      - experience (array of objects with company, position, duration, and description)
-      - education (array of objects with institution, degree, field, and year)
-      
-      Resume text:
-      ${text}
-      
-      Return only the JSON object, no additional text.`;
+      const prompt = `You are an expert resume analyzer. 
+      Your task is to process the provided resume data—already filtered to remove any Personally Identifiable Information (PII)—and extract the following details into a structured JSON format. Analyze the resume data for:
+
+        1. **Structured Resume Data**  
+        - **Personal Information**: Extract:
+            - "firstName"
+            - "lastName"
+            - "email"
+            - "phone"
+            - "current_position"
+            - "expected_position"
+        - **Work Experience**: For each job, extract:
+            - "company" (organization name)
+            - "job_title"
+            - "duration" (dates or years)
+            - "responsibilities" (list of key responsibilities)
+        - **Education**: For each educational entry, extract:
+            - "institution"
+            - "degree"
+            - "graduation_year" (or duration)
+        - **Skills**: List technical and soft skills.
+        - **Certifications**: List any certifications mentioned.
+        - **Projects** (if available): List key projects with a brief description.
+
+        2. **Job Matching Analysis**  
+        - Compare the resume data with a provided job description.
+        - Provide a "matching_score" (from 0 to 100) based on how well the skills, experience, and education match.
+        - Identify any "skill_gap" items (i.e., skills mentioned in the job description that are missing in the resume).
+
+        3. **Recommendations**  
+        - Provide "resume_optimization" suggestions (e.g., keyword enhancements or formatting tips).
+        - Provide a list of "job_recommendations" based on the resume analysis.
+
+        Resume text:
+        ${text}
+
+        Return only the JSON object in the following structure, no additional text or commentary:
+
+        {
+            "personalInformation": {
+                "firstName": "<first_name>",
+                "lastName": "<last_name>",
+                "email": "<email>",
+                "phone": "<phone>",
+                "currentPosition": "<current_position>",
+                "expectedPosition": "<expected_position>"
+            },
+            "structuredResume": {
+                "workExperience": [
+                {
+                    "company": "<company_name>",
+                    "jobTitle": "<job_title>",
+                    "duration": "<duration>",
+                    "responsibilities": ["<responsibility_1>", "<responsibility_2>", "..."]
+                }
+                ],
+                "education": [
+                {
+                    "institution": "<institution_name>",
+                    "degree": "<degree>",
+                    "graduationYear": "<year>"
+                }
+                ],
+                "skills": ["<skill_1>", "<skill_2>", "..."],
+                "certifications": ["<certification_1>", "<certification_2>", "..."],
+                "projects": [
+                {
+                    "project_title": "<project_title>",
+                    "description": "<brief_description>"
+                }
+                ]
+            },
+            "jobMatching": {
+                "matchingScore": <number>,
+                "skillGap": ["<missing_skill_1>", "<missing_skill_2>", "..."]
+            },
+            "recommendations": {
+                "resumeOptimization": "<optimization_suggestions>",
+                "jobRecommendations": ["<job_recommendation_1>", "<job_recommendation_2>", "..."]
+            }
+        }`;
 
       const response = await this.anthropic.messages.create({
         model: 'claude-3-sonnet-20240229',
@@ -227,10 +350,10 @@ export class ResumeParserService {
         currentPosition: parsedData.currentPosition,
         expectedPosition: parsedData.expectedPosition,
         resume: text,
+        structuredResume: parsedData.structuredResume,
+        jobMatching: parsedData.jobMatching,
+        recommendations: parsedData.recommendations,
         metadata: {
-          skills: parsedData.skills,
-          experience: parsedData.experience,
-          education: parsedData.education,
           parsedAt: new Date().toISOString(),
           confidence: 1, // Since we're using Claude, we can assume high confidence
         },
@@ -252,6 +375,22 @@ export class ResumeParserService {
     // Initialize the result with the full text as resume content
     const result: ParsedResumeData = {
       resume: text,
+      structuredResume: {
+        workExperience: [],
+        education: [],
+        skills: [],
+        certifications: [],
+        projects: [],
+      },
+      jobMatching: {
+        matchingScore: 0,
+        skillGap: [],
+      },
+      recommendations: {
+        resumeOptimization:
+          'Unable to provide optimization suggestions due to parsing limitations.',
+        jobRecommendations: [],
+      },
       metadata: {},
     };
 
