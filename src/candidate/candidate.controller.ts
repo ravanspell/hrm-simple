@@ -17,10 +17,11 @@ import { UpdateCandidateDto } from './dto/update-candidate.dto';
 import { FilterCandidateDto } from './dto/filter-candidate.dto';
 import { Authentication } from '../decorators/auth.decorator';
 import { ResumeParserService } from './resume-parser.service';
+import { Candidate } from './entities/candidate.entity';
 
 @ApiTags('candidates')
+@Controller('candidate')
 @Authentication()
-@Controller('candidates')
 export class CandidateController {
   constructor(
     private readonly candidateService: CandidateService,
@@ -128,26 +129,76 @@ export class CandidateController {
   }
 
   @Post('parse-resume-and-create')
-  @ApiOperation({
-    summary: 'Parse a resume by document ID and create a new candidate',
-  })
+  @ApiOperation({ summary: 'Parse resumes and create candidates' })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'Candidate created from resume successfully.',
+    description: 'The candidates have been successfully created.',
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request.' })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Unauthorized.',
-  })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden.' })
-  async parseResumeAndCreate(@Body('documentId') documentId: string) {
-    if (!documentId) {
-      throw new BadRequestException('Document ID is required');
+  async parseResumeAndCreate(
+    @Body('documentIds') documentIds: string[],
+  ): Promise<Candidate[]> {
+    if (
+      !documentIds ||
+      !Array.isArray(documentIds) ||
+      documentIds.length === 0
+    ) {
+      throw new BadRequestException('Document IDs array is required');
     }
-    return await this.candidateService.parseResumeAndCreateCandidate(
-      documentId,
+
+    // Parse all resumes in parallel
+    const parseResults = await Promise.allSettled(
+      documentIds.map((documentId) =>
+        this.resumeParserService.parseResume(documentId),
+      ),
     );
+
+    // Process results and create candidates
+    const candidates: Candidate[] = [];
+    const errors: string[] = [];
+
+    for (let i = 0; i < parseResults.length; i++) {
+      const result = parseResults[i];
+      const documentId = documentIds[i];
+
+      if (result.status === 'fulfilled') {
+        try {
+          // Create candidate from parsed data
+          const candidate = await this.candidateService.create({
+            firstName: result.value.firstName || '',
+            lastName: result.value.lastName || '',
+            email: result.value.email || '',
+            phone: result.value.phone || '',
+            currentPosition: result.value.currentPosition || '',
+            expectedPosition: result.value.expectedPosition || '',
+            resume: result.value.resume,
+            metadata: {
+              ...result.value.metadata,
+              documentId,
+              parsedAt: new Date().toISOString(),
+            },
+          });
+          candidates.push(candidate);
+        } catch (error) {
+          errors.push(
+            `Failed to create candidate for document ${documentId}: ${error.message}`,
+          );
+        }
+      } else {
+        errors.push(
+          `Failed to parse resume for document ${documentId}: ${result.reason}`,
+        );
+      }
+    }
+
+    // If there were any errors, include them in the response
+    if (errors.length > 0) {
+      // You might want to handle this differently based on your requirements
+      console.error('Errors during resume parsing:', errors);
+    }
+
+    return candidates;
   }
 
   @Post(':id/parse-resume-and-update')
