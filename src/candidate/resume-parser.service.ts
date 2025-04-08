@@ -5,6 +5,7 @@ import * as rtfParser from 'rtf-parser';
 import { Candidate } from './entities/candidate.entity';
 import { FileManagementService } from '@/file-management/file-management.service';
 import { Readable } from 'stream';
+import Anthropic from '@anthropic-ai/sdk';
 
 /**
  * Interface for parsed resume data
@@ -26,7 +27,13 @@ export interface ParsedResumeData {
  */
 @Injectable()
 export class ResumeParserService {
-  constructor(private readonly fileManagementService: FileManagementService) {}
+  private anthropic: Anthropic;
+
+  constructor(private readonly fileManagementService: FileManagementService) {
+    this.anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+  }
 
   /**
    * Parses a resume file and extracts candidate information
@@ -75,8 +82,8 @@ export class ResumeParserService {
           );
       }
 
-      // Extract candidate information from the parsed text
-      return this.extractCandidateInfo(textContent);
+      // Extract candidate information using Claude
+      return this.extractCandidateInfoWithClaude(textContent);
     } catch (error) {
       throw new BadRequestException(`Failed to parse resume: ${error.message}`);
     }
@@ -165,6 +172,74 @@ export class ResumeParserService {
     }
 
     return '';
+  }
+
+  /**
+   * Extracts candidate information from parsed text using Claude
+   *
+   * @param text - The parsed text content
+   * @returns Extracted candidate information
+   */
+  private async extractCandidateInfoWithClaude(
+    text: string,
+  ): Promise<ParsedResumeData> {
+    try {
+      const prompt = `Please analyze this resume and extract the following information in JSON format:
+      - firstName (string)
+      - lastName (string)
+      - email (string)
+      - phone (string)
+      - currentPosition (string)
+      - expectedPosition (string)
+      - skills (array of strings)
+      - experience (array of objects with company, position, duration, and description)
+      - education (array of objects with institution, degree, field, and year)
+      
+      Resume text:
+      ${text}
+      
+      Return only the JSON object, no additional text.`;
+
+      const response = await this.anthropic.messages.create({
+        model: 'claude-3-sonnet-20240229',
+        max_tokens: 1000,
+        temperature: 0,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      });
+
+      const content = response.content[0];
+      if (!content || content.type !== 'text') {
+        throw new Error('Invalid response from Claude');
+      }
+
+      const parsedData = JSON.parse(content.text);
+
+      return {
+        firstName: parsedData.firstName,
+        lastName: parsedData.lastName,
+        email: parsedData.email,
+        phone: parsedData.phone,
+        currentPosition: parsedData.currentPosition,
+        expectedPosition: parsedData.expectedPosition,
+        resume: text,
+        metadata: {
+          skills: parsedData.skills,
+          experience: parsedData.experience,
+          education: parsedData.education,
+          parsedAt: new Date().toISOString(),
+          confidence: 1, // Since we're using Claude, we can assume high confidence
+        },
+      };
+    } catch (error: any) {
+      console.error('Claude parsing failed:', error.message);
+      // Fallback to regex-based extraction if Claude fails
+      return this.extractCandidateInfo(text);
+    }
   }
 
   /**
