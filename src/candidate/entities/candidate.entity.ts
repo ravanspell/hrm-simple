@@ -74,7 +74,7 @@ export class Candidate {
   linkedInUrl: string;
 
   @Column({
-    default: 'PENDING',
+    default: 'REVIEWING',
     length: 20,
     enum: [
       'PENDING',
@@ -83,6 +83,7 @@ export class Candidate {
       'OFFERED',
       'REJECTED',
       'HIRED',
+      'IDLE',
     ],
   })
   @ApiProperty({
@@ -94,7 +95,9 @@ export class Candidate {
       'OFFERED',
       'REJECTED',
       'HIRED',
+      'IDLE',
     ],
+    default: 'REVIEWING',
   })
   status: string;
 

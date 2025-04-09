@@ -36,7 +36,8 @@ export class CandidateService {
   async findAll(
     filter: FilterCandidateDto,
   ): Promise<{ data: Candidate[]; total: number }> {
-    const [candidates, total] = await this.candidateRepository.findAll(filter);
+    const [candidates, total] =
+      await this.candidateRepository.findAllCandidates(filter);
     return { data: candidates, total };
   }
 
@@ -48,7 +49,7 @@ export class CandidateService {
    * @throws NotFoundException if candidate doesn't exist
    */
   async findOne(id: string): Promise<Candidate> {
-    const candidate = await this.candidateRepository.findOne(id);
+    const candidate = await this.candidateRepository.findCandidateById(id);
     if (!candidate) {
       throw new BadRequestException(`Candidate with ID ${id} not found`);
     }
@@ -69,7 +70,10 @@ export class CandidateService {
   ): Promise<Candidate> {
     // Check if candidate exists before updating
     await this.findOne(id);
-    return await this.candidateRepository.update(id, updateCandidateDto);
+    return await this.candidateRepository.updateCandidate(
+      id,
+      updateCandidateDto,
+    );
   }
 
   /**
@@ -81,7 +85,7 @@ export class CandidateService {
   async remove(id: string): Promise<void> {
     // Check if candidate exists before removing
     await this.findOne(id);
-    await this.candidateRepository.remove(id);
+    await this.candidateRepository.removeCandidate(id);
   }
 
   /**
@@ -137,7 +141,7 @@ export class CandidateService {
       );
 
     // Save and return the updated candidate
-    return await this.candidateRepository.update(id, updatedCandidate);
+    return await this.candidateRepository.updateCandidate(id, updatedCandidate);
   }
 
   /**
