@@ -1,23 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, DeleteResult, Repository } from 'typeorm';
 import { Candidate } from './entities/candidate.entity';
 import { FilterCandidateDto } from './dto/filter-candidate.dto';
 
 @Injectable()
-export class CandidateRepository {
-  constructor(
-    @InjectRepository(Candidate)
-    private readonly repository: Repository<Candidate>,
-  ) {}
-
-  async create(candidate: Partial<Candidate>): Promise<Candidate> {
-    const newCandidate = this.repository.create(candidate);
-    return await this.repository.save(newCandidate);
+export class CandidateRepository extends Repository<Candidate> {
+  constructor(dataSource: DataSource) {
+    super(Candidate, dataSource.createEntityManager());
   }
 
-  async findAll(filter: FilterCandidateDto): Promise<[Candidate[], number]> {
-    const queryBuilder = this.repository.createQueryBuilder('candidate');
+  async createCandidate(candidate: Partial<Candidate>): Promise<Candidate> {
+    const newCandidate = this.create(candidate);
+    return await this.save(newCandidate);
+  }
+
+  async findAllCandidates(
+    filter: FilterCandidateDto,
+  ): Promise<[Candidate[], number]> {
+    const queryBuilder = this.createQueryBuilder('candidate');
 
     if (filter.firstName) {
       queryBuilder.andWhere('candidate.firstName ILIKE :firstName', {
@@ -68,19 +68,22 @@ export class CandidateRepository {
     queryBuilder.skip(skip).take(limit);
     queryBuilder.orderBy('candidate.createdAt', 'DESC');
 
-    return await queryBuilder.getManyAndCount();
+    return queryBuilder.getManyAndCount();
   }
 
-  async findOne(id: string): Promise<Candidate> {
-    return await this.repository.findOne({ where: { id } });
+  async findCandidateById(id: string): Promise<Candidate> {
+    return this.findOne({ where: { id } });
   }
 
-  async update(id: string, candidate: Partial<Candidate>): Promise<Candidate> {
-    await this.repository.update(id, candidate);
-    return await this.findOne(id);
+  async updateCandidate(
+    id: string,
+    candidate: Partial<Candidate>,
+  ): Promise<Candidate> {
+    await this.update(id, candidate);
+    return this.findOne({ where: { id } });
   }
 
-  async remove(id: string): Promise<void> {
-    await this.repository.delete(id);
+  async removeCandidate(id: string): Promise<DeleteResult> {
+    return this.delete(id);
   }
 }
