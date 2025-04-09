@@ -324,7 +324,9 @@ export class ResumeParserService {
         }`;
 
       const response = await this.anthropic.messages.create({
-        model: 'claude-3-sonnet-20240229',
+        // Haiku is faster and cheaper than Sonnet
+        // https://docs.anthropic.com/en/docs/about-claude/models/all-models#model-comparison-table
+        model: 'claude-3-haiku-20240307',
         max_tokens: 1000,
         temperature: 0,
         messages: [
@@ -341,7 +343,7 @@ export class ResumeParserService {
       }
 
       const parsedData = JSON.parse(content.text);
-
+      console.log('Parsed data:', parsedData);
       return {
         firstName: parsedData.firstName,
         lastName: parsedData.lastName,
