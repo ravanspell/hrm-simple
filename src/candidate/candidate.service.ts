@@ -4,7 +4,7 @@ import { CreateCandidateDto } from './dto/create-candidate.dto';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
 import { FilterCandidateDto } from './dto/filter-candidate.dto';
 import { Candidate } from './entities/candidate.entity';
-import { ResumeParserService, ParsedResumeData } from './resume-parser.service';
+import { ResumeParserService } from './resume-parser.service';
 
 /**
  * Service responsible for managing candidate data and operations
@@ -24,7 +24,7 @@ export class CandidateService {
    * @returns The newly created candidate
    */
   async create(createCandidateDto: CreateCandidateDto): Promise<Candidate> {
-    return await this.candidateRepository.create(createCandidateDto);
+    return this.candidateRepository.create(createCandidateDto);
   }
 
   /**
@@ -94,25 +94,34 @@ export class CandidateService {
    * @param documentId - The ID of the document to parse
    * @returns The newly created candidate with parsed resume data
    */
-  async parseResumeAndCreateCandidate(documentId: string): Promise<Candidate> {
+  async parseResumeAndCreateCandidate(
+    createFileData: any,
+    userId: string,
+    organizationId: string,
+  ): Promise<Candidate> {
     // Parse the resume using document ID
-    const parsedData = await this.resumeParserService.parseResume(documentId);
-
+    const { dataForSave, parsedData } =
+      await this.resumeParserService.parseResume(
+        createFileData,
+        userId,
+        organizationId,
+      );
     // Create a new candidate with the parsed data
     const createCandidateDto: CreateCandidateDto = {
-      firstName: parsedData.firstName || '',
-      lastName: parsedData.lastName || '',
-      email: parsedData.email || '',
-      phone: parsedData.phone || '',
-      currentPosition: parsedData.currentPosition || '',
-      expectedPosition: parsedData.expectedPosition || '',
-      resume: parsedData.resume,
+      firstName: dataForSave.firstName || '',
+      lastName: dataForSave.lastName || '',
+      email: dataForSave.email || '',
+      phone: dataForSave.phone || '',
+      currentPosition: dataForSave.currentPosition || '',
+      expectedPosition: dataForSave.expectedPosition || '',
+      resume: dataForSave.resume,
       status: 'PENDING',
-      metadata: parsedData.metadata,
+      metadata: dataForSave.metadata,
     };
 
     // Create and return the candidate
-    return await this.create(createCandidateDto);
+    await this.create(createCandidateDto);
+    return parsedData;
   }
 
   /**
@@ -123,26 +132,26 @@ export class CandidateService {
    * @returns The updated candidate with parsed resume data
    * @throws NotFoundException if candidate doesn't exist
    */
-  async parseResumeAndUpdateCandidate(
-    id: string,
-    documentId: string,
-  ): Promise<Candidate> {
-    // Check if candidate exists
-    const candidate = await this.findOne(id);
+  // async parseResumeAndUpdateCandidate(
+  //   id: string,
+  //   documentId: string,
+  // ): Promise<Candidate> {
+  //   // Check if candidate exists
+  //   const candidate = await this.findOne(id);
 
-    // Parse the resume using document ID
-    const parsedData = await this.resumeParserService.parseResume(documentId);
+  //   // Parse the resume using document ID
+  //   const parsedData = await this.resumeParserService.parseResume(documentId);
 
-    // Update the candidate with the parsed data
-    const updatedCandidate =
-      this.resumeParserService.updateCandidateWithParsedData(
-        candidate,
-        parsedData,
-      );
+  //   // Update the candidate with the parsed data
+  //   const updatedCandidate =
+  //     this.resumeParserService.updateCandidateWithParsedData(
+  //       candidate,
+  //       parsedData,
+  //     );
 
-    // Save and return the updated candidate
-    return await this.candidateRepository.updateCandidate(id, updatedCandidate);
-  }
+  //   // Save and return the updated candidate
+  //   return await this.candidateRepository.updateCandidate(id, updatedCandidate);
+  // }
 
   /**
    * Parses a resume file and returns the extracted data without creating or updating a candidate
@@ -150,7 +159,7 @@ export class CandidateService {
    * @param documentId - The ID of the document to parse
    * @returns The parsed resume data
    */
-  async parseResumeOnly(documentId: string): Promise<ParsedResumeData> {
-    return await this.resumeParserService.parseResume(documentId);
-  }
+  // async parseResumeOnly(documentId: string): Promise<ParsedResumeData> {
+  //   return await this.resumeParserService.parseResume(documentId);
+  // }
 }
