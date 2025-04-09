@@ -100,12 +100,11 @@ export class CandidateService {
     organizationId: string,
   ): Promise<Candidate> {
     // Parse the resume using document ID
-    const { dataForSave, parsedData } =
-      await this.resumeParserService.parseResume(
-        createFileData,
-        userId,
-        organizationId,
-      );
+    const { dataForSave } = await this.resumeParserService.parseResume(
+      createFileData,
+      userId,
+      organizationId,
+    );
     // Create a new candidate with the parsed data
     const createCandidateDto: CreateCandidateDto = {
       firstName: dataForSave.firstName || '',
@@ -114,14 +113,17 @@ export class CandidateService {
       phone: dataForSave.phone || '',
       currentPosition: dataForSave.currentPosition || '',
       expectedPosition: dataForSave.expectedPosition || '',
-      resume: dataForSave.resume,
-      status: 'PENDING',
-      metadata: dataForSave.metadata,
+      resume: {
+        rawText: dataForSave.resume,
+        structuredData: dataForSave.structuredResume,
+        jobMatching: dataForSave.jobMatching,
+        recommendations: dataForSave.recommendations,
+        metadata: dataForSave.metadata || {},
+      },
     };
 
     // Create and return the candidate
-    await this.create(createCandidateDto);
-    return parsedData;
+    return await this.create(createCandidateDto);
   }
 
   /**

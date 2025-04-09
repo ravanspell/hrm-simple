@@ -9,16 +9,10 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { CANDIDATE_TABLE } from '@/constants/dbTables';
 
-/**
- * Entity representing a candidate in the hiring process
- * Uses PostgreSQL-specific features for optimal performance
- */
 @Entity(CANDIDATE_TABLE)
 @Index('idx_candidate_first_name', ['firstName'])
 @Index('idx_candidate_last_name', ['lastName'])
 @Index('idx_candidate_email', ['email'])
-@Index('idx_candidate_current_position', ['currentPosition'])
-@Index('idx_candidate_expected_position', ['expectedPosition'])
 @Index('idx_candidate_status', ['status'])
 @Index('idx_candidate_created_at', ['createdAt'])
 export class Candidate {
@@ -59,19 +53,12 @@ export class Candidate {
   })
   expectedPosition: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   @ApiProperty({
-    description: 'Resume/CV content of the candidate',
+    description: 'Resume/CV content of the candidate in JSON format',
     required: false,
   })
-  resume: string;
-
-  @Column({ nullable: true, length: 255 })
-  @ApiProperty({
-    description: 'LinkedIn profile URL of the candidate',
-    required: false,
-  })
-  linkedInUrl: string;
+  resume: Record<string, any>;
 
   @Column({
     default: 'REVIEWING',
@@ -84,6 +71,7 @@ export class Candidate {
       'REJECTED',
       'HIRED',
       'IDLE',
+      'PROCESSING',
     ],
   })
   @ApiProperty({
@@ -91,6 +79,7 @@ export class Candidate {
     enum: [
       'PENDING',
       'REVIEWING',
+      'PROCESSING',
       'INTERVIEWED',
       'OFFERED',
       'REJECTED',
@@ -100,13 +89,6 @@ export class Candidate {
     default: 'REVIEWING',
   })
   status: string;
-
-  @Column({ type: 'jsonb', nullable: true })
-  @ApiProperty({
-    description: 'Additional metadata about the candidate',
-    required: false,
-  })
-  metadata: Record<string, any>;
 
   @CreateDateColumn()
   @ApiProperty({ description: 'Timestamp when the candidate was created' })

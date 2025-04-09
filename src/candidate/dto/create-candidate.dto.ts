@@ -46,12 +46,12 @@ export class CreateCandidateDto {
   expectedPosition?: string;
 
   @ApiProperty({
-    description: 'Resume/CV content of the candidate',
+    description: 'Resume/CV content of the candidate in JSON format',
     required: false,
   })
-  @IsString()
+  @IsObject()
   @IsOptional()
-  resume?: string;
+  resume?: Record<string, any>;
 
   @ApiProperty({
     description: 'LinkedIn profile URL of the candidate',
@@ -70,6 +70,8 @@ export class CreateCandidateDto {
       'OFFERED',
       'REJECTED',
       'HIRED',
+      'IDLE',
+      'PROCESSING',
     ],
     default: 'PENDING',
   })
@@ -80,6 +82,8 @@ export class CreateCandidateDto {
     'OFFERED',
     'REJECTED',
     'HIRED',
+    'IDLE',
+    'PROCESSING',
   ])
   @IsOptional()
   status?: string;

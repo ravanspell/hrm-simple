@@ -55,6 +55,24 @@ export class CandidateRepository extends Repository<Candidate> {
       );
     }
 
+    if (filter.skills) {
+      queryBuilder.andWhere(
+        "candidate.resume->'structuredData'->'skills' ?| :skills",
+        {
+          skills: filter.skills.split(','),
+        },
+      );
+    }
+
+    if (filter.education) {
+      queryBuilder.andWhere(
+        "candidate.resume->'structuredData'->'education'::text ILIKE :education",
+        {
+          education: `%${filter.education}%`,
+        },
+      );
+    }
+
     if (filter.status) {
       queryBuilder.andWhere('candidate.status = :status', {
         status: filter.status,

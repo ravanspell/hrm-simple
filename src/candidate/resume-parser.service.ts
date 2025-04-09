@@ -537,16 +537,14 @@ export class ResumeParserService {
       candidate.expectedPosition = parsedData.expectedPosition;
     }
 
-    // Always update the resume field with the parsed text
-    candidate.resume = parsedData.resume;
-
-    // Update metadata if it exists
-    if (parsedData.metadata) {
-      candidate.metadata = {
-        ...candidate.metadata,
-        ...parsedData.metadata,
-      };
-    }
+    // Store the structured resume data in the resume field
+    candidate.resume = {
+      rawText: parsedData.resume,
+      structuredData: parsedData.structuredResume,
+      jobMatching: parsedData.jobMatching,
+      recommendations: parsedData.recommendations,
+      metadata: parsedData.metadata || {},
+    };
 
     return candidate;
   }

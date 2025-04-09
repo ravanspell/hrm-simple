@@ -23,13 +23,32 @@ export class FilterCandidateDto {
   @IsOptional()
   currentPosition?: string;
 
-  @ApiProperty({ description: 'Search by expected position', required: false })
+  @ApiProperty({
+    description: 'Expected position the candidate is applying for',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   expectedPosition?: string;
 
   @ApiProperty({
-    description: 'Filter by status',
+    description: 'Skills to search for in the resume',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  skills?: string;
+
+  @ApiProperty({
+    description: 'Education to search for in the resume',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  education?: string;
+
+  @ApiProperty({
+    description: 'Current status of the candidate application',
     enum: [
       'PENDING',
       'REVIEWING',
@@ -37,6 +56,8 @@ export class FilterCandidateDto {
       'OFFERED',
       'REJECTED',
       'HIRED',
+      'IDLE',
+      'PROCESSING',
     ],
     required: false,
   })
@@ -47,6 +68,8 @@ export class FilterCandidateDto {
     'OFFERED',
     'REJECTED',
     'HIRED',
+    'IDLE',
+    'PROCESSING',
   ])
   @IsOptional()
   status?: string;
