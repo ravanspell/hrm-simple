@@ -13,5 +13,6 @@ import { FolderRepository } from 'src/repository/folder.repository';
     FileMgtRepository,
     FolderRepository,
   ],
+  exports: [FileManagementService],
 })
 export class FileManagementModule {}
