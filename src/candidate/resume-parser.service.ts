@@ -3,7 +3,10 @@ import * as pdfParse from 'pdf-parse';
 import * as mammoth from 'mammoth';
 import * as rtfParser from 'rtf-parser';
 import { Candidate } from './entities/candidate.entity';
-import { FileManagementService } from '@/file-management/file-management.service';
+import {
+  createFileData,
+  FileManagementService,
+} from '@/file-management/file-management.service';
 import { Readable } from 'stream';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -98,52 +101,61 @@ export class ResumeParserService {
    * @param fileId - The ID of the file to parse
    * @returns Parsed resume data
    */
-  async parseResume(fileId: string): Promise<ParsedResumeData> {
-    try {
-      // Get the file stream from the file management service
-      const fileStream =
-        await this.fileManagementService.getPermentStorageObjectStream(fileId);
+  async parseResume(
+    createFileData: createFileData,
+    userId: string,
+    organizationId: string,
+  ): Promise<{ dataForSave: ParsedResumeData; parsedData: any }> {
+    // Get the file stream from the file management service
+    await this.fileManagementService.confirmUpload(
+      [createFileData],
+      organizationId,
+      userId,
+    );
+    const fileStream =
+      await this.fileManagementService.getPermentStorageObjectStream(
+        createFileData.s3ObjectKey,
+      );
 
-      // Convert stream to buffer
-      const chunks: Buffer[] = [];
-      for await (const chunk of fileStream.Body as Readable) {
-        chunks.push(Buffer.from(chunk));
-      }
-      const fileBuffer = Buffer.concat(chunks);
-
-      // Get file metadata to determine file type
-      const fileMetadata =
-        await this.fileManagementService.getDirtyBucketObjectMetadata(fileId);
-      const fileType = fileMetadata.ContentType;
-
-      let textContent = '';
-
-      // Parse based on file type
-      switch (fileType) {
-        case 'application/pdf':
-          textContent = await this.parsePdf(fileBuffer);
-          break;
-        case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-        case 'application/msword':
-          textContent = await this.parseWord(fileBuffer, fileType);
-          break;
-        case 'text/rtf':
-          textContent = await this.parseRtf(fileBuffer);
-          break;
-        case 'text/plain':
-          textContent = fileBuffer.toString('utf-8');
-          break;
-        default:
-          throw new BadRequestException(
-            `Unsupported file type: ${fileType}. Supported types are PDF, DOC, DOCX, RTF, and TXT.`,
-          );
-      }
-
-      // Extract candidate information using Claude
-      return this.extractCandidateInfoWithClaude(textContent);
-    } catch (error) {
-      throw new BadRequestException(`Failed to parse resume: ${error.message}`);
+    // Convert stream to buffer
+    const chunks: Buffer[] = [];
+    for await (const chunk of fileStream.Body as Readable) {
+      chunks.push(Buffer.from(chunk));
     }
+    const fileBuffer = Buffer.concat(chunks);
+
+    // Get file metadata to determine file type
+    const fileMetadata =
+      await this.fileManagementService.getDirtyBucketObjectMetadata(
+        createFileData.s3ObjectKey,
+      );
+    const fileType = fileMetadata.ContentType;
+
+    let textContent = '';
+
+    // Parse based on file type
+    switch (fileType) {
+      case 'application/pdf':
+        textContent = await this.parsePdf(fileBuffer);
+        break;
+      case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+      case 'application/msword':
+        textContent = await this.parseWord(fileBuffer, fileType);
+        break;
+      case 'text/rtf':
+        textContent = await this.parseRtf(fileBuffer);
+        break;
+      case 'text/plain':
+        textContent = fileBuffer.toString('utf-8');
+        break;
+      default:
+        throw new BadRequestException(
+          `Unsupported file type: ${fileType}. Supported types are PDF, DOC, DOCX, RTF, and TXT.`,
+        );
+    }
+
+    // Extract candidate information using Claude
+    return this.extractCandidateInfoWithClaude(textContent);
   }
 
   /**
@@ -239,7 +251,7 @@ export class ResumeParserService {
    */
   private async extractCandidateInfoWithClaude(
     text: string,
-  ): Promise<ParsedResumeData> {
+  ): Promise<{ dataForSave: ParsedResumeData; parsedData: any }> {
     try {
       const prompt = `You are an expert resume analyzer. 
       Your task is to process the provided resume data—already filtered to remove any Personally Identifiable Information (PII)—and extract the following details into a structured JSON format. Analyze the resume data for:
@@ -343,27 +355,26 @@ export class ResumeParserService {
       }
 
       const parsedData = JSON.parse(content.text);
-      console.log('Parsed data:', parsedData);
-      return {
-        firstName: parsedData.firstName,
-        lastName: parsedData.lastName,
-        email: parsedData.email,
-        phone: parsedData.phone,
-        currentPosition: parsedData.currentPosition,
-        expectedPosition: parsedData.expectedPosition,
+
+      const dataForSave: ParsedResumeData = {
+        firstName: parsedData.personalInformation.firstName,
+        lastName: parsedData.personalInformation.lastName,
+        email: parsedData.personalInformation.email,
+        phone: parsedData.personalInformation.phone,
+        currentPosition: parsedData.personalInformation.currentPosition,
+        expectedPosition: parsedData.personalInformation.expectedPosition,
         resume: text,
         structuredResume: parsedData.structuredResume,
         jobMatching: parsedData.jobMatching,
         recommendations: parsedData.recommendations,
-        metadata: {
-          parsedAt: new Date().toISOString(),
-          confidence: 1, // Since we're using Claude, we can assume high confidence
-        },
+      };
+      return {
+        dataForSave,
+        parsedData,
       };
     } catch (error: any) {
       console.error('Claude parsing failed:', error.message);
-      // Fallback to regex-based extraction if Claude fails
-      return this.extractCandidateInfo(text);
+      throw new BadRequestException(`Failed to parse resume: ${error.message}`);
     }
   }
 
