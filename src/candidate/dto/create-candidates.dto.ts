@@ -3,18 +3,18 @@ import {
   IsArray,
   IsNotEmpty,
   IsNumber,
-  IsOptional,
   IsString,
   Min,
   ValidateNested,
   ArrayNotEmpty,
+  ArrayMaxSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 /**
- * DTO for a single file in the create candidates request
+ * DTO for a single resume file in the create candidates request
  */
-export class FileDataDto {
+export class ResumeFileDto {
   @ApiProperty({
     description: 'Name of the file',
     example: 'resume.pdf',
@@ -24,18 +24,8 @@ export class FileDataDto {
   fileName: string;
 
   @ApiProperty({
-    description: 'ID of the parent folder (optional)',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-    nullable: true,
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  parentId?: string;
-
-  @ApiProperty({
     description: 'S3 object key for the file',
-    example: 'temp/uuid/resume.pdf',
+    example: '39b4115a-3f77-40de-a367-4e1c879cab89_resume.pdf',
   })
   @IsString()
   @IsNotEmpty()
@@ -57,23 +47,26 @@ export class FileDataDto {
 export class CreateCandidatesDto {
   @ApiProperty({
     description: 'Array of resume files to parse and create candidates from',
-    type: [FileDataDto],
+    type: [ResumeFileDto],
     example: [
       {
         fileName: 'resume1.pdf',
-        s3ObjectKey: 'temp/uuid/resume1.pdf',
+        s3ObjectKey: '39b4115a-3f77-40de-a367-4e1c879cab89_resume1.pdf',
         fileSize: 1024,
       },
       {
         fileName: 'resume2.pdf',
-        s3ObjectKey: 'temp/uuid/resume2.pdf',
+        s3ObjectKey: '39b4115a-3f77-40de-a367-4e1c879cab89_resume2.pdf',
         fileSize: 2048,
       },
     ],
   })
   @IsArray()
   @ArrayNotEmpty({ message: 'At least one resume file is required' })
+  @ArrayMaxSize(50, {
+    message: 'Maximum 50 resume files can be processed at once',
+  })
   @ValidateNested({ each: true })
-  @Type(() => FileDataDto)
-  resumeFiles: FileDataDto[];
+  @Type(() => ResumeFileDto)
+  resumeFiles: ResumeFileDto[];
 }
