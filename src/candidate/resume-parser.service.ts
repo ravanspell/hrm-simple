@@ -106,6 +106,7 @@ export class ResumeParserService {
     userId: string,
     organizationId: string,
   ): Promise<{ dataForSave: ParsedResumeData; parsedData: any }> {
+    // check if the file exists in the permanent bucket
     const isFileExists =
       await this.fileManagementService.getPermanentBucketObjectMetadata(
         createFileData.s3ObjectKey,
