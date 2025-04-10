@@ -11,6 +11,7 @@ import {
   BadRequestException,
   Req,
   Version,
+  HttpCode,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CandidateService } from './candidate.service';
@@ -148,17 +149,21 @@ export class CandidateController {
   }
 
   /**
-   * Parse resumes and create candidates
+   * Create candidates with resume files and queue them for parsing
    * @param createCandidatesDto - The file data of the resumes to parse
    * @param req - The request object containing the user and organization
    * @returns The created candidates
    */
   @Post('create-candidates')
   @Version(API_VERSION.V1)
-  @ApiOperation({ summary: 'Parse resumes and create candidates' })
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Create candidates with resume files and queue them for parsing',
+  })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'The candidates have been successfully created.',
+    description:
+      'The candidates have been successfully created and queued for parsing.',
     type: [Candidate],
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request.' })
@@ -167,56 +172,19 @@ export class CandidateController {
     description: 'Unauthorized.',
   })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden.' })
-  async parseResumeAndCreate(
+  async createCandidatesWithResumeParsing(
     @Body() createCandidatesDto: CreateCandidatesDto,
     @Req() req: RequestWithTenant,
   ): Promise<any> {
     const { user } = req;
-    console.log('user', user);
     const organizationId = user.organizationId;
     const userId = user.id;
 
-    // Parse all resumes in parallel
-    const parseResults = await Promise.allSettled(
-      createCandidatesDto.resumeFiles.map((fileData) =>
-        this.resumeParserService.parseResume(
-          fileData as createFileData,
-          userId,
-          organizationId,
-        ),
-      ),
+    // Create candidates with dummy data and queue them for parsing
+    return this.candidateService.createCandidatesWithResumeParsing(
+      createCandidatesDto.resumeFiles,
+      userId,
+      organizationId,
     );
-    return parseResults;
   }
-
-  // @Post(':id/parse-resume-and-update')
-  // @ApiOperation({
-  //   summary: 'Parse a resume by document ID and update an existing candidate',
-  // })
-  // @ApiResponse({
-  //   status: HttpStatus.OK,
-  //   description: 'Candidate updated from resume successfully.',
-  // })
-  // @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request.' })
-  // @ApiResponse({
-  //   status: HttpStatus.UNAUTHORIZED,
-  //   description: 'Unauthorized.',
-  // })
-  // @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden.' })
-  // @ApiResponse({
-  //   status: HttpStatus.NOT_FOUND,
-  //   description: 'Candidate not found.',
-  // })
-  // async parseResumeAndUpdate(
-  //   @Param('id') id: string,
-  //   @Body('documentId') documentId: string,
-  // ) {
-  //   if (!documentId) {
-  //     throw new BadRequestException('Document ID is required');
-  //   }
-  //   return await this.candidateService.parseResumeAndUpdateCandidate(
-  //     id,
-  //     documentId,
-  //   );
-  // }
 }

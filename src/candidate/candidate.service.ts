@@ -5,6 +5,9 @@ import { UpdateCandidateDto } from './dto/update-candidate.dto';
 import { FilterCandidateDto } from './dto/filter-candidate.dto';
 import { Candidate } from './entities/candidate.entity';
 import { ResumeParserService } from './resume-parser.service';
+import { AwsSqsService } from '@/utilities/aws-sqs-service/aws-sqs.service';
+import { ConfigService } from '@nestjs/config';
+import { ResumeFileDto } from './dto/create-candidates.dto';
 
 /**
  * Service responsible for managing candidate data and operations
@@ -12,10 +15,18 @@ import { ResumeParserService } from './resume-parser.service';
  */
 @Injectable()
 export class CandidateService {
+  private readonly resumeParserQueueUrl: string;
+
   constructor(
     private readonly candidateRepository: CandidateRepository,
     private readonly resumeParserService: ResumeParserService,
-  ) {}
+    private readonly awsSqsService: AwsSqsService,
+    private readonly configService: ConfigService,
+  ) {
+    this.resumeParserQueueUrl = this.configService.get<string>(
+      'RESUME_PARSER_QUEUE_URL',
+    );
+  }
 
   /**
    * Creates a new candidate in the system
@@ -24,7 +35,7 @@ export class CandidateService {
    * @returns The newly created candidate
    */
   async create(createCandidateDto: CreateCandidateDto): Promise<Candidate> {
-    return this.candidateRepository.create(createCandidateDto);
+    return this.candidateRepository.createCandidate(createCandidateDto);
   }
 
   /**
@@ -89,9 +100,62 @@ export class CandidateService {
   }
 
   /**
+   * Creates candidate entries with dummy data and queues resume parsing
+   *
+   * @param resumeFiles - Array of resume file data
+   * @param userId - ID of the user creating the candidates
+   * @param organizationId - ID of the organization
+   * @returns Array of created candidates
+   */
+  async createCandidatesWithResumeParsing(
+    resumeFiles: ResumeFileDto[],
+    userId: string,
+    organizationId: string,
+  ): Promise<Candidate[]> {
+    // Step 1: Create candidate entries with dummy data
+    const candidates: Candidate[] = [];
+
+    for (const resumeFile of resumeFiles) {
+      // Create a candidate with dummy data
+      const createCandidateDto: CreateCandidateDto = {
+        firstName: 'Processing...',
+        lastName: '-',
+        email: `temp_${Date.now()}@example.com`,
+        status: 'PROCESSING', // Set initial status as PROCESSING
+      };
+
+      // Create the candidate
+      const candidate = await this.create(createCandidateDto);
+
+      candidates.push(candidate);
+
+      // Step 2: Create SQS message for resume parsing
+      const resumeParserMessage = {
+        candidateId: candidate.id,
+        fileName: resumeFile.fileName,
+        s3ObjectKey: resumeFile.s3ObjectKey,
+        fileSize: resumeFile.fileSize,
+        userId: userId,
+        organizationId: organizationId,
+      };
+
+      // Publish message to SQS queue
+      await this.awsSqsService.publishMessage(
+        this.resumeParserQueueUrl,
+        JSON.stringify(resumeParserMessage),
+        { Type: 'resume_parser' },
+      );
+    }
+
+    return candidates;
+  }
+
+  /**
    * Parses a resume file and creates a new candidate with the extracted data
    *
-   * @param documentId - The ID of the document to parse
+   * @param createFileData - The file data of the resume to parse
+   * @param userId - ID of the user creating the candidate
+   * @param organizationId - ID of the organization
    * @returns The newly created candidate with parsed resume data
    */
   async parseResumeAndCreateCandidate(
@@ -125,43 +189,4 @@ export class CandidateService {
     // Create and return the candidate
     return await this.create(createCandidateDto);
   }
-
-  /**
-   * Parses a resume file and updates an existing candidate with the extracted data
-   *
-   * @param id - Unique identifier of the candidate to update
-   * @param documentId - The ID of the document to parse
-   * @returns The updated candidate with parsed resume data
-   * @throws NotFoundException if candidate doesn't exist
-   */
-  // async parseResumeAndUpdateCandidate(
-  //   id: string,
-  //   documentId: string,
-  // ): Promise<Candidate> {
-  //   // Check if candidate exists
-  //   const candidate = await this.findOne(id);
-
-  //   // Parse the resume using document ID
-  //   const parsedData = await this.resumeParserService.parseResume(documentId);
-
-  //   // Update the candidate with the parsed data
-  //   const updatedCandidate =
-  //     this.resumeParserService.updateCandidateWithParsedData(
-  //       candidate,
-  //       parsedData,
-  //     );
-
-  //   // Save and return the updated candidate
-  //   return await this.candidateRepository.updateCandidate(id, updatedCandidate);
-  // }
-
-  /**
-   * Parses a resume file and returns the extracted data without creating or updating a candidate
-   *
-   * @param documentId - The ID of the document to parse
-   * @returns The parsed resume data
-   */
-  // async parseResumeOnly(documentId: string): Promise<ParsedResumeData> {
-  //   return await this.resumeParserService.parseResume(documentId);
-  // }
 }

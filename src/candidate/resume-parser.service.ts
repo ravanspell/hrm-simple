@@ -106,29 +106,35 @@ export class ResumeParserService {
     userId: string,
     organizationId: string,
   ): Promise<{ dataForSave: ParsedResumeData; parsedData: any }> {
-    // Get the file stream from the file management service
-    await this.fileManagementService.confirmUpload(
-      [createFileData],
-      organizationId,
-      userId,
-    );
-    const fileStream =
-      await this.fileManagementService.getPermentStorageObjectStream(
+    const isFileExists =
+      await this.fileManagementService.getPermanentBucketObjectMetadata(
         createFileData.s3ObjectKey,
       );
-
+    // this check usefull when resume queue retry but file already on the permenent storage
+    if (!isFileExists) {
+      // Get the file stream from the file management service
+      await this.fileManagementService.confirmUpload(
+        [createFileData],
+        organizationId,
+        userId,
+      );
+    }
+    const [fileStream, fileMetadata] = await Promise.all([
+      // Get file stream from the file management service
+      this.fileManagementService.getPermentStorageObjectStream(
+        createFileData.s3ObjectKey,
+      ),
+      // Get file metadata to determine file type
+      this.fileManagementService.getPermanentBucketObjectMetadata(
+        createFileData.s3ObjectKey,
+      ),
+    ]);
     // Convert stream to buffer
     const chunks: Buffer[] = [];
     for await (const chunk of fileStream.Body as Readable) {
       chunks.push(Buffer.from(chunk));
     }
     const fileBuffer = Buffer.concat(chunks);
-
-    // Get file metadata to determine file type
-    const fileMetadata =
-      await this.fileManagementService.getDirtyBucketObjectMetadata(
-        createFileData.s3ObjectKey,
-      );
     const fileType = fileMetadata.ContentType;
 
     let textContent = '';
@@ -531,10 +537,6 @@ export class ResumeParserService {
 
     if (!candidate.currentPosition && parsedData.currentPosition) {
       candidate.currentPosition = parsedData.currentPosition;
-    }
-
-    if (!candidate.expectedPosition && parsedData.expectedPosition) {
-      candidate.expectedPosition = parsedData.expectedPosition;
     }
 
     // Store the structured resume data in the resume field
