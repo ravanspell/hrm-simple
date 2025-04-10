@@ -336,6 +336,18 @@ export class FileManagementService {
   }
 
   /**
+   * Get the metadata of a file in the permanent bucket.
+   *
+   * @param fileKey - The key of the file in the permanent bucket.
+   * @returns The metadata of the file.
+   */
+  async getPermanentBucketObjectMetadata(
+    fileKey: string,
+  ): Promise<HeadObjectCommandOutput> {
+    return this.awsS3Service.getObjectMetadata(this.permanentBucket, fileKey);
+  }
+
+  /**
    * Confirms file uploads by moving files from temporary storage to permanent storage
    * and creating corresponding database records.
    *
