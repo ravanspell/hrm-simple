@@ -67,7 +67,7 @@ export class CandidateService {
    * @returns The candidate if found
    * @throws NotFoundException if candidate doesn't exist
    */
-  async findOne(id: string): Promise<Candidate> {
+  async getIndividualCandidate(id: string): Promise<Candidate> {
     const candidate = await this.candidateRepository.findCandidateById(id);
     if (!candidate) {
       throw new BadRequestException(`Candidate with ID ${id} not found`);
@@ -88,7 +88,7 @@ export class CandidateService {
     updateCandidateDto: UpdateCandidateDto,
   ): Promise<Candidate> {
     // Check if candidate exists before updating
-    await this.findOne(id);
+    await this.getIndividualCandidate(id);
     return await this.candidateRepository.updateCandidate(
       id,
       updateCandidateDto,
@@ -103,7 +103,7 @@ export class CandidateService {
    */
   async remove(id: string): Promise<void> {
     // Check if candidate exists before removing
-    await this.findOne(id);
+    await this.getIndividualCandidate(id);
     await this.candidateRepository.removeCandidate(id);
   }
 

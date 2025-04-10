@@ -113,10 +113,16 @@ export class CandidateController {
     status: HttpStatus.NOT_FOUND,
     description: 'Candidate not found.',
   })
-  findOne(@Param('id') id: string) {
-    return this.candidateService.findOne(id);
+  getIndividualCandidate(@Param('id') id: string) {
+    return this.candidateService.getIndividualCandidate(id);
   }
 
+  /**
+   * Update a candidate
+   * @param id - The id of the candidate
+   * @param updateCandidateDto - The update candidate dto
+   * @returns The updated candidate
+   */
   @Patch(':id')
   @ApiOperation({ summary: 'Update a candidate' })
   @ApiResponse({
