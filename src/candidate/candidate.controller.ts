@@ -51,19 +51,57 @@ export class CandidateController {
     return this.candidateService.create(createCandidateDto);
   }
 
+  /**
+   * Get all candidates with filtering and pagination
+   * @param filter - The filter criteria for candidates (name, email, status, etc.)
+   * @returns Object containing candidates and total count
+   */
   @Get()
+  @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Get all candidates with filtering and pagination' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Return all candidates.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a list of candidates with pagination metadata',
+    schema: {
+      properties: {
+        data: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/Candidate' },
+        },
+        pagination: {
+          type: 'object',
+          properties: {
+            total: {
+              type: 'number',
+              description: 'Total number of candidates',
+            },
+            page: { type: 'number', description: 'Current page number' },
+            limit: { type: 'number', description: 'Number of items per page' },
+            totalPages: {
+              type: 'number',
+              description: 'Total number of pages',
+            },
+          },
+        },
+      },
+    },
+  })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
     description: 'Unauthorized.',
   })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden.' })
-  findAll(@Query() filter: FilterCandidateDto) {
-    return this.candidateService.findAll(filter);
+  async findAll(@Query() filter: FilterCandidateDto) {
+    return this.candidateService.findAllCandidates(filter);
   }
 
+  /**
+   * Get a candidate by id
+   * @param id - The id of the candidate
+   * @returns The candidate
+   */
   @Get(':id')
+  @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Get a candidate by id' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Return the candidate.' })
   @ApiResponse({

@@ -73,8 +73,8 @@ export class CandidateRepository extends Repository<Candidate> {
       );
     }
 
-    if (filter.status) {
-      queryBuilder.andWhere('candidate.status = :status', {
+    if (filter.status && filter.status.length > 0) {
+      queryBuilder.andWhere('candidate.status IN (:...status)', {
         status: filter.status,
       });
     }
@@ -85,6 +85,16 @@ export class CandidateRepository extends Repository<Candidate> {
 
     queryBuilder.skip(skip).take(limit);
     queryBuilder.orderBy('candidate.createdAt', 'DESC');
+    queryBuilder.select([
+      'candidate.id',
+      'candidate.firstName',
+      'candidate.lastName',
+      'candidate.email',
+      'candidate.phone',
+      'candidate.status',
+      'candidate.createdAt',
+      'candidate.updatedAt',
+    ]);
 
     return queryBuilder.getManyAndCount();
   }

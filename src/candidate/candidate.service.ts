@@ -44,12 +44,20 @@ export class CandidateService {
    * @param filter - Filter criteria for candidates (name, email, status, etc.)
    * @returns Object containing candidates and total count
    */
-  async findAll(
-    filter: FilterCandidateDto,
-  ): Promise<{ data: Candidate[]; total: number }> {
+  async findAllCandidates(filter: FilterCandidateDto) {
     const [candidates, total] =
       await this.candidateRepository.findAllCandidates(filter);
-    return { data: candidates, total };
+    const page = filter.page || 1;
+    const limit = filter.limit || 10;
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      candidates,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   /**

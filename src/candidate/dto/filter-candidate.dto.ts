@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsArray } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class FilterCandidateDto {
@@ -48,7 +48,8 @@ export class FilterCandidateDto {
   education?: string;
 
   @ApiProperty({
-    description: 'Current status of the candidate application',
+    description:
+      'Current status of the candidate application (can be multiple)',
     enum: [
       'PENDING',
       'REVIEWING',
@@ -60,19 +61,30 @@ export class FilterCandidateDto {
       'PROCESSING',
     ],
     required: false,
+    isArray: true,
   })
-  @IsEnum([
-    'PENDING',
-    'REVIEWING',
-    'INTERVIEWED',
-    'OFFERED',
-    'REJECTED',
-    'HIRED',
-    'IDLE',
-    'PROCESSING',
-  ])
+  @IsArray()
+  @IsEnum(
+    [
+      'PENDING',
+      'REVIEWING',
+      'INTERVIEWED',
+      'OFFERED',
+      'REJECTED',
+      'HIRED',
+      'IDLE',
+      'PROCESSING',
+    ],
+    { each: true },
+  )
   @IsOptional()
-  status?: string;
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',');
+    }
+    return value;
+  })
+  status?: string[];
 
   @ApiProperty({ description: 'Page number', required: false, default: 1 })
   @Transform(({ value }) => parseInt(value))
