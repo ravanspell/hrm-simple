@@ -331,8 +331,20 @@ export class FileManagementService {
    */
   async getDirtyBucketObjectMetadata(
     fileKey: string,
-  ): Promise<HeadObjectCommandOutput> {
+  ): Promise<HeadObjectCommandOutput | null> {
     return this.awsS3Service.getObjectMetadata(this.dirtyBucket, fileKey);
+  }
+
+  /**
+   * Get the metadata of a file in the permanent bucket.
+   *
+   * @param fileKey - The key of the file in the permanent bucket.
+   * @returns The metadata of the file.
+   */
+  async getPermanentBucketObjectMetadata(
+    fileKey: string,
+  ): Promise<HeadObjectCommandOutput | null> {
+    return this.awsS3Service.getObjectMetadata(this.permanentBucket, fileKey);
   }
 
   /**

@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  HttpStatus,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   CopyObjectCommand,
@@ -8,6 +12,7 @@ import {
   GetObjectCommandOutput,
   HeadObjectCommand,
   HeadObjectCommandOutput,
+  NotFound,
   PutObjectCommand,
   PutObjectTaggingCommand,
   PutObjectTaggingCommandOutput,
@@ -111,12 +116,14 @@ export class AwsS3Service {
   async getObjectMetadata(
     bucketName: string,
     key: string,
-  ): Promise<HeadObjectCommandOutput> {
+  ): Promise<HeadObjectCommandOutput | null> {
     const command = new HeadObjectCommand({ Bucket: bucketName, Key: key });
     try {
       return await this.s3Client.send(command);
-    } catch (error) {
-      console.error('Error fetching object metadata:', error);
+    } catch (error: unknown) {
+      if (this.isNotFoundError(error)) {
+        return null;
+      }
       throw new InternalServerErrorException('Failed to fetch object metadata');
     }
   }
@@ -161,5 +168,20 @@ export class AwsS3Service {
     };
     const command = new GetObjectCommand(params);
     return await this.s3Client.send(command);
+  }
+
+  /**
+   * Checks if an error is a NotFound error.
+   * @param err - The error to check.
+   * @returns True if the error is a NotFound error, false otherwise.
+   */
+  private isNotFoundError(err: unknown): err is NotFound {
+    return (
+      typeof err === 'object' &&
+      err !== null &&
+      'name' in err &&
+      (err as any).name === 'NotFound' &&
+      (err as any).$metadata?.httpStatusCode === HttpStatus.NOT_FOUND
+    );
   }
 }
