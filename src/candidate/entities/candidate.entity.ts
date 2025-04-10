@@ -24,11 +24,11 @@ export class Candidate {
   @ApiProperty({ description: 'First name of the candidate' })
   firstName: string;
 
-  @Column({ length: 100 })
+  @Column({ length: 100, nullable: true })
   @ApiProperty({ description: 'Last name of the candidate' })
   lastName: string;
 
-  @Column({ unique: true, length: 255 })
+  @Column({ unique: true, length: 255, nullable: true })
   @ApiProperty({ description: 'Email address of the candidate' })
   email: string;
 
@@ -45,13 +45,6 @@ export class Candidate {
     required: false,
   })
   currentPosition: string;
-
-  @Column({ nullable: true, length: 100 })
-  @ApiProperty({
-    description: 'Expected position the candidate is applying for',
-    required: false,
-  })
-  expectedPosition: string;
 
   @Column({ type: 'jsonb', nullable: true })
   @ApiProperty({
