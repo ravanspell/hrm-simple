@@ -11,7 +11,7 @@ import { ENVIRONMENT } from './constants/common';
  */
 @Injectable()
 export class AppService implements OnModuleInit {
-  private readonly TIMEOUT_MINUTES = 10;
+  private readonly TIMEOUT_MINUTES = 20;
   private timer: NodeJS.Timeout;
   private ec2Client: EC2Client;
 
@@ -88,7 +88,7 @@ export class AppService implements OnModuleInit {
 
     this.timer = setTimeout(
       () => this.shutdownEC2Instance(),
-      this.TIMEOUT_MINUTES * 60 * 1000, // 10 minutes
+      this.TIMEOUT_MINUTES * 60 * 1000, // 20 minutes
     );
   }
 
