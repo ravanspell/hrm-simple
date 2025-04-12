@@ -113,8 +113,8 @@ jobs:
       run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
           echo "Starting extraction..."
-          tar -xzf ~/deploy.tar.gz -C ~/api/
-          rm ~/deploy.tar.gz  # Cleanup
+          sudo tar -xzf ~/deploy.tar.gz -C ~/api/
+          sudo rm ~/deploy.tar.gz  # Cleanup
           echo "Extraction completed successfully."
         EOF
 
@@ -124,7 +124,7 @@ jobs:
           cd ~/api
           if ! command -v pm2 &> /dev/null; then
             echo "Installing PM2..."
-            npm install -g pm2
+            sudonpm install -g pm2
           fi
           echo "Installing dependencies..."
           # --ignore-scripts for avoiding running npm lifecycle scripts.
