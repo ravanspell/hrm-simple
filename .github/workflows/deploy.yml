@@ -129,7 +129,8 @@ jobs:
           echo "Installing dependencies..."
           # --ignore-scripts for avoiding running npm lifecycle scripts.
           # --omit=dev for avoiding installing dev dependencies.
-          npm ci --omit=dev --ignore-scripts
+          # --verbose for more detailed output
+          npm ci --omit=dev --ignore-scripts --verbose
             
           # Run TypeORM schema sync - Temporary disabled
           #node dist/typeorm-cli.js schema:sync
