@@ -15,6 +15,7 @@ import { FolderRepository } from 'src/repository/folder.repository';
 import { Transactional } from 'typeorm-transactional';
 import { Folder } from './entities/folder.entity';
 import { FileMgt } from './entities/file-management.entity';
+import { OrganizationService } from '../organization/organization.service';
 
 interface TaggingResult {
   status: 'fulfilled' | 'rejected';
@@ -39,6 +40,7 @@ export class FileManagementService {
     private readonly awsS3Service: AwsS3Service,
     private readonly fileMgtRepository: FileMgtRepository,
     private readonly folderRepository: FolderRepository,
+    private readonly organizationService: OrganizationService,
   ) {
     this.dirtyBucket = this.configService.get<string>('DIRTY_BUCKET_NAME');
     this.permanentBucket = this.configService.get<string>(
@@ -169,6 +171,18 @@ export class FileManagementService {
       fileS3ObjectKeys,
       [{ Key: 'fileStatus', Value: FILE_STATUSES.DELETED }],
     );
+
+    // Update organization's used storage by subtracting the size of deleted files
+    const totalBytesToSubtract = files.reduce(
+      (sum, file) => sum + file.fileSize,
+      0,
+    );
+    if (totalBytesToSubtract > 0 && files.length > 0) {
+      await this.organizationService.updateUsedStorage(
+        files[0].organizationId,
+        -totalBytesToSubtract,
+      );
+    }
   }
 
   /**
@@ -391,6 +405,16 @@ export class FileManagementService {
 
     // Create file records in the database
     await this.createFileRecords(fileRecordData, organizationId, userId);
+
+    // Update organization's used storage
+    const totalBytesToAdd = fileRecordData.reduce(
+      (sum, file) => sum + file.fileSize,
+      0,
+    );
+    await this.organizationService.updateUsedStorage(
+      organizationId,
+      totalBytesToAdd,
+    );
 
     // Move files from dirty bucket to permanent storage
     const moveFileToPermanentStoragePromises = createFileData.map(

@@ -33,6 +33,20 @@ export class Organization {
   @Column({ nullable: true })
   logo?: string;
 
+  @Column({
+    type: 'bigint',
+    default: 0,
+    comment: 'User allowed storage in bytes',
+  })
+  storage: number;
+
+  @Column({
+    type: 'bigint',
+    default: 0,
+    comment: 'Total storage used by the organization in bytes',
+  })
+  usedStorage: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
