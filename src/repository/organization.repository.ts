@@ -9,9 +9,10 @@ import { Repository, DataSource } from 'typeorm';
 
 @Injectable()
 export class OrganizationRepository extends Repository<Organization> {
-  constructor(dataSource: DataSource) {
+  constructor(private readonly dataSource: DataSource) {
     super(Organization, dataSource.createEntityManager());
   }
+
   /**
    * Creates a new organization entity and saves it to the database.
    * @param data - Partial data to create a new organization.

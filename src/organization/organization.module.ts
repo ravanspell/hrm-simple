@@ -4,6 +4,8 @@ import { OrganizationController } from './organization.controller';
 import { OrganizationRepository } from 'src/repository/organization.repository';
 import { GeneralSettingsService } from './general-settings.service';
 import { GeneralSettingsRepository } from '@/repository/general-settings.repository';
+import { OrganizationStorageService } from './organization-storage.service';
+import { FileMgtUtilityService } from '../utilities/file-mgt-utility/file-mgt-utility.service';
 
 @Module({
   controllers: [OrganizationController],
@@ -12,7 +14,9 @@ import { GeneralSettingsRepository } from '@/repository/general-settings.reposit
     OrganizationRepository,
     GeneralSettingsService,
     GeneralSettingsRepository,
+    OrganizationStorageService,
+    FileMgtUtilityService,
   ],
-  exports: [OrganizationService],
+  exports: [OrganizationService, OrganizationStorageService],
 })
 export class OrganizationModule {}

@@ -15,7 +15,7 @@ import { FolderRepository } from 'src/repository/folder.repository';
 import { Transactional } from 'typeorm-transactional';
 import { Folder } from './entities/folder.entity';
 import { FileMgt } from './entities/file-management.entity';
-import { OrganizationService } from '../organization/organization.service';
+import { OrganizationStorageService } from '../organization/organization-storage.service';
 
 interface TaggingResult {
   status: 'fulfilled' | 'rejected';
@@ -40,7 +40,7 @@ export class FileManagementService {
     private readonly awsS3Service: AwsS3Service,
     private readonly fileMgtRepository: FileMgtRepository,
     private readonly folderRepository: FolderRepository,
-    private readonly organizationService: OrganizationService,
+    private readonly organizationStorageService: OrganizationStorageService,
   ) {
     this.dirtyBucket = this.configService.get<string>('DIRTY_BUCKET_NAME');
     this.permanentBucket = this.configService.get<string>(
@@ -162,7 +162,18 @@ export class FileManagementService {
     await this.fileMgtRepository.softDeleteFiles(fileIds);
 
     const fileS3ObjectKeys = files.map((file) => file.s3ObjectKey);
-
+    // Update organization's used storage by subtracting the size of deleted files
+    const totalBytesToSubtract = files.reduce(
+      (sum, file) => sum + file.fileSize,
+      0,
+    );
+    if (totalBytesToSubtract > 0 && files.length > 0) {
+      await this.organizationStorageService.decreaseStorageUsed(
+        null,
+        files[0].organizationId,
+        totalBytesToSubtract,
+      );
+    }
     // tag to be deleted the file object in the storage
     // Leveraging the AWS S3 lifecycle methods to delete after some time tagged
     // objects we 'DELETED'
@@ -171,18 +182,6 @@ export class FileManagementService {
       fileS3ObjectKeys,
       [{ Key: 'fileStatus', Value: FILE_STATUSES.DELETED }],
     );
-
-    // Update organization's used storage by subtracting the size of deleted files
-    const totalBytesToSubtract = files.reduce(
-      (sum, file) => sum + file.fileSize,
-      0,
-    );
-    if (totalBytesToSubtract > 0 && files.length > 0) {
-      await this.organizationService.updateUsedStorage(
-        files[0].organizationId,
-        -totalBytesToSubtract,
-      );
-    }
   }
 
   /**
@@ -406,22 +405,21 @@ export class FileManagementService {
     // Create file records in the database
     await this.createFileRecords(fileRecordData, organizationId, userId);
 
+    // Move files from dirty bucket to permanent storage
+    const moveFileToPermanentStoragePromises = createFileData.map(
+      ({ s3ObjectKey }) => this.copyFileToMainStorage(s3ObjectKey),
+    );
     // Update organization's used storage
     const totalBytesToAdd = fileRecordData.reduce(
       (sum, file) => sum + file.fileSize,
       0,
     );
-    await this.organizationService.updateUsedStorage(
+    await this.organizationStorageService.increaseStorageUsed(
+      null,
       organizationId,
       totalBytesToAdd,
     );
-
-    // Move files from dirty bucket to permanent storage
-    const moveFileToPermanentStoragePromises = createFileData.map(
-      ({ s3ObjectKey }) => this.copyFileToMainStorage(s3ObjectKey),
-    );
     await Promise.all(moveFileToPermanentStoragePromises);
-
     return fileRecordData;
   }
 

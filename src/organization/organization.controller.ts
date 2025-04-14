@@ -23,6 +23,7 @@ import { StorageInfoResponseDto } from './dto/storage-info-response.dto';
 import { RequestWithTenant } from '@/coretypes';
 import { Authentication } from '@/decorators/auth.decorator';
 import { API_VERSION } from '@/constants/common';
+import { OrganizationStorageService } from './organization-storage.service';
 
 @ApiTags('organizations')
 @Controller('organization')
@@ -30,6 +31,7 @@ export class OrganizationController {
   constructor(
     private readonly organizationService: OrganizationService,
     private readonly generalSettingsService: GeneralSettingsService,
+    private readonly organizationStorageService: OrganizationStorageService,
   ) {}
 
   /**
@@ -212,6 +214,6 @@ export class OrganizationController {
     @Req() req: RequestWithTenant,
   ): Promise<StorageInfoResponseDto> {
     const organizationId = req.user.organizationId;
-    return this.organizationService.getStorageInfo(organizationId);
+    return this.organizationStorageService.getStorageInfo(organizationId);
   }
 }
