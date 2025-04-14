@@ -4,7 +4,7 @@ import './instrument';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
-import { TransformInterceptor } from './interceptor/responseTransform.interceptor';
+import { TransformInterceptor } from './interceptors/responseTransform.interceptor';
 import * as session from 'express-session';
 import * as passport from 'passport';
 import { DataSource } from 'typeorm';
