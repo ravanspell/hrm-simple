@@ -19,20 +19,13 @@ import {
 import { JobService } from './job.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { Job } from './entities/job.entity';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiQuery,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { RequestWithTenant } from '@/coretypes';
 import { Authentication } from '@/decorators/auth.decorator';
 import { API_VERSION } from '@/constants/common';
 
-@ApiTags('jobs')
+@ApiTags('Job postings')
 @Controller('jobs')
-@ApiBearerAuth()
 export class JobController {
   constructor(private readonly jobService: JobService) {}
 
@@ -64,7 +57,7 @@ export class JobController {
    * Retrieves all jobs for the authenticated organization.
    * Includes pagination support.
    */
-  @Get('organization')
+  @Get()
   @Authentication()
   @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Get all jobs for the organization' })

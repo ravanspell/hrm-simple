@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Organization } from '@/organization/entities/organization.entity';
 import { User } from '@/user/entities/user.entity';
+import { JOB_TABLE } from '@/constants/dbTables';
 
 export enum JobStatus {
   DRAFT = 'DRAFT',
@@ -16,7 +17,7 @@ export enum JobStatus {
   UNPUBLISHED = 'UNPUBLISHED',
 }
 
-@Entity('jobs')
+@Entity(JOB_TABLE)
 export class Job {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -41,15 +42,6 @@ export class Job {
 
   @Column({ nullable: true })
   industry: string;
-
-  @Column({ nullable: true })
-  experienceRequired: string;
-
-  @Column({ nullable: true })
-  educationRequired: string;
-
-  @Column({ default: false })
-  sponsorshipConsidered: boolean;
 
   @Column({ type: 'timestamp', nullable: true })
   publishedAt: Date;
