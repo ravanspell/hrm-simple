@@ -18,6 +18,7 @@ import { GeneralSettings } from './general-settings.entity';
 import { Notification } from '@/notification/entities/notification.entity';
 import { OrganizationLicensedPermission } from '@/permission/entities/organization-licensed-permission.entity';
 import { UserDirectPermission } from '@/permission/entities/user-direct-permission.entity';
+import { Job } from '@/job/entities/job.entity';
 
 @Entity(ORGANIZATION_TABLE)
 export class Organization {
@@ -90,4 +91,7 @@ export class Organization {
     (permission) => permission.organization,
   )
   userDirectPermissions: UserDirectPermission[];
+
+  @OneToMany(() => Job, (job) => job.organization)
+  jobs: Job[];
 }

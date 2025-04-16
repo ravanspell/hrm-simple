@@ -20,7 +20,7 @@ import { NotificationService } from '@/notification/notification.service';
 import { NOTIFICATION_TYPE } from '@/constants/notifications';
 import { API_VERSION } from '@/constants/common';
 
-@ApiTags('email-settings')
+@ApiTags('Email settings')
 @Controller('email-settings')
 export class EmailSettingsController {
   constructor(
