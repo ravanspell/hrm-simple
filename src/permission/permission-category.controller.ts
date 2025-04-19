@@ -7,6 +7,7 @@ import {
   Param,
   ParseUUIDPipe,
   HttpStatus,
+  Version,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PermissionService } from './permission.service';
@@ -16,6 +17,9 @@ import {
   PermissionCategoryResponseDto,
 } from './dto/dto';
 import { UpdatePermissionCategoryDto } from './dto/update-permission-category.dto';
+import { User } from '@/user/entities/user.entity';
+import { CurrentUser } from '@/decorators/current-user.decorator';
+import { API_VERSION } from '@/constants/common';
 
 @ApiTags('Permission Categories')
 @Controller('permission-categories')
@@ -24,6 +28,7 @@ export class PermissionCategoryController {
   constructor(private readonly permissionService: PermissionService) {}
 
   @Post()
+  @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Create a new permission category' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -40,8 +45,9 @@ export class PermissionCategoryController {
   })
   async createCategory(
     @Body() dto: CreatePermissionCategoryDto,
+    @CurrentUser() user: User,
   ): Promise<PermissionCategoryResponseDto> {
-    return this.permissionService.createCategory(dto);
+    return this.permissionService.createCategory(dto, user.id);
   }
 
   @Get()

@@ -26,8 +26,9 @@ export class CreatePermissionCategoryDto {
   description?: string;
 
   @ApiProperty({ description: 'Display order for the category' })
+  @IsOptional()
   @IsInt()
-  displayOrder: number;
+  displayOrder?: number;
 }
 
 export class PermissionCategoryResponseDto {

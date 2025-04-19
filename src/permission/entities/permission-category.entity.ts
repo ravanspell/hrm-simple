@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   OneToMany,
+  UpdateDateColumn,
 } from 'typeorm';
 import { SystemPermission } from './system-permission.entity';
 import { PERMISSION_CATEGORIES_TABLE } from '@/constants/dbTables';
@@ -23,11 +24,20 @@ export class PermissionCategory {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column()
+  @Column({ default: 0 })
   displayOrder: number;
+
+  @Column({ nullable: true })
+  createdBy: string;
+
+  @Column({ nullable: true })
+  updatedBy: string;
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 
   @OneToMany(() => SystemPermission, (permission) => permission.category)
   systemPermissions: SystemPermission[];

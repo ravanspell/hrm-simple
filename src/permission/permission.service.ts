@@ -45,6 +45,7 @@ export class PermissionService {
    */
   async createCategory(
     permissionCategoryInputData: CreatePermissionCategoryDto,
+    userId: string,
   ): Promise<PermissionCategory> {
     // Validate display order
     if (permissionCategoryInputData.displayOrder < 0) {
@@ -65,6 +66,8 @@ export class PermissionService {
     const category = this.permissionCategoryRepo.create({
       ...permissionCategoryInputData,
       name: permissionCategoryInputData.name.trim(),
+      createdBy: userId,
+      updatedBy: userId,
     });
     return this.permissionCategoryRepo.save(category);
   }

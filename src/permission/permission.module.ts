@@ -10,7 +10,7 @@ import { UserDirectPermissionRepository } from './repositories/user-direct-permi
 import { SystemPermissionRepository } from './repositories/system-permission.repository';
 
 @Module({
-  controllers: [PermissionController],
+  controllers: [PermissionController, PermissionCategoryController],
   providers: [
     PermissionService,
     EffectiveUserPermissionsRepository,
@@ -18,7 +18,6 @@ import { SystemPermissionRepository } from './repositories/system-permission.rep
     PermissionCategoryRepository,
     UserDirectPermissionRepository,
     SystemPermissionRepository,
-    PermissionCategoryController,
     SystemPermissionController,
   ],
 })
