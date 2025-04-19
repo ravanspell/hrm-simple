@@ -1,6 +1,9 @@
 import { TenantId } from './tenant.decorator';
-import { TenantContext } from '../tenant/tenant-context';
 import { BadRequestException } from '@nestjs/common';
+import { TenantService } from '../utilities/tenant-service/tenant.service';
+
+// Mock the TenantService
+jest.mock('../utilities/tenant-service/tenant.service');
 
 describe('TenantId Decorator', () => {
   beforeEach(() => {
@@ -10,7 +13,9 @@ describe('TenantId Decorator', () => {
 
   it('should return the current tenant ID', () => {
     // Set the tenant ID
-    TenantContext.setCurrentTenantId('test-org-123');
+    (TenantService.getCurrentTenantId as jest.Mock).mockReturnValue(
+      'test-org-123',
+    );
 
     // Create a mock execution context
     const mockExecutionContext = {
@@ -24,9 +29,13 @@ describe('TenantId Decorator', () => {
 
     // Verify the result
     expect(result).toBe('test-org-123');
+    expect(TenantService.getCurrentTenantId).toHaveBeenCalled();
   });
 
   it('should throw a BadRequestException when tenant ID is not set', () => {
+    // Mock the tenant ID to return undefined
+    (TenantService.getCurrentTenantId as jest.Mock).mockReturnValue(undefined);
+
     // Create a mock execution context
     const mockExecutionContext = {
       switchToHttp: () => ({

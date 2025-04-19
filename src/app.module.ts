@@ -22,7 +22,6 @@ import { TerminusModule } from '@nestjs/terminus';
 import { CandidateModule } from './candidate/candidate.module';
 import { JobModule } from './job/job.module';
 import { TenantMiddleware } from './middlewares/tenant.middleware';
-
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),

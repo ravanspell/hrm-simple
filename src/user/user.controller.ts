@@ -24,9 +24,11 @@ import { FilterUsersDto } from './dto/filter-user.dto';
 import { Permissions } from 'src/decorators/permissions.decorator';
 import { Authentication } from 'src/decorators/auth.decorator';
 import { RequestWithTenant } from 'src/coretypes';
+import { TenantId } from '@/decorators/tenant.decorator';
 
 @ApiTags('user')
 @Controller('user')
+@Authentication()
 export class UserController {
   constructor(
     private readonly userService: UserService,
@@ -39,6 +41,7 @@ export class UserController {
    */
   @Post()
   @Version('1')
+  @Permissions('can:create')
   @ApiOperation({ summary: 'Create a new user' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, description: 'User successfully created' })
@@ -58,15 +61,15 @@ export class UserController {
    */
   @Get()
   @Version('1')
-  @Authentication()
-  @Permissions('can:filter')
   @ApiOperation({ summary: 'Filter users' })
   @ApiResponse({ status: 200, description: 'Users successfully filtered' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   filter(
     @Body() filterUsersDto: FilterUsersDto[],
     @Req() request: RequestWithTenant,
+    @TenantId() organizationId: string,
   ) {
+    console.log('im first log here', organizationId);
     this.loggerService.logEmployeeAction('im first log here', 'emp id');
     const orgId = request.user.organizationId;
     return orgId;

@@ -9,6 +9,7 @@ import { HttpModule } from '@nestjs/axios';
 import { SentryService } from './sentry/sentry.service';
 import { CommonUtilitiesService } from './environment/common.utilities.service';
 import { AsyncStorageService } from './async-storage-service/async-storage.service';
+import { TenantService } from './tenant-service/tenant.service';
 
 @Module({
   imports: [HttpModule],
@@ -22,6 +23,7 @@ import { AsyncStorageService } from './async-storage-service/async-storage.servi
     SentryService,
     CommonUtilitiesService,
     AsyncStorageService,
+    TenantService,
   ],
   exports: [
     EncryptionService,
@@ -32,6 +34,7 @@ import { AsyncStorageService } from './async-storage-service/async-storage.servi
     SentryService,
     CommonUtilitiesService,
     AsyncStorageService,
+    TenantService,
   ],
 })
 export class UtilitiesModule {}
