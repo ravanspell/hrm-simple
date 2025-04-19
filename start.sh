@@ -28,8 +28,6 @@ fi
 # fill prisma seed data for dependency tables
 echo -e "${BOLD}${YELLOW}apply db migrations...${RESET}"
 
-echo -e "${BOLD}${YELLOW}Generate prisma types${RESET}"
-
 # fill prisma seed data for dependency tables
 echo -e "${BOLD}${YELLOW}Start execute db seeds...${RESET}"
 
