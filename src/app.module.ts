@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -21,6 +21,7 @@ import { SentryModule, SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { TerminusModule } from '@nestjs/terminus';
 import { CandidateModule } from './candidate/candidate.module';
 import { JobModule } from './job/job.module';
+import { TenantMiddleware } from './middlewares/tenant.middleware';
 
 @Module({
   imports: [
@@ -61,4 +62,10 @@ import { JobModule } from './job/job.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(TenantMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}
