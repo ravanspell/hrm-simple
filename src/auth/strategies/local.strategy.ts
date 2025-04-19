@@ -15,6 +15,11 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('Incorrect email or password');
     }
-    return user;
+
+    // Make sure the organization ID is included in the user object
+    return {
+      ...user,
+      organizationId: user.organizationId,
+    };
   }
 }
