@@ -40,14 +40,32 @@ export class PermissionService {
    * Create a new permission category
    * @param dto CreatePermissionCategoryDto
    * @returns Created category
+   * @throws ConflictException if category with same name exists
+   * @throws BadRequestException if display order is invalid
    */
-  async createCategory(dto: CreatePermissionCategoryDto) {
-    const existing = await this.permissionCategoryRepo.findByName(dto.name);
+  async createCategory(
+    permissionCategoryInputData: CreatePermissionCategoryDto,
+  ): Promise<PermissionCategory> {
+    // Validate display order
+    if (permissionCategoryInputData.displayOrder < 0) {
+      throw new BadRequestException(
+        'Display order must be a non-negative number',
+      );
+    }
+
+    // Check for existing category with same name
+    const existing = await this.permissionCategoryRepo.findByName(
+      permissionCategoryInputData.name,
+    );
     if (existing) {
       throw new ConflictException('Category with this name already exists');
     }
 
-    const category = this.permissionCategoryRepo.create(dto);
+    // Create and save the new category
+    const category = this.permissionCategoryRepo.create({
+      ...permissionCategoryInputData,
+      name: permissionCategoryInputData.name.trim(),
+    });
     return this.permissionCategoryRepo.save(category);
   }
 

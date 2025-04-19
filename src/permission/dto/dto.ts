@@ -30,6 +30,23 @@ export class CreatePermissionCategoryDto {
   displayOrder: number;
 }
 
+export class PermissionCategoryResponseDto {
+  @ApiProperty({ description: 'Unique identifier of the category' })
+  id: string;
+
+  @ApiProperty({ description: 'Name of the permission category' })
+  name: string;
+
+  @ApiProperty({ description: 'Description of the permission category' })
+  description?: string;
+
+  @ApiProperty({ description: 'Display order for the category' })
+  displayOrder: number;
+
+  @ApiProperty({ description: 'Creation timestamp' })
+  createdAt: Date;
+}
+
 export class UpdateOrganizationLicensedPermissionDto {
   @ApiProperty({
     description: 'Whether the permission is active',
