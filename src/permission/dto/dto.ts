@@ -143,3 +143,5 @@ export class BulkAssignUserDirectPermissionsDto {
   @IsOptional()
   isOverride?: boolean;
 }
+
+export * from './create-system-permission.dto';

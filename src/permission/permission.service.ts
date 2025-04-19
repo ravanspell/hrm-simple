@@ -15,6 +15,7 @@ import {
   PermissionQueryDto,
   UpdateOrganizationLicensedPermissionDto,
   UpdateUserDirectPermissionDto,
+  CreateSystemPermissionDto,
 } from './dto/dto';
 import { UpdatePermissionCategoryDto } from './dto/update-permission-category.dto';
 import { UpdateSystemPermissionDto } from './dto/update-system-permission.dto';
@@ -96,21 +97,35 @@ export class PermissionService {
 
   /**
    * Create a new system permission
-   * @param newPermissionData
-   * @returns created system permission
+   * @param permissionInputData CreateSystemPermissionDto containing permission details
+   * @param userId ID of the user creating the permission
+   * @returns Created system permission
+   * @throws ConflictException if permission with same key exists
+   * @throws BadRequestException if category not found
    */
   async createSystemPermission(
-    newPermissionData: any,
+    permissionInputData: CreateSystemPermissionDto,
+    userId: string,
   ): Promise<SystemPermission> {
-    await this.getPermissionCategoryById(newPermissionData.categoryId);
+    // Validate category exists
+    await this.getPermissionCategoryById(permissionInputData.categoryId);
 
+    // Check for existing permission with same key
     const existing = await this.systemPermissionRepo.findOne({
-      where: { permissionKey: newPermissionData.permissionKey },
+      where: { permissionKey: permissionInputData.permissionKey },
     });
     if (existing) {
-      throw new ConflictException('Permission with this key already exists');
+      throw new BadRequestException('Permission with this key already exists');
     }
-    return await this.systemPermissionRepo.createPermission(newPermissionData);
+
+    // Create and save the new permission
+    const permission = this.systemPermissionRepo.create({
+      ...permissionInputData,
+      createdBy: userId,
+      updatedBy: userId,
+    });
+
+    return this.systemPermissionRepo.save(permission);
   }
 
   /**

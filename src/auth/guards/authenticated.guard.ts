@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
-import { IS_AUTH_REQUIRED } from 'src/decorators/auth.decorator';
-import { RequestWithTenant } from 'src/coretypes';
+import { IS_AUTH_REQUIRED } from '@/decorators/auth.decorator';
+import { RequestWithTenant } from '@/coretypes';
 
 @Injectable()
 export class AuthenticatedGuard implements CanActivate {

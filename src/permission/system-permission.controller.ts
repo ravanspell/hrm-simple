@@ -13,8 +13,10 @@ import { CreateSystemPermissionDto } from './dto/create-system-permission.dto';
 import { PermissionQueryDto } from './dto/dto';
 import { UpdateSystemPermissionDto } from './dto/update-system-permission.dto';
 import { PermissionService } from './permission.service';
+import { CurrentUser } from '@/decorators/current-user.decorator';
+import { User } from '@/user/entities/user.entity';
 
-ApiTags('System Permissions');
+@ApiTags('System Permissions')
 @Controller('system-permissions')
 export class SystemPermissionController {
   constructor(private readonly permissionService: PermissionService) {}
@@ -22,8 +24,11 @@ export class SystemPermissionController {
   @Post()
   @ApiOperation({ summary: 'Create a new system permission' })
   @ApiResponse({ status: 201, description: 'Permission created successfully' })
-  async createPermission(@Body() dto: CreateSystemPermissionDto) {
-    return this.permissionService.createSystemPermission(dto);
+  async createPermission(
+    @Body() dto: CreateSystemPermissionDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.permissionService.createSystemPermission(dto, user.id);
   }
 
   @Get()

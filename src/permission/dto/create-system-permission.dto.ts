@@ -6,11 +6,40 @@ import {
   IsBoolean,
   MinLength,
   MaxLength,
+  IsNotEmpty,
 } from 'class-validator';
 
 export class CreateSystemPermissionDto {
-  @ApiProperty({ description: 'Category ID for the permission' })
-  @IsUUID(undefined, { message: 'Category ID must be a valid UUID.' })
+  @ApiProperty({
+    description: 'Unique key for the permission',
+    example: 'user.create',
+  })
+  @IsNotEmpty()
+  @IsString()
+  permissionKey: string;
+
+  @ApiProperty({
+    description: 'Display name of the permission',
+    example: 'Create User',
+  })
+  @IsNotEmpty()
+  @IsString()
+  displayName: string;
+
+  @ApiProperty({
+    description: 'Description of what the permission allows',
+    example: 'Allows creating new users in the system',
+  })
+  @IsNotEmpty()
+  @IsString()
+  description: string;
+
+  @ApiProperty({
+    description: 'ID of the permission category',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsNotEmpty()
+  @IsUUID()
   categoryId: string;
 
   @ApiProperty({ description: 'Resource the permission applies to' })
@@ -18,35 +47,6 @@ export class CreateSystemPermissionDto {
   @MinLength(3, { message: 'Resource must be at least 3 characters long.' })
   @MaxLength(255, { message: 'Resource cannot be longer than 255 characters.' })
   resource: string;
-
-  @ApiProperty({ description: 'Unique key for the permission' })
-  @IsString({ message: 'Permission key must be a string.' })
-  @MinLength(3, {
-    message: 'Permission key must be at least 3 characters long.',
-  })
-  @MaxLength(255, {
-    message: 'Permission key cannot be longer than 255 characters.',
-  })
-  permissionKey: string;
-
-  @ApiProperty({ description: 'Display name for the permission' })
-  @IsString({ message: 'Display name must be a string.' })
-  @MinLength(3, { message: 'Display name must be at least 3 characters long.' })
-  @MaxLength(255, {
-    message: 'Display name cannot be longer than 255 characters.',
-  })
-  displayName: string;
-
-  @ApiProperty({
-    description: 'Description of the permission',
-    required: false,
-  })
-  @IsString({ message: 'Description must be a string.' })
-  @IsOptional()
-  @MaxLength(255, {
-    message: 'Description cannot be longer than 255 characters.',
-  })
-  description?: string;
 
   @ApiProperty({
     description: 'Whether this is a base permission',
