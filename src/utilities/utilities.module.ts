@@ -8,6 +8,7 @@ import { TurnstileService } from './turnstile-service/turnstile-service';
 import { HttpModule } from '@nestjs/axios';
 import { SentryService } from './sentry/sentry.service';
 import { CommonUtilitiesService } from './environment/common.utilities.service';
+import { AsyncStorageService } from './async-storage-service/async-storage.service';
 
 @Module({
   imports: [HttpModule],
@@ -20,6 +21,7 @@ import { CommonUtilitiesService } from './environment/common.utilities.service';
     TurnstileService,
     SentryService,
     CommonUtilitiesService,
+    AsyncStorageService,
   ],
   exports: [
     EncryptionService,
@@ -29,6 +31,7 @@ import { CommonUtilitiesService } from './environment/common.utilities.service';
     TurnstileService,
     SentryService,
     CommonUtilitiesService,
+    AsyncStorageService,
   ],
 })
 export class UtilitiesModule {}
