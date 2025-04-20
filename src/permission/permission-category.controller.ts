@@ -51,6 +51,7 @@ export class PermissionCategoryController {
   }
 
   @Get()
+  @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Get all permission categories' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Returns all categories' })
   async getAllCategories() {
@@ -58,6 +59,7 @@ export class PermissionCategoryController {
   }
 
   @Put(':id')
+  @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Update a permission category' })
   @ApiResponse({ status: 200, description: 'Category updated successfully' })
   async updateCategory(

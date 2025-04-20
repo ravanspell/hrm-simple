@@ -36,7 +36,7 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
   /**
    * Find permissions by query parameters
    * @param queryDto Query parameters
-   * @returns [SystemPermission[], number]
+   * @returns Tuple of [permissions, total count]
    */
   async findByQueryParams(
     queryDto: PermissionQueryDto,
@@ -45,9 +45,9 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
       queryDto;
     const skip = (page - 1) * limit;
 
-    const queryBuilder = this.createQueryBuilder(
-      'permission',
-    ).leftJoinAndSelect('permission.category', 'category');
+    const queryBuilder = this.createQueryBuilder('permission')
+      .leftJoinAndSelect('permission.category', 'category')
+      .orderBy('permission.createdAt', 'DESC');
 
     if (search) {
       queryBuilder.andWhere(
@@ -66,10 +66,12 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
       queryBuilder.andWhere('permission.resource = :resource', { resource });
     }
 
-    if (basePermissionsOnly) {
+    if (basePermissionsOnly !== undefined) {
       queryBuilder.andWhere(
         'permission.isBasePermission = :basePermissionsOnly',
-        { basePermissionsOnly },
+        {
+          basePermissionsOnly,
+        },
       );
     }
 
