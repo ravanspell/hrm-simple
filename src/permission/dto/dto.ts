@@ -9,7 +9,7 @@ import {
   MinLength,
   MaxLength,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { PaginationDto } from '@/common/dto/pagination.dto';
 
 export class CreatePermissionCategoryDto {
   @ApiProperty({ description: 'Name of the permission category' })
@@ -74,26 +74,7 @@ export class UpdateUserDirectPermissionDto {
   isOverride?: boolean;
 }
 
-export class PaginationQueryDto {
-  @ApiProperty({ description: 'Page number', minimum: 1, default: 1 })
-  @Type(() => Number)
-  @IsInt()
-  @IsOptional()
-  page?: number = 1;
-
-  @ApiProperty({
-    description: 'Items per page',
-    minimum: 1,
-    maximum: 100,
-    default: 10,
-  })
-  @Type(() => Number)
-  @IsInt()
-  @IsOptional()
-  limit?: number = 10;
-}
-
-export class PermissionQueryDto extends PaginationQueryDto {
+export class PermissionQueryDto extends PaginationDto {
   @ApiProperty({
     description: 'Search term for permission name or description',
     required: false,
