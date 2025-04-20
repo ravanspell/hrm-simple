@@ -9,6 +9,7 @@ import {
   MinLength,
   MaxLength,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreatePermissionCategoryDto {
   @ApiProperty({ description: 'Name of the permission category' })
@@ -75,6 +76,7 @@ export class UpdateUserDirectPermissionDto {
 
 export class PaginationQueryDto {
   @ApiProperty({ description: 'Page number', minimum: 1, default: 1 })
+  @Type(() => Number)
   @IsInt()
   @IsOptional()
   page?: number = 1;
@@ -85,6 +87,7 @@ export class PaginationQueryDto {
     maximum: 100,
     default: 10,
   })
+  @Type(() => Number)
   @IsInt()
   @IsOptional()
   limit?: number = 10;
