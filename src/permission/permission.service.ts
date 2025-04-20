@@ -153,10 +153,27 @@ export class PermissionService {
    * Get system permissions with filtering
    *
    * @param query PermissionQueryDto
-   * @returns Array of permissions and count
+   * @returns Object containing permissions and pagination metadata
+   * @throws BadRequestException if query parameters are invalid
    */
   async getSystemPermissions(query: PermissionQueryDto) {
-    return this.systemPermissionRepo.findByQueryParams(query);
+    // Validate query parameters
+    if (query.page < 1) {
+      throw new BadRequestException('Page number must be greater than 0');
+    }
+    if (query.limit < 1) {
+      throw new BadRequestException('Limit must be greater than 0');
+    }
+
+    const [permissions, total] =
+      await this.systemPermissionRepo.findByQueryParams(query);
+
+    return {
+      permissions,
+      total,
+      page: query.page,
+      limit: query.limit,
+    };
   }
 
   /**
