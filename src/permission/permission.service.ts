@@ -165,8 +165,12 @@ export class PermissionService {
       throw new BadRequestException('Limit must be greater than 0');
     }
 
+    // Calculate pagination parameters
+    const skip = (query.page - 1) * query.limit;
+    const take = query.limit;
+
     const [permissions, total] =
-      await this.systemPermissionRepo.findByQueryParams(query);
+      await this.systemPermissionRepo.findByQueryParams(query, skip, take);
 
     return {
       permissions,

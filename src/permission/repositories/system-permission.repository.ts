@@ -36,14 +36,16 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
   /**
    * Find permissions by query parameters
    * @param queryDto Query parameters
+   * @param skip Number of records to skip
+   * @param take Number of records to take
    * @returns Tuple of [permissions, total count]
    */
   async findByQueryParams(
     queryDto: PermissionQueryDto,
+    skip: number,
+    take: number,
   ): Promise<[SystemPermission[], number]> {
-    const { page, limit, search, categoryId, resource, basePermissionsOnly } =
-      queryDto;
-    const skip = (page - 1) * limit;
+    const { search, categoryId, resource, basePermissionsOnly } = queryDto;
 
     const queryBuilder = this.createQueryBuilder('permission')
       .leftJoinAndSelect('permission.category', 'category')
@@ -75,6 +77,6 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
       );
     }
 
-    return queryBuilder.skip(skip).take(limit).getManyAndCount();
+    return queryBuilder.skip(skip).take(take).getManyAndCount();
   }
 }
