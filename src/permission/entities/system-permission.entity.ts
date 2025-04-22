@@ -12,6 +12,13 @@ import { OrganizationLicensedPermission } from './organization-licensed-permissi
 import { UserDirectPermission } from './user-direct-permission.entity';
 import { SYSTEM_PERMISSIONS_TABLE } from '@/constants/dbTables';
 
+export enum PermissionType {
+  CREATE = 'CREATE',
+  READ = 'READ',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+}
+
 /**
  * Entity representing a system permission in the system
  * @class SystemPermission
@@ -24,11 +31,11 @@ export class SystemPermission {
   @Column({ type: 'uuid' })
   categoryId: string;
 
-  @Column()
-  resource: string;
-
-  @Column({ unique: true })
-  permissionKey: string;
+  @Column({
+    type: 'enum',
+    enum: PermissionType,
+  })
+  type: PermissionType;
 
   @Column()
   displayName: string;

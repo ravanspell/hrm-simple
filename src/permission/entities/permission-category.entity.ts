@@ -21,6 +21,9 @@ export class PermissionCategory {
   @Column({ unique: true })
   name: string;
 
+  @Column({ unique: true })
+  key: string;
+
   @Column({ type: 'text', nullable: true })
   description: string;
 
