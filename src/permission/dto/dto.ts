@@ -19,6 +19,14 @@ export class CreatePermissionCategoryDto {
   name: string;
 
   @ApiProperty({
+    description: 'Category key for the permission category',
+  })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(255)
+  categoryKey: string;
+
+  @ApiProperty({
     description: 'Description of the permission category',
     required: false,
   })

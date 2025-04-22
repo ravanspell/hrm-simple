@@ -37,7 +37,7 @@ export class PermissionCategoryController {
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data or display order',
+    description: 'Invalid input data or category key already exists',
   })
   @ApiResponse({
     status: HttpStatus.CONFLICT,

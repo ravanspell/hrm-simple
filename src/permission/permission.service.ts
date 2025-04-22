@@ -23,7 +23,10 @@ import { CreateOrganizationLicensedPermissionDto } from './dto/create-organizati
 import { IsolationLevel, Transactional } from 'typeorm-transactional';
 import { AssignUserDirectPermissionDto } from './dto/assign-user-direct-permission.dto';
 import { EffectiveUserPermissionsRepository } from './repositories/effective-user-permission.repository';
-import { SystemPermission } from './entities/system-permission.entity';
+import {
+  PermissionType,
+  SystemPermission,
+} from './entities/system-permission.entity';
 import { PermissionCategory } from './entities/permission-category.entity';
 
 @Injectable()
@@ -37,39 +40,53 @@ export class PermissionService {
   ) {}
 
   /**
+   * Generate a standardized permission key by combining type and category key
+   * @param type PermissionType (CREATE, READ, UPDATE, DELETE)
+   * @param categoryKey Category identifier
+   * @returns Formatted permission key (e.g., CREATE:USER_MANAGEMENT)
+   */
+  generatePermissionKey(type: PermissionType, categoryKey: string): string {
+    return categoryKey ? `${type}:${categoryKey}` : type;
+  }
+  /**
    * Create a new permission category
-   * @param dto CreatePermissionCategoryDto
+   * @param permissionCategoryInputData CreatePermissionCategoryDto
+   * @param userId User ID who is creating the category
    * @returns Created category
-   * @throws ConflictException if category with same name exists
-   * @throws BadRequestException if display order is invalid
+   * @throws BadRequestException if category with same name or key exists
    */
   async createCategory(
     permissionCategoryInputData: CreatePermissionCategoryDto,
     userId: string,
   ): Promise<PermissionCategory> {
-    // Validate display order
-    if (permissionCategoryInputData.displayOrder < 0) {
-      throw new BadRequestException(
-        'Display order must be a non-negative number',
-      );
-    }
+    const name = permissionCategoryInputData.name.trim();
+    const categoryKey = permissionCategoryInputData.categoryKey.trim();
 
     // Check for existing category with same name
-    const existing = await this.permissionCategoryRepo.findByName(
-      permissionCategoryInputData.name,
-    );
-    if (existing) {
-      throw new ConflictException('Category with this name already exists');
+    const existingWithName = await this.permissionCategoryRepo.findByName(name);
+    if (existingWithName) {
+      throw new BadRequestException('Category with this name already exists');
     }
 
-    // Create and save the new category
-    const category = this.permissionCategoryRepo.create({
-      ...permissionCategoryInputData,
-      name: permissionCategoryInputData.name.trim(),
+    // Check for existing category with same key
+    const existingWithKey =
+      await this.permissionCategoryRepo.findByKey(categoryKey);
+    if (existingWithKey) {
+      throw new BadRequestException('Category with this key already exists');
+    }
+
+    // Prepare category data
+    const categoryData = {
+      name,
+      key: categoryKey,
+      description: permissionCategoryInputData.description?.trim(),
+      displayOrder: permissionCategoryInputData.displayOrder || 0,
       createdBy: userId,
       updatedBy: userId,
-    });
-    return this.permissionCategoryRepo.save(category);
+    };
+
+    // Create and save the new category
+    return this.permissionCategoryRepo.upsertCategory(categoryData);
   }
 
   /**
@@ -133,7 +150,7 @@ export class PermissionService {
 
     // Check for existing permission with same key
     const existing = await this.systemPermissionRepo.findOne({
-      where: { permissionKey: permissionInputData.permissionKey },
+      where: { type: permissionInputData.type },
     });
     if (existing) {
       throw new BadRequestException('Permission with this key already exists');
