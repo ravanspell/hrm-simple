@@ -87,6 +87,12 @@ export class SystemPermission {
   )
   userDirectPermissions: UserDirectPermission[];
 
-  @ManyToOne(() => PermissionCategory, (category) => category.systemPermissions)
+  @ManyToOne(
+    () => PermissionCategory,
+    (category) => category.systemPermissions,
+    {
+      onDelete: 'CASCADE',
+    },
+  )
   category: PermissionCategory;
 }
