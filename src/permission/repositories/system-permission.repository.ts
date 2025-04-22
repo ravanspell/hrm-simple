@@ -79,7 +79,7 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
    * @returns SystemPermission
    */
   async upsertPermission(
-    systemPermissionData: SystemPermission,
+    systemPermissionData: Partial<SystemPermission>,
   ): Promise<SystemPermission> {
     const result = await this.createQueryBuilder()
       .insert()

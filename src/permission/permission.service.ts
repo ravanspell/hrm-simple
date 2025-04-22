@@ -150,20 +150,18 @@ export class PermissionService {
 
     // Check for existing permission with same key
     const existing = await this.systemPermissionRepo.findOne({
-      where: { type: permissionInputData.type },
+      where: { type: permissionInputData.permissionKey },
     });
+
     if (existing) {
       throw new BadRequestException('Permission with this key already exists');
     }
-
-    // Create and save the new permission
-    const permission = this.systemPermissionRepo.create({
+    const permission = {
       ...permissionInputData,
       createdBy: userId,
       updatedBy: userId,
-    });
-
-    return this.systemPermissionRepo.save(permission);
+    };
+    return this.systemPermissionRepo.upsertPermission(permission);
   }
 
   /**

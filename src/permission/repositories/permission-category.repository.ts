@@ -1,6 +1,7 @@
 import { DataSource, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { PermissionCategory } from '../entities/permission-category.entity';
+import { PERMISSION_CATEGORY_COLUMNS } from '../constants/table-columns';
 
 @Injectable()
 export class PermissionCategoryRepository extends Repository<PermissionCategory> {
@@ -22,7 +23,15 @@ export class PermissionCategoryRepository extends Repository<PermissionCategory>
       .insert()
       .into(PermissionCategory)
       .values(categoryData)
-      .orUpdate(['name', 'description', 'displayOrder', 'updatedBy'], ['key'])
+      .orUpdate(
+        [
+          PERMISSION_CATEGORY_COLUMNS.NAME,
+          PERMISSION_CATEGORY_COLUMNS.DESCRIPTION,
+          PERMISSION_CATEGORY_COLUMNS.DISPLAY_ORDER,
+          PERMISSION_CATEGORY_COLUMNS.UPDATED_BY,
+        ],
+        [PERMISSION_CATEGORY_COLUMNS.KEY],
+      )
       .returning('*')
       .execute();
 

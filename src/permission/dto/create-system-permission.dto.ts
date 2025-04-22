@@ -8,6 +8,7 @@ import {
   MaxLength,
   IsNotEmpty,
 } from 'class-validator';
+import { PermissionType } from '../entities/system-permission.entity';
 
 export class CreateSystemPermissionDto {
   @ApiProperty({
@@ -16,7 +17,7 @@ export class CreateSystemPermissionDto {
   })
   @IsNotEmpty()
   @IsString()
-  permissionKey: string;
+  permissionKey: PermissionType;
 
   @ApiProperty({
     description: 'Display name of the permission',

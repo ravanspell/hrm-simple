@@ -33,7 +33,6 @@ export class SystemPermissionController {
    * @param createSystemPermissionDto - Data transfer object containing permission details
    * @param _user - Current authenticated user
    * @returns The created permission
-   * @throws ConflictException if permission with same key exists
    * @throws BadRequestException if category not found
    */
   @Post()
@@ -46,10 +45,6 @@ export class SystemPermissionController {
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input data or category not found.',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Permission with this key already exists.',
   })
   async createSystemPermission(
     @Body() createSystemPermissionDto: CreateSystemPermissionDto,
