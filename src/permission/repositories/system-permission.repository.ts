@@ -2,25 +2,13 @@ import { DataSource, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { SystemPermission } from '../entities/system-permission.entity';
 import { PermissionQueryDto } from '../dto/dto';
+import { SYSTEM_PERMISSION_COLUMNS } from '../constants/table-columns';
 
 @Injectable()
 export class SystemPermissionRepository extends Repository<SystemPermission> {
   constructor(dataSource: DataSource) {
     super(SystemPermission, dataSource.createEntityManager());
   }
-
-  /**
-   * Create permission
-   * @param systemPermissionData
-   * @returns SystemPermission
-   */
-  async createPermission(
-    systemPermissionData: SystemPermission,
-  ): Promise<SystemPermission> {
-    const permission = this.create(systemPermissionData);
-    return this.save(permission);
-  }
-
   /**
    * Find permission with write lock
    * @param id Permission ID
@@ -49,19 +37,22 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
 
     const queryBuilder = this.createQueryBuilder('permission')
       .leftJoinAndSelect('permission.category', 'category')
-      .orderBy('permission.createdAt', 'DESC');
+      .orderBy(`permission.${SYSTEM_PERMISSION_COLUMNS.CREATED_AT}`, 'DESC');
 
     if (search) {
       queryBuilder.andWhere(
-        '(permission.displayName ILIKE :search OR permission.description ILIKE :search)',
+        `(permission.${SYSTEM_PERMISSION_COLUMNS.DISPLAY_NAME} ILIKE :search OR permission.${SYSTEM_PERMISSION_COLUMNS.DESCRIPTION} ILIKE :search)`,
         { search: `%${search}%` },
       );
     }
 
     if (categoryId) {
-      queryBuilder.andWhere('permission.categoryId = :categoryId', {
-        categoryId,
-      });
+      queryBuilder.andWhere(
+        `permission.${SYSTEM_PERMISSION_COLUMNS.CATEGORY_ID} = :categoryId`,
+        {
+          categoryId,
+        },
+      );
     }
 
     if (resource) {
@@ -70,7 +61,7 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
 
     if (basePermissionsOnly !== undefined) {
       queryBuilder.andWhere(
-        'permission.isBasePermission = :basePermissionsOnly',
+        `permission.${SYSTEM_PERMISSION_COLUMNS.IS_BASE_PERMISSION} = :basePermissionsOnly`,
         {
           basePermissionsOnly,
         },
@@ -78,5 +69,34 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
     }
 
     return queryBuilder.skip(skip).take(take).getManyAndCount();
+  }
+
+  /**
+   * Upsert a system permission
+   * If a permission with the same type and categoryId exists, it will be updated
+   * If no permission exists with these values, a new one will be created
+   * @param systemPermissionData Permission data to upsert
+   * @returns SystemPermission
+   */
+  async upsertPermission(
+    systemPermissionData: SystemPermission,
+  ): Promise<SystemPermission> {
+    const result = await this.createQueryBuilder()
+      .insert()
+      .into(SystemPermission)
+      .values(systemPermissionData)
+      .orUpdate(
+        [
+          SYSTEM_PERMISSION_COLUMNS.DISPLAY_NAME,
+          SYSTEM_PERMISSION_COLUMNS.DESCRIPTION,
+          SYSTEM_PERMISSION_COLUMNS.IS_BASE_PERMISSION,
+          SYSTEM_PERMISSION_COLUMNS.UPDATED_BY,
+        ],
+        [SYSTEM_PERMISSION_COLUMNS.TYPE, SYSTEM_PERMISSION_COLUMNS.CATEGORY_ID],
+      )
+      .returning('*')
+      .execute();
+
+    return result.raw[0];
   }
 }
