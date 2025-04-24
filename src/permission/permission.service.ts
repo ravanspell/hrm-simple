@@ -138,7 +138,7 @@ export class PermissionService {
    * @param permissionInputData CreateSystemPermissionDto containing permission details
    * @param userId ID of the user creating the permission
    * @returns Created system permission
-   * @throws BadRequestException if permission with same type and category exists
+   * @throws ConflictException if permission with same type and category exists
    * @throws BadRequestException if category not found
    */
   async createSystemPermission(
@@ -154,11 +154,12 @@ export class PermissionService {
         type: permissionInputData.type,
         categoryId: permissionInputData.categoryId,
       },
+      relations: ['category'],
     });
 
     if (existing) {
       throw new BadRequestException(
-        'Permission with this type already exists in this category',
+        `Permission with type '${permissionInputData.type}' already exists in category '${existing.category.name}'`,
       );
     }
 

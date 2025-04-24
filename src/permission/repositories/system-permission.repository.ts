@@ -1,8 +1,9 @@
 import { DataSource, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { SystemPermission } from '../entities/system-permission.entity';
-import { PermissionQueryDto } from '../dto/dto';
 import { SYSTEM_PERMISSION_COLUMNS } from '../constants/table-columns';
+import { PermissionQueryDto } from '../dto/dto';
+import { SYSTEM_PERMISSIONS_TABLE } from '@/constants/dbTables';
 
 @Injectable()
 export class SystemPermissionRepository extends Repository<SystemPermission> {
@@ -35,20 +36,23 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
   ): Promise<[SystemPermission[], number]> {
     const { search, categoryId, resource, basePermissionsOnly } = queryDto;
 
-    const queryBuilder = this.createQueryBuilder('permission')
-      .leftJoinAndSelect('permission.category', 'category')
-      .orderBy(`permission.${SYSTEM_PERMISSION_COLUMNS.CREATED_AT}`, 'DESC');
+    const queryBuilder = this.createQueryBuilder(SYSTEM_PERMISSIONS_TABLE)
+      .leftJoinAndSelect(`${SYSTEM_PERMISSIONS_TABLE}.category`, 'category')
+      .orderBy(
+        `${SYSTEM_PERMISSIONS_TABLE}.${SYSTEM_PERMISSION_COLUMNS.CREATED_AT}`,
+        'DESC',
+      );
 
     if (search) {
       queryBuilder.andWhere(
-        `(permission.${SYSTEM_PERMISSION_COLUMNS.DISPLAY_NAME} ILIKE :search OR permission.${SYSTEM_PERMISSION_COLUMNS.DESCRIPTION} ILIKE :search)`,
+        `(${SYSTEM_PERMISSIONS_TABLE}.${SYSTEM_PERMISSION_COLUMNS.DISPLAY_NAME} ILIKE :search OR ${SYSTEM_PERMISSIONS_TABLE}.${SYSTEM_PERMISSION_COLUMNS.DESCRIPTION} ILIKE :search)`,
         { search: `%${search}%` },
       );
     }
 
     if (categoryId) {
       queryBuilder.andWhere(
-        `permission.${SYSTEM_PERMISSION_COLUMNS.CATEGORY_ID} = :categoryId`,
+        `${SYSTEM_PERMISSIONS_TABLE}.${SYSTEM_PERMISSION_COLUMNS.CATEGORY_ID} = :categoryId`,
         {
           categoryId,
         },
@@ -56,12 +60,15 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
     }
 
     if (resource) {
-      queryBuilder.andWhere('permission.resource = :resource', { resource });
+      queryBuilder.andWhere(
+        `${SYSTEM_PERMISSIONS_TABLE}.resource = :resource`,
+        { resource },
+      );
     }
 
     if (basePermissionsOnly !== undefined) {
       queryBuilder.andWhere(
-        `permission.${SYSTEM_PERMISSION_COLUMNS.IS_BASE_PERMISSION} = :basePermissionsOnly`,
+        `${SYSTEM_PERMISSIONS_TABLE}.${SYSTEM_PERMISSION_COLUMNS.IS_BASE_PERMISSION} = :basePermissionsOnly`,
         {
           basePermissionsOnly,
         },
