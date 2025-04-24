@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Repository, DataSource, In } from 'typeorm';
 import { Role } from '@/role/entities/role.entity';
+import { ROLE_COLUMNS } from '../constants/role-columns';
 
 @Injectable()
 export class RoleRepository extends Repository<Role> {
@@ -14,11 +15,7 @@ export class RoleRepository extends Repository<Role> {
    * @returns A promise that resolves to the found Role entity.
    */
   async findRoleByName(name: string): Promise<Role> {
-    const role = await this.findOne({ where: { name } });
-    if (!role) {
-      throw new NotFoundException(`Role with name "${name}" not found.`);
-    }
-    return role;
+    return this.findOne({ where: { name } });
   }
 
   /**
@@ -36,14 +33,10 @@ export class RoleRepository extends Repository<Role> {
    * @returns A promise that resolves to the found Role entity.
    */
   async findRoleWithScopes(roleId: string): Promise<Role> {
-    const role = await this.findOne({
+    return this.findOne({
       where: { id: roleId },
       relations: ['scopes'],
     });
-    if (!role) {
-      throw new NotFoundException(`Role with ID "${roleId}" not found.`);
-    }
-    return role;
   }
 
   /**
@@ -57,11 +50,28 @@ export class RoleRepository extends Repository<Role> {
   }
 
   /**
-   * Saves a role.
-   * @param role - The role to save.
-   * @returns A promise that resolves to the saved Role entity.
+   * Upserts a role using the id as the conflict path.
+   * If a role with the same id exists, it will be updated.
+   * If no role exists, a new one will be created.
+   * @param role - The role to upsert.
+   * @returns A promise that resolves to the upserted Role entity.
    */
-  async saveRole(role: Role): Promise<Role> {
-    return this.save(role);
+  async upsertRole(role: Role): Promise<Role> {
+    const result = await this.createQueryBuilder()
+      .insert()
+      .into(Role)
+      .values(role)
+      .orUpdate(
+        [
+          ROLE_COLUMNS.NAME,
+          ROLE_COLUMNS.DESCRIPTION,
+          ROLE_COLUMNS.ORGANIZATION_ID,
+        ],
+        [ROLE_COLUMNS.ID],
+      )
+      .returning('*')
+      .execute();
+
+    return result.raw[0];
   }
 }
