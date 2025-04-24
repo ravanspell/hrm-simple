@@ -8,6 +8,10 @@ import { Observable, tap } from 'rxjs';
 import * as Sentry from '@sentry/node';
 import { SentryService } from '../utilities/sentry/sentry.service';
 
+/**
+ * Sentry interceptor
+ * This interceptor is used to capture errors and send them to Sentry
+ */
 @Injectable()
 export class SentryInterceptor implements NestInterceptor {
   constructor(private readonly sentryService: SentryService) {}
