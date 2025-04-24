@@ -6,7 +6,7 @@ import { UserModule } from './user/user.module';
 import { LoggerModule } from './logger/logger.module';
 import { EmployeeLeavesModule } from './employee-leaves/employee-leaves.module';
 import { AuthModule } from './auth/auth.module';
-import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { PermissionsGuard } from './auth/guards/permissions.guard';
 import { AuthenticatedGuard } from './auth/guards/authenticated.guard';
 import { FileManagementModule } from './file-management/file-management.module';
@@ -22,6 +22,8 @@ import { TerminusModule } from '@nestjs/terminus';
 import { CandidateModule } from './candidate/candidate.module';
 import { JobModule } from './job/job.module';
 import { TenantMiddleware } from './middlewares/tenant.middleware';
+import { UserTrackingInterceptor } from './interceptors/user-tracking.interceptor';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -58,6 +60,11 @@ import { TenantMiddleware } from './middlewares/tenant.middleware';
     {
       provide: APP_FILTER,
       useClass: SentryGlobalFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      // apply user tracking interceptor for all endpoint routes.
+      useClass: UserTrackingInterceptor,
     },
   ],
 })

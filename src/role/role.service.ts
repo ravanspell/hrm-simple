@@ -36,6 +36,8 @@ export class RoleService {
     role.name = createRoleData.name;
     role.description = createRoleData.description;
     role.organizationId = organizationId;
+    role.createdBy = createRoleData.createdBy;
+    role.updatedBy = createRoleData.updatedBy;
 
     // First save the role to get its ID
     const savedRole = await this.roleRepository.upsertRole(role);

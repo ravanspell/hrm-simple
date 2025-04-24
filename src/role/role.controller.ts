@@ -21,6 +21,7 @@ import { API_VERSION } from '@/constants/common';
 import { Role } from './entities/role.entity';
 import { TenantId } from '@/decorators/tenant.decorator';
 import { Authentication } from '@/decorators/auth.decorator';
+import { TrackUser } from '@/decorators/user-tracking.decorator';
 
 @Controller('role')
 @ApiTags('Role')
@@ -54,6 +55,7 @@ export class RoleController {
    */
   @Post()
   @Version(API_VERSION.V1)
+  @TrackUser()
   @ApiOperation({ summary: 'Create a new role' })
   @ApiBody({ type: CreateRoleRequest })
   @ApiResponse({

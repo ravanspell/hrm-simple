@@ -39,4 +39,27 @@ export class CreateRoleRequest {
   @IsUUID('4', { each: true })
   @IsOptional()
   scopeIds?: string[];
+
+  /**
+   * The ID of the user creating the role.
+   * This field is automatically populated by the user tracking interceptor.
+   */
+  @ApiProperty({
+    description: 'The ID of the user creating the role.',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsUUID('4')
+  @IsOptional()
+  createdBy?: string;
+  /**
+   * The ID of the user updating the role.
+   * This field is automatically populated by the user tracking interceptor.
+   */
+  @ApiProperty({
+    description: 'The ID of the user updating the role.',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsUUID('4')
+  @IsOptional()
+  updatedBy?: string;
 }
