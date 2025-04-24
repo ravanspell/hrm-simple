@@ -17,7 +17,7 @@ export class CreateSystemPermissionDto {
   })
   @IsNotEmpty()
   @IsString()
-  permissionKey: PermissionType;
+  type: PermissionType;
 
   @ApiProperty({
     description: 'Display name of the permission',

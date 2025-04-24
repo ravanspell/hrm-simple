@@ -138,7 +138,7 @@ export class PermissionService {
    * @param permissionInputData CreateSystemPermissionDto containing permission details
    * @param userId ID of the user creating the permission
    * @returns Created system permission
-   * @throws ConflictException if permission with same key exists
+   * @throws BadRequestException if permission with same type and category exists
    * @throws BadRequestException if category not found
    */
   async createSystemPermission(
@@ -148,14 +148,20 @@ export class PermissionService {
     // Validate category exists
     await this.getPermissionCategoryById(permissionInputData.categoryId);
 
-    // Check for existing permission with same key
+    // Check for existing permission with same type and category
     const existing = await this.systemPermissionRepo.findOne({
-      where: { type: permissionInputData.permissionKey },
+      where: {
+        type: permissionInputData.type,
+        categoryId: permissionInputData.categoryId,
+      },
     });
 
     if (existing) {
-      throw new BadRequestException('Permission with this key already exists');
+      throw new BadRequestException(
+        'Permission with this type already exists in this category',
+      );
     }
+
     const permission = {
       ...permissionInputData,
       createdBy: userId,

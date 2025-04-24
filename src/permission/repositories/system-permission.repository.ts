@@ -73,8 +73,8 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
 
   /**
    * Upsert a system permission
-   * If a permission with the same type and categoryId exists, it will be updated
-   * If no permission exists with these values, a new one will be created
+   * If a permission with the same id exists, it will be updated
+   * If no permission exists with the id, a new one will be created
    * @param systemPermissionData Permission data to upsert
    * @returns SystemPermission
    */
@@ -87,12 +87,14 @@ export class SystemPermissionRepository extends Repository<SystemPermission> {
       .values(systemPermissionData)
       .orUpdate(
         [
+          SYSTEM_PERMISSION_COLUMNS.TYPE,
+          SYSTEM_PERMISSION_COLUMNS.CATEGORY_ID,
           SYSTEM_PERMISSION_COLUMNS.DISPLAY_NAME,
           SYSTEM_PERMISSION_COLUMNS.DESCRIPTION,
           SYSTEM_PERMISSION_COLUMNS.IS_BASE_PERMISSION,
           SYSTEM_PERMISSION_COLUMNS.UPDATED_BY,
         ],
-        [SYSTEM_PERMISSION_COLUMNS.TYPE, SYSTEM_PERMISSION_COLUMNS.CATEGORY_ID],
+        [SYSTEM_PERMISSION_COLUMNS.ID],
       )
       .returning('*')
       .execute();
