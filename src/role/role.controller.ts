@@ -5,17 +5,26 @@ import {
   Param,
   Post,
   Put,
-  Req,
   Version,
 } from '@nestjs/common';
 import { RoleService } from './role.service';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CreateRoleRequest } from './dto/create-role.dto';
-import { RequestWithTenant } from '@/coretypes';
 import { UpdateRoleRequest } from './dto/update-role.dto';
 import { API_VERSION } from '@/constants/common';
+import { Role } from './entities/role.entity';
+import { TenantId } from '@/decorators/tenant.decorator';
+import { Authentication } from '@/decorators/auth.decorator';
 
 @Controller('role')
+@ApiTags('Role')
+@Authentication()
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
@@ -40,6 +49,8 @@ export class RoleController {
   /**
    * Create a new role.
    * @param createRoleData Data to create the role.
+   * @param organizationId The ID of the organization.
+   * @returns The newly created role.
    */
   @Post()
   @Version(API_VERSION.V1)
@@ -48,14 +59,14 @@ export class RoleController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Role successfully created',
+    type: Role,
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Bad Request' })
-  createRole(
+  async createRole(
     @Body() createRoleData: CreateRoleRequest,
-    @Req() requestWithTenant: RequestWithTenant,
-  ) {
-    const organizationId = requestWithTenant.organization.id;
-    this.roleService.createRole(createRoleData, organizationId);
+    @TenantId() organizationId: string,
+  ): Promise<Role> {
+    return await this.roleService.createRole(createRoleData, organizationId);
   }
 
   /**

@@ -1,5 +1,6 @@
 import { RoleRepository } from '@/role/repository/role.repository';
 import { UserRoleRepository } from '@/role/repository/user-role.repository';
+import { RolePermissionRepository } from '@/role/repository/role-permission.repository';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   IsolationLevel,
@@ -14,6 +15,7 @@ export class RoleService {
   constructor(
     private readonly roleRepository: RoleRepository,
     private readonly userRoleRepository: UserRoleRepository,
+    private readonly rolePermissionRepository: RolePermissionRepository,
   ) {}
 
   /**
@@ -22,6 +24,10 @@ export class RoleService {
    * @param organizationId - The ID of the organization.
    * @returns The created role.
    */
+  @Transactional({
+    propagation: Propagation.NESTED,
+    isolationLevel: IsolationLevel.READ_COMMITTED,
+  })
   async createRole(
     createRoleData: CreateRoleRequest,
     organizationId: string,
@@ -30,8 +36,23 @@ export class RoleService {
     role.name = createRoleData.name;
     role.description = createRoleData.description;
     role.organizationId = organizationId;
-    return this.roleRepository.saveRole(role);
+
+    // First save the role to get its ID
+    const savedRole = await this.roleRepository.upsertRole(role);
+
+    // If there are scopeIds, create the role permissions
+    if (createRoleData.scopeIds?.length) {
+      await this.rolePermissionRepository.assignPermissionsToRole(
+        savedRole.id,
+        createRoleData.scopeIds,
+        organizationId,
+        createRoleData.createdBy,
+      );
+    }
+
+    return savedRole;
   }
+
   /**
    * Fetch roles by their IDs.
    * @param roleIds - An array of role IDs.
