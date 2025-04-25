@@ -38,6 +38,16 @@ export class CreatePermissionCategoryDto {
   @IsOptional()
   @IsInt()
   displayOrder?: number;
+
+  @ApiProperty({ description: 'Created by' })
+  @IsUUID()
+  @IsOptional()
+  createdBy?: string;
+
+  @ApiProperty({ description: 'Updated by' })
+  @IsUUID()
+  @IsOptional()
+  updatedBy?: string;
 }
 
 export class PermissionCategoryResponseDto {

@@ -57,7 +57,6 @@ export class PermissionService {
    */
   async createCategory(
     permissionCategoryInputData: CreatePermissionCategoryDto,
-    userId: string,
   ): Promise<PermissionCategory> {
     const name = permissionCategoryInputData.name.trim();
     const categoryKey = permissionCategoryInputData.categoryKey.trim();
@@ -77,12 +76,11 @@ export class PermissionService {
 
     // Prepare category data
     const categoryData = {
+      ...permissionCategoryInputData,
       name,
       key: categoryKey,
       description: permissionCategoryInputData.description?.trim(),
       displayOrder: permissionCategoryInputData.displayOrder || 0,
-      createdBy: userId,
-      updatedBy: userId,
     };
 
     // Create and save the new category

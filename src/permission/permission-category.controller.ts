@@ -17,9 +17,8 @@ import {
   PermissionCategoryResponseDto,
 } from './dto/dto';
 import { UpdatePermissionCategoryDto } from './dto/update-permission-category.dto';
-import { User } from '@/user/entities/user.entity';
-import { CurrentUser } from '@/decorators/current-user.decorator';
 import { API_VERSION } from '@/constants/common';
+import { TrackUser } from '@/decorators/user-tracking.decorator';
 
 @ApiTags('Permission Categories')
 @Controller('permission-categories')
@@ -29,6 +28,7 @@ export class PermissionCategoryController {
 
   @Post()
   @Version(API_VERSION.V1)
+  @TrackUser()
   @ApiOperation({ summary: 'Create a new permission category' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -44,10 +44,12 @@ export class PermissionCategoryController {
     description: 'Category with this name already exists',
   })
   async createCategory(
-    @Body() dto: CreatePermissionCategoryDto,
-    @CurrentUser() user: User,
+    @Body()
+    createPermissionCategoryRequest: CreatePermissionCategoryDto,
   ): Promise<PermissionCategoryResponseDto> {
-    return this.permissionService.createCategory(dto, user.id);
+    return this.permissionService.createCategory(
+      createPermissionCategoryRequest,
+    );
   }
 
   @Get()
