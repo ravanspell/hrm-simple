@@ -23,10 +23,21 @@ import { CandidateModule } from './candidate/candidate.module';
 import { JobModule } from './job/job.module';
 import { TenantMiddleware } from './middlewares/tenant.middleware';
 import { UserTrackingInterceptor } from './interceptors/user-tracking.interceptor';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    /**
+     * ThrottlerModule is used to limit the number of requests per minute.
+     * https://docs.nestjs.com/techniques/throttling
+     */
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: 1000, // 100 requests per minute
+      },
+    ]),
     DatabaseModule,
     UserModule,
     LoggerModule,
@@ -56,6 +67,10 @@ import { UserTrackingInterceptor } from './interceptors/user-tracking.intercepto
       provide: APP_GUARD,
       // apply permission guard for all endpoint routes.
       useClass: PermissionsGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
     {
       provide: APP_FILTER,
