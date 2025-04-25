@@ -5,9 +5,11 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { Role } from './role.entity';
 import { ROLE_PERMISSION_COLUMNS } from '../constants/role-columns';
+import { OrganizationLicensedPermission } from '../../permission/entities/organization-licensed-permission.entity';
 
 @Entity()
 export class RolePermission {
@@ -17,11 +19,8 @@ export class RolePermission {
   @Column({ name: ROLE_PERMISSION_COLUMNS.ROLE_ID })
   roleId: string;
 
-  @Column({ name: ROLE_PERMISSION_COLUMNS.SYSTEM_PERMISSION_ID })
-  systemPermissionId: string;
-
-  @Column({ name: ROLE_PERMISSION_COLUMNS.ORGANIZATION_ID })
-  organizationId: string;
+  @Column({ name: ROLE_PERMISSION_COLUMNS.ORGANIZATION_LICENSED_PERMISSION_ID })
+  organizationLicensedPermissionId: string;
 
   @Column({ type: 'uuid', name: ROLE_PERMISSION_COLUMNS.CREATED_BY })
   createdBy: string;
@@ -40,5 +39,13 @@ export class RolePermission {
   updatedAt: Date;
 
   @ManyToOne(() => Role, (role) => role.rolePermissions)
+  @JoinColumn({ name: 'roleId' })
   role: Role;
+
+  @ManyToOne(
+    () => OrganizationLicensedPermission,
+    (permission) => permission.rolePermissions,
+  )
+  @JoinColumn({ name: 'organizationLicensedPermissionId' })
+  organizationLicensedPermission: OrganizationLicensedPermission;
 }

@@ -11,8 +11,7 @@ export const ROLE_COLUMNS = {
 export const ROLE_PERMISSION_COLUMNS = {
   ID: 'id',
   ROLE_ID: 'roleId',
-  SYSTEM_PERMISSION_ID: 'systemPermissionId',
-  ORGANIZATION_ID: 'organizationId',
+  ORGANIZATION_LICENSED_PERMISSION_ID: 'organizationLicensedPermissionId',
   CREATED_BY: 'createdBy',
   UPDATED_BY: 'updatedBy',
   CREATED_AT: 'createdAt',

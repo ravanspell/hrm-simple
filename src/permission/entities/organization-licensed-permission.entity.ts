@@ -7,9 +7,11 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
+  OneToMany,
 } from 'typeorm';
 import { SystemPermission } from './system-permission.entity';
 import { Organization } from '@/organization/entities/organization.entity';
+import { RolePermission } from '@/role/entities/role-permission.entity';
 
 /**
  * Entity representing an organization's licensed permissions
@@ -62,4 +64,11 @@ export class OrganizationLicensedPermission {
   )
   @JoinColumn()
   systemPermission: SystemPermission;
+
+  @OneToMany(
+    () => RolePermission,
+    (rolePermission) => rolePermission.organizationLicensedPermission,
+    { onDelete: 'CASCADE' },
+  )
+  rolePermissions: RolePermission[];
 }
