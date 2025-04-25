@@ -110,24 +110,23 @@ async function bootstrap() {
   });
 
   // Session configuration should be before passport initialization
-  app.use(
-    session({
-      secret: process.env.SESSION_TOKEN_SECRET,
-      resave: false,
-      saveUninitialized: false,
-      store: sessionStore,
-      cookie: {
-        secure: process.env.ENV === 'prod',
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 1000 * 60 * 60 * 24,
-        path: '/',
-        domain: process.env.COOKIE_DOMAIN || undefined,
-      },
-      name: '__Host-session', // More secure cookie name
-    }),
-  );
+  const sessionConfig = {
+    secret: process.env.SESSION_TOKEN_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore,
+    name: 'myhrm_session',
+    cookie: {
+      secure: process.env.ENV === 'prod',
+      httpOnly: true,
+      sameSite: 'lax' as const,
+      maxAge: 1000 * 60 * 60 * 24,
+      path: '/',
+      domain: process.env.COOKIE_DOMAIN || undefined,
+    },
+  };
 
+  app.use(session(sessionConfig));
   app.use(passport.initialize());
   app.use(passport.session());
 
