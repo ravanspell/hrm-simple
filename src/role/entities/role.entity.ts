@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   OneToMany,
+  Index,
 } from 'typeorm';
 import { Organization } from '@/organization/entities/organization.entity';
 import { ROLE_TABLE } from '@/constants/dbTables';
@@ -12,6 +13,8 @@ import { UserRole } from './user-role.entity';
 import { ROLE_COLUMNS } from '../constants/role-columns';
 
 @Entity(ROLE_TABLE)
+@Index('idx_role_organization', ['organizationId'])
+@Index('idx_role_name_org', ['name', 'organizationId'], { unique: true })
 export class Role {
   @PrimaryGeneratedColumn('uuid')
   id: string;

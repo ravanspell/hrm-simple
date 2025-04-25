@@ -6,12 +6,20 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Role } from './role.entity';
 import { ROLE_PERMISSION_COLUMNS } from '../constants/role-columns';
 import { OrganizationLicensedPermission } from '../../permission/entities/organization-licensed-permission.entity';
 
 @Entity()
+@Index('idx_role_permission_role', ['roleId'])
+@Index('idx_role_permission_org_license', ['organizationLicensedPermissionId'])
+@Index(
+  'idx_role_permission_composite',
+  ['roleId', 'organizationLicensedPermissionId'],
+  { unique: true },
+)
 export class RolePermission {
   @PrimaryGeneratedColumn('uuid')
   id: string;
