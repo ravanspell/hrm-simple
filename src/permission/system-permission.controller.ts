@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CreateSystemPermissionDto } from './dto/create-system-permission.dto';
-import { PermissionQueryDto } from './dto/dto';
 import { UpdateSystemPermissionDto } from './dto/update-system-permission.dto';
 import { PermissionService } from './permission.service';
 import { CurrentUser } from '@/decorators/current-user.decorator';
@@ -20,6 +19,9 @@ import { User } from '@/user/entities/user.entity';
 import { SystemPermission } from './entities/system-permission.entity';
 import { API_VERSION } from '@/constants/common';
 import { Authentication } from '@/decorators/auth.decorator';
+import { SystemPermissionResponseDto } from './dto/system-permission-response.dto';
+import { PaginationDto } from '@/common/dto/pagination.dto';
+import { PaginatedResponseDto } from '@/common/dto/paginated-response.dto';
 
 @ApiTags('System Permissions')
 @Controller('system-permissions')
@@ -55,6 +57,7 @@ export class SystemPermissionController {
       user.id,
     );
   }
+
   /**
    * Get system permissions with filters
    *
@@ -68,18 +71,15 @@ export class SystemPermissionController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Returns filtered permissions with pagination metadata',
-    type: [SystemPermission],
+    type: PaginatedResponseDto<SystemPermissionResponseDto>,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid query parameters provided',
   })
-  async getPermissions(@Query() query: PermissionQueryDto): Promise<{
-    permissions: SystemPermission[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
+  async getPermissions(
+    @Query() query: PaginationDto,
+  ): Promise<PaginatedResponseDto<SystemPermissionResponseDto>> {
     return this.permissionService.getSystemPermissions(query);
   }
 

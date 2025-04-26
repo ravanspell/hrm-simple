@@ -12,7 +12,6 @@ import {
   BulkAssignPermissionsDto,
   BulkAssignUserDirectPermissionsDto,
   CreatePermissionCategoryDto,
-  PermissionQueryDto,
   UpdateOrganizationLicensedPermissionDto,
   UpdateUserDirectPermissionDto,
   CreateSystemPermissionDto,
@@ -23,11 +22,11 @@ import { CreateOrganizationLicensedPermissionDto } from './dto/create-organizati
 import { IsolationLevel, Transactional } from 'typeorm-transactional';
 import { AssignUserDirectPermissionDto } from './dto/assign-user-direct-permission.dto';
 import { EffectiveUserPermissionsRepository } from './repositories/effective-user-permission.repository';
-import {
-  PermissionType,
-  SystemPermission,
-} from './entities/system-permission.entity';
+import { SystemPermission } from './entities/system-permission.entity';
 import { PermissionCategory } from './entities/permission-category.entity';
+import { PaginationDto } from '@/common/dto/pagination.dto';
+import { SystemPermissionResponseDto } from './dto/system-permission-response.dto';
+import { PaginatedResponseDto } from '@/common/dto/paginated-response.dto';
 
 @Injectable()
 export class PermissionService {
@@ -39,15 +38,6 @@ export class PermissionService {
     private readonly effectiveUserPermissionRepo: EffectiveUserPermissionsRepository,
   ) {}
 
-  /**
-   * Generate a standardized permission key by combining type and category key
-   * @param type PermissionType (CREATE, READ, UPDATE, DELETE)
-   * @param categoryKey Category identifier
-   * @returns Formatted permission key (e.g., CREATE:USER_MANAGEMENT)
-   */
-  generatePermissionKey(type: PermissionType, categoryKey: string): string {
-    return categoryKey ? `${type}:${categoryKey}` : type;
-  }
   /**
    * Create a new permission category
    * @param permissionCategoryInputData CreatePermissionCategoryDto
@@ -170,24 +160,52 @@ export class PermissionService {
   }
 
   /**
-   * Get system permissions with filtering
+   * Get system permissions with filtering and grouping by category
    *
-   * @param query PermissionQueryDto
-   * @returns Object containing permissions and pagination metadata
+   * @param query PaginationDto
+   * @returns Object containing grouped permissions and pagination metadata
    */
-  async getSystemPermissions(query: PermissionQueryDto) {
+  async getSystemPermissions(
+    query: PaginationDto,
+  ): Promise<PaginatedResponseDto<SystemPermissionResponseDto>> {
     // Calculate pagination parameters
     const skip = (query.page - 1) * query.limit;
     const take = query.limit;
 
     const [permissions, total] =
-      await this.systemPermissionRepo.findByQueryParams(query, skip, take);
+      await this.systemPermissionRepo.findByQueryParams(
+        { page: query.page, limit: query.limit },
+        skip,
+        take,
+      );
+
+    // Group permissions by category
+    const groupedPermissions = permissions.reduce(
+      (acc, permission) => {
+        const category = permission.category.name;
+        if (!acc[category]) {
+          acc[category] = {
+            category,
+            permissions: [],
+          };
+        }
+
+        acc[category].permissions.push({
+          displayName: permission.displayName,
+          permission: `${permission.type}:${permission.category.key}`,
+        });
+
+        return acc;
+      },
+      {} as Record<string, SystemPermissionResponseDto>,
+    );
 
     return {
-      permissions,
+      items: Object.values(groupedPermissions),
       total,
       page: query.page,
       limit: query.limit,
+      totalPages: Math.ceil(total / query.limit),
     };
   }
 
@@ -208,6 +226,7 @@ export class PermissionService {
     }
     return category;
   }
+
   /**
    * Update a system permission
    *
