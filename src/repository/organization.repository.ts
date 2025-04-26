@@ -1,8 +1,3 @@
-/**
- * OrganizationRepository is a custom repository for the Organization entity.
- * It extends the TypeORM Repository class and provides additional
- * methods for creating and querying the Organization entity.
- */
 import { Injectable } from '@nestjs/common';
 import { Organization } from '@/organization/entities/organization.entity';
 import { Repository, DataSource } from 'typeorm';
@@ -22,20 +17,29 @@ export class OrganizationRepository extends Repository<Organization> {
     return this.save(newOrganization);
   }
 
-  async getOrganizations(
-    page: number = 1,
-    limit: number = 10,
-  ): Promise<{
-    organizations: Organization[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
-    const [organizations, total] = await this.findAndCount({
-      skip: (page - 1) * limit,
-      take: limit,
+  /**
+   * Find organizations with pagination parameters
+   *
+   * @param skip - Number of records to skip
+   * @param take - Number of records to take
+   * @returns Promise containing organizations and total count
+   */
+  async findOrganizationsWithPagination(
+    skip: number,
+    take: number,
+  ): Promise<[Organization[], number]> {
+    return this.findAndCount({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        logo: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      skip,
+      take,
       order: { name: 'ASC' },
     });
-    return { organizations, total, page, limit };
   }
 }

@@ -1,38 +1,76 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Organization } from './entities/organization.entity';
 import { Transactional } from 'typeorm-transactional';
 import { OrganizationRepository } from 'src/repository/organization.repository';
 import { StorageInfoResponseDto } from './dto/storage-info-response.dto';
+import { PaginatedResponseDto } from '@/common/dto/paginated-response.dto';
+import { PaginationDto } from '@/common/dto/pagination.dto';
 
 @Injectable()
 export class OrganizationService {
   constructor(private organizationRepository: OrganizationRepository) {}
 
+  /**
+   * Create a new organization.
+   *
+   * @param data - The data to create a new organization.
+   * @returns The created organization.
+   */
   @Transactional()
-  async create(data: Partial<Organization>) {
-    const org = await this.organizationRepository.createOrganization(data);
-    // throw new Error('This is a test error');
-    return org;
+  async create(data: Partial<Organization>): Promise<Organization> {
+    return this.organizationRepository.createOrganization(data);
   }
 
-  async getAllOrganizations(page: number = 1, limit: number = 10) {
-    return this.organizationRepository.getOrganizations(page, limit);
+  /**
+   * Get all organizations with pagination.
+   *
+   * @param pagination - Pagination parameters
+   * @returns Paginated list of organizations
+   */
+  async getAllOrganizations(
+    pagination: PaginationDto,
+  ): Promise<PaginatedResponseDto<Organization>> {
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+    const [organizations, total] =
+      await this.organizationRepository.findOrganizationsWithPagination(
+        skip,
+        limit,
+      );
+
+    return {
+      items: organizations,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   /**
    * Get an organization by its ID.
+   *
    * @param id - The ID of the organization to retrieve.
    * @returns The organization with the specified ID.
+   * @throws NotFoundException if organization not found
    */
   async getOrganizationById(id: string): Promise<Organization> {
-    return this.organizationRepository.findOne({ where: { id } });
+    const organization = await this.organizationRepository.findOne({
+      where: { id },
+    });
+    if (!organization) {
+      throw new NotFoundException(`Organization with ID ${id} not found`);
+    }
+    return organization;
   }
 
   /**
    * Update the used storage for an organization.
+   *
    * @param id - The ID of the organization.
    * @param bytesToAdd - The number of bytes to add (positive) or subtract (negative) from the used storage.
    * @returns The updated organization.
+   * @throws NotFoundException if organization not found
    */
   @Transactional()
   async updateUsedStorage(
@@ -40,9 +78,6 @@ export class OrganizationService {
     bytesToAdd: number,
   ): Promise<Organization> {
     const organization = await this.getOrganizationById(id);
-    if (!organization) {
-      throw new Error(`Organization with ID ${id} not found`);
-    }
 
     // Ensure we're working with numbers, not strings
     const currentUsedStorage = Number(organization.usedStorage) || 0;
@@ -60,12 +95,27 @@ export class OrganizationService {
     return this.getOrganizationById(id);
   }
 
-  update(id: number, data: Partial<Organization>) {
-    return this.organizationRepository.update(id, data);
+  /**
+   * Update an organization
+   * @param id - The ID of the organization to update
+   * @param data - The data to update
+   * @returns The updated organization
+   * @throws NotFoundException if organization not found
+   */
+  async update(id: string, data: Partial<Organization>): Promise<Organization> {
+    await this.getOrganizationById(id);
+    await this.organizationRepository.update(id, data);
+    return this.getOrganizationById(id);
   }
 
-  delete(id: number) {
-    return this.organizationRepository.delete(id);
+  /**
+   * Delete an organization
+   * @param id - The ID of the organization to delete
+   * @throws NotFoundException if organization not found
+   */
+  async delete(id: string): Promise<void> {
+    await this.getOrganizationById(id);
+    await this.organizationRepository.delete(id);
   }
 
   /**

@@ -11,6 +11,7 @@ import {
   Req,
   HttpStatus,
   Version,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
@@ -23,9 +24,13 @@ import { StorageInfoResponseDto } from './dto/storage-info-response.dto';
 import { RequestWithTenant } from '@/coretypes';
 import { Authentication } from '@/decorators/auth.decorator';
 import { API_VERSION } from '@/constants/common';
+import { Organization } from './entities/organization.entity';
+import { PaginatedResponseDto } from '@/common/dto/paginated-response.dto';
+import { PaginationDto } from '@/common/dto/pagination.dto';
 
-@ApiTags('organizations')
+@ApiTags('Organizations')
 @Controller('organization')
+@Authentication()
 export class OrganizationController {
   constructor(
     private readonly organizationService: OrganizationService,
@@ -37,37 +42,41 @@ export class OrganizationController {
    * @param data - The data to create a new organization.
    * @returns The created organization.
    */
+  @Post()
+  @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Create a new organization' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'The organization has been successfully created.',
+    type: Organization,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad Request.',
   })
-  @Post()
-  async create(@Body() createOrganizationDto: CreateOrganizationDto) {
-    console.log('this is operated');
-
+  async create(
+    @Body() createOrganizationDto: CreateOrganizationDto,
+  ): Promise<Organization> {
     return await this.organizationService.create(createOrganizationDto);
   }
 
   /**
-   * Get all organizations.
-   * @returns A list of all organizations.
+   * Get all organizations with pagination.
+   * @param pagination - Pagination parameters
+   * @returns Paginated list of organizations
    */
-  @ApiOperation({ summary: 'Get all organizations' })
+  @Get()
+  @Version(API_VERSION.V1)
+  @ApiOperation({ summary: 'Get all organizations with pagination' })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Return all organizations.',
+    description: 'Return paginated list of organizations.',
+    type: PaginatedResponseDto<Organization>,
   })
-  @Get()
   async findAll(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-  ) {
-    return await this.organizationService.getAllOrganizations(page, limit);
+    @Query() pagination: PaginationDto,
+  ): Promise<PaginatedResponseDto<Organization>> {
+    return await this.organizationService.getAllOrganizations(pagination);
   }
 
   /**
@@ -75,18 +84,20 @@ export class OrganizationController {
    * @param id - The ID of the organization to retrieve.
    * @returns The organization with the specified ID.
    */
+  @Get(':id')
+  @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Get an organization by ID' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Return the organization with the specified ID.',
+    type: Organization,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Organization not found.',
   })
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return id;
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Organization> {
+    return this.organizationService.getOrganizationById(id);
   }
 
   /**
@@ -95,28 +106,30 @@ export class OrganizationController {
    * @param data - The data to update the organization.
    * @returns The updated organization.
    */
+  @Patch(':id')
+  @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Update an organization by ID' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The organization has been successfully updated.',
+    type: Organization,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Organization not found.',
   })
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
+  async update(
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateOrganizationDto: UpdateOrganizationDto,
-  ) {
-    return this.organizationService.update(+id, updateOrganizationDto);
+  ): Promise<Organization> {
+    return this.organizationService.update(id, updateOrganizationDto);
   }
 
   /**
    * Delete an organization by ID.
    * @param id - The ID of the organization to delete.
-   * @returns The deleted organization.
    */
+  @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Delete an organization by ID' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -127,8 +140,8 @@ export class OrganizationController {
     description: 'Organization not found.',
   })
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.organizationService.delete(+id);
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.organizationService.delete(id);
   }
 
   /**
@@ -196,11 +209,10 @@ export class OrganizationController {
 
   /**
    * Get storage information for an organization.
-   * @param id - The ID of the organization.
+   * @param req - The request object containing the organization ID
    * @returns Storage information including allocated, used, and percentage.
    */
   @Get('/storage')
-  @Authentication()
   @Version(API_VERSION.V1)
   @ApiOperation({ summary: 'Get storage information for an organization' })
   @ApiResponse({
