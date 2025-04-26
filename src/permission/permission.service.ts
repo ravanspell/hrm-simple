@@ -186,6 +186,7 @@ export class PermissionService {
         if (!acc[category]) {
           acc[category] = {
             category,
+            categoryId: permission.category.id,
             permissions: [],
           };
         }
@@ -193,6 +194,7 @@ export class PermissionService {
         acc[category].permissions.push({
           displayName: permission.displayName,
           permission: `${permission.type}:${permission.category.key}`,
+          permissionId: permission.id,
         });
 
         return acc;

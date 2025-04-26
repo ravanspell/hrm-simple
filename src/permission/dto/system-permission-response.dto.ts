@@ -12,6 +12,12 @@ export class PermissionDto {
     example: 'CREATE:JOB',
   })
   permission: string;
+
+  @ApiProperty({
+    description: 'ID of the permission',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  permissionId: string;
 }
 
 export class SystemPermissionResponseDto {
@@ -22,7 +28,13 @@ export class SystemPermissionResponseDto {
   category: string;
 
   @ApiProperty({
-    description: 'List of permissions in the category',
+    description: 'ID of the permission category',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  categoryId: string;
+
+  @ApiProperty({
+    description: 'List of permissions in this category',
     type: [PermissionDto],
   })
   permissions: PermissionDto[];
