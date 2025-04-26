@@ -13,7 +13,10 @@ import {
   PERMISSION_CATEGORIES_TABLE,
 } from '@/constants/dbTables';
 import { USER_ROLE_COLUMNS } from '@/role/constants/role-columns';
-import { SYSTEM_PERMISSION_COLUMNS } from '../constants/table-columns';
+import {
+  EFFECTIVE_USER_PERMISSION_COLUMNS,
+  SYSTEM_PERMISSION_COLUMNS,
+} from '../constants/table-columns';
 import { PERMISSION_CATEGORY_COLUMNS } from '../constants/table-columns';
 
 /**
@@ -90,22 +93,34 @@ import { PERMISSION_CATEGORY_COLUMNS } from '../constants/table-columns';
   unique: true,
 })
 export class EffectiveUserPermission {
-  @ViewColumn()
+  @ViewColumn({
+    name: EFFECTIVE_USER_PERMISSION_COLUMNS.ID,
+  })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ViewColumn()
+  @ViewColumn({
+    name: EFFECTIVE_USER_PERMISSION_COLUMNS.USER_ID,
+  })
   userId: string;
 
-  @ViewColumn()
+  @ViewColumn({
+    name: EFFECTIVE_USER_PERMISSION_COLUMNS.ORGANIZATION_ID,
+  })
   organizationId: string;
 
-  @ViewColumn()
+  @ViewColumn({
+    name: EFFECTIVE_USER_PERMISSION_COLUMNS.PERMISSION,
+  })
   permission: string;
 
-  @ViewColumn()
+  @ViewColumn({
+    name: EFFECTIVE_USER_PERMISSION_COLUMNS.ORIGIN,
+  })
   origin: 'ROLE' | 'DIRECT' | 'OVERRIDE';
 
-  @ViewColumn()
+  @ViewColumn({
+    name: EFFECTIVE_USER_PERMISSION_COLUMNS.LAST_UPDATED,
+  })
   lastUpdated: Date;
 }
