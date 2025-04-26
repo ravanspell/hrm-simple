@@ -50,6 +50,15 @@ export class RoleRepository extends Repository<Role> {
   }
 
   /**
+   * Finds a role by its ID.
+   * @param id - The ID of the role to find.
+   * @returns A promise that resolves to the found Role entity.
+   */
+  async findRoleById(id: string): Promise<Role> {
+    return this.findOne({ where: { id } });
+  }
+
+  /**
    * Upserts a role using the id as the conflict path.
    * If a role with the same id exists, it will be updated.
    * If no role exists, a new one will be created.

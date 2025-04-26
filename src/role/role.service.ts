@@ -1,12 +1,12 @@
 import { RoleRepository } from '@/role/repository/role.repository';
 import { UserRoleRepository } from '@/role/repository/user-role.repository';
 import { RolePermissionRepository } from '@/role/repository/role-permission.repository';
-import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  IsolationLevel,
-  Propagation,
-  Transactional,
-} from 'typeorm-transactional';
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { IsolationLevel, Transactional } from 'typeorm-transactional';
 import { Role } from './entities/role.entity';
 import { CreateRoleRequest } from './dto/create-role.dto';
 
@@ -20,12 +20,12 @@ export class RoleService {
 
   /**
    * Create a new role.
+   *
    * @param createRoleData - The data to create the role.
    * @param organizationId - The ID of the organization.
    * @returns The created role.
    */
   @Transactional({
-    propagation: Propagation.NESTED,
     isolationLevel: IsolationLevel.READ_COMMITTED,
   })
   async createRole(
@@ -47,7 +47,6 @@ export class RoleService {
       await this.rolePermissionRepository.assignPermissionsToRole(
         savedRole.id,
         createRoleData.scopeIds,
-        organizationId,
         createRoleData.createdBy,
       );
     }
@@ -57,6 +56,7 @@ export class RoleService {
 
   /**
    * Fetch roles by their IDs.
+   *
    * @param roleIds - An array of role IDs.
    * @returns An array of Role entities.
    */
@@ -72,22 +72,6 @@ export class RoleService {
     return roles;
   }
 
-  /**
-   * Assign multiple roles to a user.
-   * @param userId - The ID of the user.
-   * @param roleIds - An array of role IDs to assign.
-   * @returns The updated user entity with the assigned roles.
-   */
-  // async updateUserRoles(userId: string, roleIds: string[]): Promise<User> {
-  //     // Fetch the user along with their current roles
-  //     const user = await this.findUserWithRoles(userId);
-  //     // Fetch the roles by the provided role IDs
-  //     const newRoles = await this.roleService.findRolesByIds(roleIds);
-  //     // Assign the new roles to the user
-  //     user.roles = newRoles;
-  //     // Save the user with updated roles
-  //     return await this.userRepository.saveUser(user);
-  //   }
   /**
    * Assigns roles to a user and retrieves the list of associated scopes.
    *
@@ -109,21 +93,29 @@ export class RoleService {
       scopes.find((scope) => scope.id === id),
     );
   }
+
   /**
    * Assigns permissions to a role and updates all users with this role
+   *
+   * @param roleId - The ID of the role
+   * @param permissionIds - Array of permission IDs to assign
+   * @returns Promise<void>
    */
   @Transactional({
-    propagation: Propagation.NESTED,
-    isolationLevel: IsolationLevel.READ_COMMITTED,
+    isolationLevel: IsolationLevel.SERIALIZABLE,
   })
   async assignPermissionsToRole(roleId: string, permissionIds: string[]) {
-    console.log('assignPermissionsToRole-->', roleId, permissionIds);
-    // Step 1: Assign permissions to the role
-    // await this.rolePermissionsRepo.assignPermissions(roleId, permissionIds);
-    // // Step 2: Get all users assigned to this role
-    // const userIds = await this.userRolesRepo.findUsersByRole(roleId);
-    // if (userIds.length === 0) return;
-    // // Step 3: Update permissions for affected users
-    // await this.effectivePermissionsRepo.updatePermissionsForUsers(userIds, permissionIds);
+    // Step 1: Verify the role exists
+    const role = await this.roleRepository.findOne({ where: { id: roleId } });
+    if (!role) {
+      throw new BadRequestException(`Role with ID ${roleId} not found`);
+    }
+
+    // Step 2: Update permissions gracefully
+    await this.rolePermissionRepository.updatePermissionsForRole(
+      roleId,
+      permissionIds,
+      role.createdBy,
+    );
   }
 }

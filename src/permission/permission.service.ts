@@ -308,12 +308,12 @@ export class PermissionService {
   }
 
   /**
-   * Assign direct permission to user
+   * Assign user direct permission
    *
    * @param dto AssignUserDirectPermissionDto
    * @returns Created direct permission
    */
-  @Transactional()
+  @Transactional({ isolationLevel: IsolationLevel.SERIALIZABLE })
   async assignUserDirectPermission(dto: AssignUserDirectPermissionDto) {
     // Check if organization has this permission licensed
     const orgLicense = await this.orgLicenseRepo.findWithLock(
@@ -341,30 +341,6 @@ export class PermissionService {
     return this.userDirectPermissionRepo.save(permission);
   }
 
-  /**
-   * Updates permissions for a list of users based on role permission changes
-   */
-  @Transactional()
-  async updatePermissionsForUsers(userIds: string[], permissionIds: string[]) {
-    if (userIds.length === 0 || permissionIds.length === 0) return;
-
-    // Step 1: Remove only role-based permissions that are no longer assigned
-    await this.effectiveUserPermissionRepo.removeUnusedPermissionsForUsers(
-      userIds,
-      permissionIds,
-    );
-
-    // Step 2: Add new permissions assigned by updated roles
-    const newPermissions = userIds.flatMap((userId) =>
-      permissionIds.map((permissionKey) => ({
-        userId,
-        permissionKey,
-        origin: 'ROLE',
-      })),
-    );
-    console.log('newPermissions-->', newPermissions);
-    // await this.effectiveUserPermissionRepo.addPermissionsForUsers(newPermissions);
-  }
   /**
    * Bulk assign direct permissions to user
    *

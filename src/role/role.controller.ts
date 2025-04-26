@@ -22,6 +22,7 @@ import { Role } from './entities/role.entity';
 import { TenantId } from '@/decorators/tenant.decorator';
 import { Authentication } from '@/decorators/auth.decorator';
 import { TrackUser } from '@/decorators/user-tracking.decorator';
+import { AssignRolePermissionsDto } from './dto/assign-role-permissions.dto';
 
 @Controller('role')
 @ApiTags('Role')
@@ -90,5 +91,36 @@ export class RoleController {
     console.log('updateRole-->', id, updateRoleData);
     return id;
     // this.roleService.updateRole(id, updateRoleData);
+  }
+
+  /**
+   * Assign permissions to a role
+   *
+   * @param id Role ID
+   * @param assignPermissionsDto Data containing permission IDs to assign
+   */
+  @Put('/:id/permissions')
+  @Version(API_VERSION.V1)
+  // @TrackUser()
+  @ApiOperation({ summary: 'Assign permissions to a role' })
+  @ApiParam({ name: 'id', type: String, description: 'Role ID' })
+  @ApiBody({ type: AssignRolePermissionsDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Permissions successfully assigned to role',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Role not found',
+  })
+  async assignPermissionsToRole(
+    @Param('id') id: string,
+    @Body() assignPermissionsRequest: AssignRolePermissionsDto,
+  ) {
+    await this.roleService.assignPermissionsToRole(
+      id,
+      assignPermissionsRequest.permissionIds,
+    );
+    return { message: 'Permissions successfully assigned to role' };
   }
 }

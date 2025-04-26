@@ -38,4 +38,17 @@ export class UserRoleRepository extends Repository<UserRole> {
 
     await this.save(userRoles);
   }
+
+  /**
+   * Finds all users assigned to a specific role
+   * @param roleId - The ID of the role
+   * @returns Array of user IDs
+   */
+  async findUsersByRole(roleId: string): Promise<string[]> {
+    const userRoles = await this.find({
+      where: { role: { id: roleId } },
+      relations: ['user'],
+    });
+    return userRoles.map((userRole) => userRole.user.id);
+  }
 }
