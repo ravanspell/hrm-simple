@@ -1,6 +1,6 @@
 import { UserRole } from '@/role/entities/user-role.entity';
 import { Injectable } from '@nestjs/common';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 
 @Injectable()
 export class UserRoleRepository extends Repository<UserRole> {
@@ -9,38 +9,55 @@ export class UserRoleRepository extends Repository<UserRole> {
   }
 
   /**
-   * Deletes all roles assigned to a user.
+   * Get all roles for a user
    *
-   * @param userId - The ID of the user.
-   * @returns A Promise that resolves when the roles are deleted.
+   * @param userId - The ID of the user
+   * @returns Array of role IDs
    */
-  async deleteRolesForUser(userId: string): Promise<void> {
-    await this.delete({ user: { id: userId } });
+  async getUserRoles(userId: string): Promise<string[]> {
+    const userRoles = await this.find({
+      where: { userId },
+      select: ['roleId'],
+    });
+    return userRoles.map((role) => role.roleId);
   }
 
   /**
-   * Assigns multiple roles to a user. First, deletes all existing roles for the user,
-   * then assigns the provided roles.
+   * Remove specific roles from a user
    *
-   * @param userId - The ID of the user.
-   * @param roleIds - An array of role IDs to assign.
-   * @returns A Promise that resolves when the roles are assigned.
+   * @param userId - The ID of the user
+   * @param roleIds - Array of role IDs to remove
    */
-  async assignRolesToUser(userId: string, roleIds: string[]): Promise<void> {
-    // Reuse the method to delete existing roles
-    await this.deleteRolesForUser(userId);
+  async removeRolesFromUser(userId: string, roleIds: string[]): Promise<void> {
+    await this.delete({
+      userId,
+      roleId: In(roleIds),
+    });
+  }
 
-    // Assign new roles
+  /**
+   * Add roles to a user
+   *
+   * @param userId - The ID of the user
+   * @param roleIds - Array of role IDs to add
+   * @param organizationId - The ID of the organization
+   */
+  async addRolesToUser(
+    userId: string,
+    roleIds: string[],
+    organizationId: string,
+  ): Promise<void> {
     const userRoles = roleIds.map((roleId) => ({
-      user: { id: userId },
-      role: { id: roleId },
+      userId,
+      roleId,
+      organizationId,
     }));
-
     await this.save(userRoles);
   }
 
   /**
    * Finds all users assigned to a specific role
+   *
    * @param roleId - The ID of the role
    * @returns Array of user IDs
    */

@@ -1,14 +1,12 @@
 import { RoleRepository } from '@/role/repository/role.repository';
 import { UserRoleRepository } from '@/role/repository/user-role.repository';
 import { RolePermissionRepository } from '@/role/repository/role-permission.repository';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { IsolationLevel, Transactional } from 'typeorm-transactional';
 import { Role } from './entities/role.entity';
 import { CreateRoleRequest } from './dto/create-role.dto';
+import { SessionService } from '@/auth/session.service';
+import { In } from 'typeorm';
 
 @Injectable()
 export class RoleService {
@@ -16,7 +14,18 @@ export class RoleService {
     private readonly roleRepository: RoleRepository,
     private readonly userRoleRepository: UserRoleRepository,
     private readonly rolePermissionRepository: RolePermissionRepository,
+    private readonly sessionService: SessionService,
   ) {}
+
+  /**
+   * Get a role by its ID.
+   *
+   * @param id - The ID of the role.
+   * @returns The role.
+   */
+  async getRoleById(id: string): Promise<Role> {
+    return this.roleRepository.findOne({ where: { id } });
+  }
 
   /**
    * Create a new role.
@@ -61,11 +70,16 @@ export class RoleService {
    * @returns An array of Role entities.
    */
   async findRolesByIds(roleIds: string[]): Promise<Role[]> {
-    const roles = await this.roleRepository.findRolesByIds(roleIds);
+    const roles = await this.roleRepository.find({
+      where: { id: In(roleIds) },
+      relations: ['rolePermissions'],
+    });
 
     if (roles.length !== roleIds.length) {
-      throw new NotFoundException(
-        `Some roles could not be found. Ensure all role IDs are valid.`,
+      const foundRoleIds = roles.map((role) => role.id);
+      const missingRoleIds = roleIds.filter((id) => !foundRoleIds.includes(id));
+      throw new BadRequestException(
+        `The following roles do not exist: ${missingRoleIds.join(', ')}`,
       );
     }
 
@@ -78,20 +92,50 @@ export class RoleService {
    * @param userId - The ID of the user.
    * @param roleIds - An array of role IDs to assign to the user.
    * @returns A Promise resolving to a list of unique scopes associated with the assigned roles.
-   * @throws NotFoundException if any of the roles are invalid.
+   * @throws BadRequestException if the user is not found.
    */
-  async assignRolesToUser(userId: string, roleIds: string[]): Promise<any[]> {
-    // Validate roles
-    const roles = await this.findRolesByIds(roleIds);
+  @Transactional({
+    isolationLevel: IsolationLevel.READ_COMMITTED,
+  })
+  async assignRolesToUser(
+    userId: string,
+    roleIds: string[],
+    organizationId: string,
+  ): Promise<{ message: string }> {
+    // Validate roles exist
+    await this.findRolesByIds(roleIds);
 
-    // Assign roles to the user
-    await this.userRoleRepository.assignRolesToUser(userId, roleIds);
+    // Get existing roles for the user
+    const existingRoles = await this.userRoleRepository.getUserRoles(userId);
 
-    // Collect and deduplicate scopes from assigned roles
-    const scopes = roles.flatMap((role) => role.rolePermissions);
-    return Array.from(new Set(scopes.map((scope) => scope.id))).map((id) =>
-      scopes.find((scope) => scope.id === id),
-    );
+    // Find roles to remove (in existing but not in new)
+    const rolesToRemove = existingRoles.filter((id) => !roleIds.includes(id));
+
+    // Find roles to add (in new but not in existing)
+    const rolesToAdd = roleIds.filter((id) => !existingRoles.includes(id));
+
+    // Remove roles that are no longer needed
+    if (rolesToRemove.length > 0) {
+      await this.userRoleRepository.removeRolesFromUser(userId, rolesToRemove);
+    }
+
+    // Add new roles
+    if (rolesToAdd.length > 0) {
+      await this.userRoleRepository.addRolesToUser(
+        userId,
+        rolesToAdd,
+        organizationId,
+      );
+    }
+
+    // Logout the user if their roles were modified
+    if (rolesToRemove.length > 0 || rolesToAdd.length > 0) {
+      await this.sessionService.deleteUserSessions(userId);
+    }
+
+    return {
+      message: 'Roles successfully assigned to user',
+    };
   }
 
   /**

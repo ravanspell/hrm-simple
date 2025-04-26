@@ -23,6 +23,7 @@ import { TenantId } from '@/decorators/tenant.decorator';
 import { Authentication } from '@/decorators/auth.decorator';
 import { TrackUser } from '@/decorators/user-tracking.decorator';
 import { AssignRolePermissionsDto } from './dto/assign-role-permissions.dto';
+import { AssignUserRolesDto } from './dto/assign-user-roles.dto';
 
 @Controller('role')
 @ApiTags('Role')
@@ -122,5 +123,44 @@ export class RoleController {
       assignPermissionsRequest.permissionIds,
     );
     return { message: 'Permissions successfully assigned to role' };
+  }
+
+  /**
+   * Assign roles to a user
+   *
+   * @param userId User ID
+   * @param assignRolesDto Data containing role IDs to assign
+   * @returns Object containing success message and associated scopes
+   */
+  @Put('/:userId/roles')
+  @Version(API_VERSION.V1)
+  @ApiOperation({ summary: 'Assign roles to a user' })
+  @ApiParam({ name: 'userId', type: String, description: 'User ID' })
+  @ApiBody({ type: AssignUserRolesDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Roles successfully assigned to user',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        scopes: { type: 'array', items: { type: 'object' } },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User or Role(s) not found',
+  })
+  async assignRolesToUser(
+    @Param('userId') userId: string,
+    @Body() assignRolesRequest: AssignUserRolesDto,
+    @TenantId() organizationId: string,
+  ) {
+    return await this.roleService.assignRolesToUser(
+      userId,
+      assignRolesRequest.roleIds,
+      organizationId,
+    );
   }
 }
