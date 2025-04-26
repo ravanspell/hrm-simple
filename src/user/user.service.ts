@@ -6,10 +6,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Organization } from '@/organization/entities/organization.entity';
 import { UserRepository } from 'src/repository/user.repository';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { PermissionService } from '@/permission/permission.service';
 
-export type UserWithScopes = Omit<User, 'roles' | 'scopes'> & {
+export type UserWithPermissions = {
   roles?: any[]; // Optional if roles are included for debugging purposes
-  scopes: string[]; // The flat array of unique scope names
+  permissions: string[]; // The flat array of unique scope names
 };
 
 @Injectable()
@@ -18,6 +19,7 @@ export class UserService {
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
     private readonly userRepository: UserRepository,
+    private readonly permissionService: PermissionService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -60,7 +62,7 @@ export class UserService {
   }
 
   async findOne(email: string): Promise<User> {
-    const user = await this.userRepository.findUser(email);
+    const user = await this.userRepository.findUserByEmail(email);
 
     if (!user) {
       throw new BadRequestException(`User with email ${email} not found`);
@@ -107,28 +109,17 @@ export class UserService {
    * console.log(result);
    * // {
    * //   id: 'user123',
-   * //   scopes: ['view_dashboard', 'manage_users', 'custom_permission']
+   * //   permissions: ['view_dashboard', 'manage_users', 'custom_permission']
    * // }
    * ```
    */
-  async findUserWithScopes(userId?: string): Promise<UserWithScopes> {
-    const user = await this.userRepository.findUserWithScopes(userId);
-
-    if (!user) {
-      throw new BadRequestException('User with ID not found.');
-    }
-
-    // // Combine role-based scopes and custom scopes
-    // const roleBasedScopes = user.roles.flatMap((role) => role.rolePermissions);
-
-    // // Merge all scopes, deduplicate by scope name
-    // const combinedScopes = Array.from(
-    //   new Set([...roleBasedScopes].map((scope) => scope.systemPermissionId)),
-    // );
+  async findUserPermissions(userId?: string): Promise<UserWithPermissions> {
+    // Get effective permissions from the permission service
+    const permissions =
+      await this.permissionService.getUserEffectivePermissions(userId);
 
     return {
-      ...user,
-      scopes: [],
+      permissions: permissions.map((p) => p.permissionKey),
     };
   }
 

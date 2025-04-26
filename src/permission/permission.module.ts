@@ -23,5 +23,6 @@ import { SystemPermissionRepository } from './repositories/system-permission.rep
     UserDirectPermissionRepository,
     SystemPermissionRepository,
   ],
+  exports: [PermissionService],
 })
 export class PermissionModule {}

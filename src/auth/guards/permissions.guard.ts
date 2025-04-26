@@ -7,7 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { PERMISSIONS_KEY } from 'src/decorators/permissions.decorator';
-import { UserWithScopes } from '@/user/user.service';
+import { UserWithPermissions } from '@/user/user.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -17,9 +17,9 @@ export class PermissionsGuard implements CanActivate {
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     const currentUser = context.switchToHttp().getRequest()
-      .user as UserWithScopes;
+      .user as UserWithPermissions;
     // get current user scopes
-    const userPermissions = currentUser?.scopes || [];
+    const userPermissions = currentUser?.permissions || [];
     const requiredPermissions =
       this.reflector.get<string[]>(PERMISSIONS_KEY, context.getHandler()) || [];
     // ignore permission check if no permissions defined

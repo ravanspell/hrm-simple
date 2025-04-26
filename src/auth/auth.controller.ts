@@ -57,6 +57,19 @@ export class AuthController {
     description: 'User logged in successfully',
   })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid credentials',
+  })
+
+  /**
+   * Handles user login and generates an authenticated session.
+   *
+   * This endpoint authenticates the user based on provided credentials and, if
+   * successful, stores a session. Additionally, it can update the push notification
+   * token for the user.
+   *
+   */
   async login(@Body() body: LoginDto, @Req() req: RequestWithTenant) {
     const user = req.user;
     const notificationToken = body?.notificationToken;
@@ -106,15 +119,18 @@ export class AuthController {
   })
   async getUserInfo(@Req() req: RequestWithTenant) {
     const userId = req.user?.id;
-    const userWithScopes = await this.userService.findUserWithScopes(userId);
+    const [user, userWithPermissions] = await Promise.all([
+      this.userService.findUserByUserId(userId),
+      this.userService.findUserPermissions(userId),
+    ]);
 
     return {
       user: {
-        email: userWithScopes.email,
-        firstName: userWithScopes.firstName,
-        lastName: userWithScopes.lastName,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
       },
-      scopes: userWithScopes.scopes,
+      permissions: userWithPermissions.permissions,
     };
   }
 
