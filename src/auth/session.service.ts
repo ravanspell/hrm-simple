@@ -39,4 +39,20 @@ export class SessionService {
       })
       .getOne();
   }
+
+  /**
+   * Delete all sessions for a user
+   *
+   * @param userId - The ID of the user whose sessions should be deleted
+   */
+  async deleteUserSessions(userId: string): Promise<void> {
+    await this.sessionRepository
+      .createQueryBuilder('session')
+      .delete()
+      .where(
+        "session.json::jsonb->'passport'->'user'->>'id' = :userId OR session.json::jsonb->'passport' IS NULL",
+        { userId },
+      )
+      .execute();
+  }
 }

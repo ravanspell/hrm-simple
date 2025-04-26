@@ -9,6 +9,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Session } from './entities/session.entity';
 import { PushNotificationTokenRepository } from '@/repository/push-notification-token.repository';
 import { UtilitiesModule } from 'src/utilities/utilities.module';
+import { SessionService } from './session.service';
+
 @Module({
   imports: [
     UserModule,
@@ -16,12 +18,13 @@ import { UtilitiesModule } from 'src/utilities/utilities.module';
     TypeOrmModule.forFeature([Session]),
     UtilitiesModule,
   ],
-  exports: [],
+  exports: [SessionService],
   providers: [
     AuthService,
     LocalStrategy,
     SessionSerializer,
     PushNotificationTokenRepository,
+    SessionService,
   ],
   controllers: [AuthController],
 })

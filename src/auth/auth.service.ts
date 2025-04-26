@@ -13,6 +13,13 @@ export class AuthService {
     private readonly notificationService: NotificationService,
   ) {}
 
+  /**
+   * Verifies a user's credentials and returns their user data with scopes and roles.
+   *
+   * @param email - The email address of the user.
+   * @param password - The password of the user.
+   * @returns An object containing the user data, scopes, and roles.
+   */
   async verifyUser(email: string, password: string) {
     const user = await this.userService.findOne(email);
     // get user scope data for permission checking
