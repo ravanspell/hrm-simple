@@ -12,6 +12,7 @@ import {
 import { SystemPermission } from './system-permission.entity';
 import { Organization } from '@/organization/entities/organization.entity';
 import { RolePermission } from '@/role/entities/role-permission.entity';
+import { ORGANIZATION_LICENSED_PERMISSION_COLUMNS } from '../constants/table-columns';
 
 /**
  * Entity representing an organization's licensed permissions
@@ -24,35 +25,62 @@ import { RolePermission } from '@/role/entities/role-permission.entity';
   'isActive',
 ])
 export class OrganizationLicensedPermission {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid', {
+    name: ORGANIZATION_LICENSED_PERMISSION_COLUMNS.ID,
+  })
   id: string;
 
-  @Column({ type: 'uuid' })
+  @Column({
+    type: 'uuid',
+    name: ORGANIZATION_LICENSED_PERMISSION_COLUMNS.ORGANIZATION_ID,
+  })
   organizationId: string;
 
-  @Column({ type: 'uuid' })
+  @Column({
+    type: 'uuid',
+    name: ORGANIZATION_LICENSED_PERMISSION_COLUMNS.SYSTEM_PERMISSION_ID,
+  })
   systemPermissionId: string;
 
-  @Column({ default: true })
+  @Column({
+    default: true,
+    name: ORGANIZATION_LICENSED_PERMISSION_COLUMNS.IS_ACTIVE,
+  })
   isActive: boolean;
 
-  @Column()
+  @Column({
+    name: ORGANIZATION_LICENSED_PERMISSION_COLUMNS.VALID_FROM,
+  })
   validFrom: Date;
 
-  @Column({ nullable: true })
+  @Column({
+    nullable: true,
+    name: ORGANIZATION_LICENSED_PERMISSION_COLUMNS.VALID_UNTIL,
+  })
   validUntil: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({
+    name: ORGANIZATION_LICENSED_PERMISSION_COLUMNS.CREATED_AT,
+  })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({
+    name: ORGANIZATION_LICENSED_PERMISSION_COLUMNS.UPDATED_AT,
+  })
   updatedAt: Date;
 
-  @Column({ type: 'uuid' })
-  createdById: string;
+  @Column({
+    type: 'uuid',
+    name: ORGANIZATION_LICENSED_PERMISSION_COLUMNS.CREATED_BY,
+  })
+  createdBy: string;
 
-  @Column({ type: 'uuid', nullable: true })
-  updatedById: string;
+  @Column({
+    type: 'uuid',
+    nullable: true,
+    name: ORGANIZATION_LICENSED_PERMISSION_COLUMNS.UPDATED_BY,
+  })
+  updatedBy: string;
 
   @ManyToOne(() => Organization, (org) => org.licensedPermissions)
   @JoinColumn()

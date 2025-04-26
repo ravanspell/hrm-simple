@@ -6,7 +6,6 @@ import {
   UpdateDateColumn,
   ManyToOne,
   OneToMany,
-  ColumnType,
 } from 'typeorm';
 import { PermissionCategory } from './permission-category.entity';
 import { OrganizationLicensedPermission } from './organization-licensed-permission.entity';
@@ -31,7 +30,7 @@ export class SystemPermission {
   id: string;
 
   @Column({
-    type: 'uuid' as ColumnType,
+    type: 'uuid',
     name: SYSTEM_PERMISSION_COLUMNS.CATEGORY_ID,
   })
   categoryId: string;
