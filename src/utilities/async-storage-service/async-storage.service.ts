@@ -8,6 +8,21 @@ import { AsyncLocalStorage } from 'async_hooks';
 @Injectable()
 export class AsyncStorageService {
   private static storage = new AsyncLocalStorage<Record<string, any>>();
+  private static instance: AsyncStorageService; // <<< Add this line
+
+  constructor() {
+    AsyncStorageService.instance = this; // <<< Set instance in constructor
+  }
+
+  /**
+   * Static way to access the AsyncStorageService instance
+   */
+  static getInstance(): AsyncStorageService {
+    if (!AsyncStorageService.instance) {
+      throw new Error('AsyncStorageService is not initialized yet.');
+    }
+    return AsyncStorageService.instance;
+  }
 
   /**
    * Get a value from the current context
