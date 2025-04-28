@@ -1,20 +1,11 @@
 import { EMAIL_SETTINGS_TABLE } from 'src/constants/dbTables';
 import { Organization } from '@/organization/entities/organization.entity';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { BaseEntity } from '@/common/entities/base.entity';
 
 @Entity(EMAIL_SETTINGS_TABLE)
 @Index('idx_organization_id', ['organizationId']) // Optional, for indexing organizationId
-export class EmailSettings {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class EmailSettings extends BaseEntity {
   @Column()
   emailHost: string;
 

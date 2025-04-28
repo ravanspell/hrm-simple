@@ -22,6 +22,7 @@ import { TerminusModule } from '@nestjs/terminus';
 import { CandidateModule } from './candidate/candidate.module';
 import { JobModule } from './job/job.module';
 import { TenantMiddleware } from './middlewares/tenant.middleware';
+import { UserContextMiddleware } from './middlewares/user-context.middleware';
 import { UserTrackingInterceptor } from './interceptors/user-tracking.interceptor';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
@@ -87,6 +88,8 @@ export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(TenantMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL })
+      .apply(UserContextMiddleware)
       .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }
