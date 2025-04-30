@@ -20,6 +20,7 @@ export const BASE_ENTITY_COLUMNS = {
   UPDATED_AT: 'updatedAt',
   CREATED_BY: 'createdBy',
   UPDATED_BY: 'updatedBy',
+  ORGANIZATION_ID: 'organizationId',
 } as const;
 
 // context keys

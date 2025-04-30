@@ -8,7 +8,7 @@ import { Injectable } from '@nestjs/common';
 import { AsyncStorageService } from '@/utilities/async-storage-service/async-storage.service';
 import { USER_CONTEXT_KEY } from '@/constants/common';
 import { User } from '@/user/entities/user.entity';
-import { BaseEntity } from '@/common/entities/base.entity';
+import { BaseEntityWithTenant } from '@/common/entities/base-with-tenant.entity';
 
 @Injectable()
 @EventSubscriber()
@@ -17,14 +17,14 @@ export class AuditMetadataSubscriber implements EntitySubscriberInterface {
 
   // set the createdBy field automatically
   setCreatedBy(entity: any, currentUserId: string) {
-    if (entity instanceof BaseEntity) {
+    if (entity instanceof BaseEntityWithTenant) {
       entity.createdBy = currentUserId;
     }
   }
 
   // set the updatedBy field automatically
   setUpdatedBy(entity: any, currentUserId: string) {
-    if (entity instanceof BaseEntity) {
+    if (entity instanceof BaseEntityWithTenant) {
       entity.updatedBy = currentUserId;
     }
   }

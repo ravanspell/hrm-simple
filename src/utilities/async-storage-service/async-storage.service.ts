@@ -8,10 +8,10 @@ import { AsyncLocalStorage } from 'async_hooks';
 @Injectable()
 export class AsyncStorageService {
   private static storage = new AsyncLocalStorage<Record<string, any>>();
-  private static instance: AsyncStorageService; // <<< Add this line
+  private static instance: AsyncStorageService;
 
   constructor() {
-    AsyncStorageService.instance = this; // <<< Set instance in constructor
+    AsyncStorageService.instance = this;
   }
 
   /**

@@ -43,15 +43,8 @@ export class EmailSettingsController {
     description: 'The email settings have been successfully created.',
   })
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden.' })
-  create(
-    @Body() createDto: CreateEmailSettingsDto,
-    @Req() req: RequestWithTenant,
-  ) {
-    const createEmailSettingsData = {
-      ...createDto,
-      organizationId: req.user.organizationId,
-    };
-    return this.emailSettingsService.create(createEmailSettingsData);
+  create(@Body() createEmailSettingsRequest: CreateEmailSettingsDto) {
+    return this.emailSettingsService.create(createEmailSettingsRequest);
   }
 
   /**

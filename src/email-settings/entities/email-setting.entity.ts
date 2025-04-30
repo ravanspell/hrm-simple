@@ -1,11 +1,11 @@
 import { EMAIL_SETTINGS_TABLE } from 'src/constants/dbTables';
 import { Organization } from '@/organization/entities/organization.entity';
-import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { BaseEntity } from '@/common/entities/base.entity';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { BaseEntityWithTenant } from '@/common/entities/base-with-tenant.entity';
+import { BASE_ENTITY_COLUMNS } from '@/constants/common';
 
 @Entity(EMAIL_SETTINGS_TABLE)
-@Index('idx_organization_id', ['organizationId']) // Optional, for indexing organizationId
-export class EmailSettings extends BaseEntity {
+export class EmailSettings extends BaseEntityWithTenant {
   @Column()
   emailHost: string;
 
@@ -36,10 +36,7 @@ export class EmailSettings extends BaseEntity {
   @Column({ default: 30000 })
   emailSendTimeout: number;
 
-  @Column()
-  organizationId: string;
-
   @ManyToOne(() => Organization, (organization) => organization.emailSettings)
-  @JoinColumn({ name: 'organizationId' })
+  @JoinColumn({ name: BASE_ENTITY_COLUMNS.ORGANIZATION_ID })
   organization: Organization;
 }

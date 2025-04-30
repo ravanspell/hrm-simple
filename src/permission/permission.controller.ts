@@ -6,6 +6,7 @@ import {
   Param,
   Put,
   Version,
+  Query,
 } from '@nestjs/common';
 import { PermissionService } from './permission.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -14,6 +15,10 @@ import { API_VERSION } from '@/constants/common';
 import { UpdateSystemPermissionDto } from './dto/update-system-permission.dto';
 import { CurrentUser } from '@/decorators/current-user.decorator';
 import { User } from '@/user/entities/user.entity';
+import { PaginationDto } from '@/common/dto/pagination.dto';
+import { PaginatedResponseDto } from '@/common/dto/paginated-response.dto';
+import { SystemPermissionResponseDto } from './dto/system-permission-response.dto';
+import { ParseUUIDPipe } from '@nestjs/common';
 
 @ApiTags('User Permissions')
 @Controller('permission')
@@ -31,6 +36,53 @@ export class PermissionController {
   async getPermissions(@CurrentUser() user: User) {
     const userId = user.id;
     return this.permissionService.getUserEffectivePermissions(userId);
+  }
+
+  /**
+   * Get all permissions licensed to an organization (for super admin)
+   * @param organizationId Organization ID
+   * @returns Array of permission IDs
+   */
+  @Get('organization/:organizationId/licensed')
+  @Version(API_VERSION.V1)
+  @ApiOperation({ summary: 'Get all permissions licensed to an organization' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Returns array of permission IDs licensed to the organization',
+  })
+  async getOrganizationLicensedPermissions(
+    @Param('organizationId', ParseUUIDPipe) organizationId: string,
+  ): Promise<string[]> {
+    return this.permissionService.getOrganizationLicensedPermissions(
+      organizationId,
+    );
+  }
+
+  /**
+   * Get all permissions assigned to roles in current user's organization
+   * @param query Pagination parameters
+   * @param user Current authenticated user
+   * @returns Object containing grouped permissions and pagination metadata
+   */
+  @Get('organization/role-permissions')
+  @Version(API_VERSION.V1)
+  @ApiOperation({
+    summary: 'Get all permissions assigned to roles in organization',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description:
+      'Returns grouped permissions assigned to roles in organization',
+    type: PaginatedResponseDto<SystemPermissionResponseDto>,
+  })
+  async getOrganizationRolePermissions(
+    @Query() query: PaginationDto,
+    @CurrentUser() user: User,
+  ): Promise<PaginatedResponseDto<SystemPermissionResponseDto>> {
+    return this.permissionService.getOrganizationRolePermissions(
+      user.organizationId,
+      query,
+    );
   }
 
   /**

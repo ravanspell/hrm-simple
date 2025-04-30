@@ -30,17 +30,17 @@ export class EmailSettingsService {
    * - Uses transaction to ensure data consistency
    */
   @Transactional()
-  async create(createDto: CreateEmailSettingsDto) {
+  async create(createEmailSettingsRequest: CreateEmailSettingsDto) {
     // Encrypt the email authentication password for security
     const encryptedPassword = this.encryptionService.encrypt(
-      createDto.emailAuthPassword,
+      createEmailSettingsRequest.emailAuthPassword,
     );
 
     // If isPrimary is true, unset other primary email settings for the organization
-    if (createDto.isPrimary) {
+    if (createEmailSettingsRequest.isPrimary) {
       const currentPrimaryEmailSetting =
         await this.emailSettingsRepository.findPrimaryEmailSettings(
-          createDto.organizationId,
+          createEmailSettingsRequest.organizationId,
         );
       if (currentPrimaryEmailSetting) {
         await this.emailSettingsRepository.updateEmailSettings(
@@ -55,17 +55,16 @@ export class EmailSettingsService {
 
     // Prepare the new email setting with encrypted password
     const newEmailSetting: Partial<EmailSettings> = {
-      emailHost: createDto.emailHost,
-      emailPort: createDto.emailPort,
-      displayName: createDto.displayName,
-      defaultFromEmail: createDto.defaultFromEmail,
-      emailHostUsername: createDto.emailHostUsername,
+      emailHost: createEmailSettingsRequest.emailHost,
+      emailPort: createEmailSettingsRequest.emailPort,
+      displayName: createEmailSettingsRequest.displayName,
+      defaultFromEmail: createEmailSettingsRequest.defaultFromEmail,
+      emailHostUsername: createEmailSettingsRequest.emailHostUsername,
       emailAuthPassword: encryptedPassword,
-      useTLS: createDto.useTLS ?? false,
-      useSSL: createDto.useSSL ?? false,
-      isPrimary: createDto.isPrimary ?? false,
-      emailSendTimeout: createDto.emailSendTimeout ?? 30000,
-      organizationId: createDto.organizationId,
+      useTLS: createEmailSettingsRequest.useTLS ?? false,
+      useSSL: createEmailSettingsRequest.useSSL ?? false,
+      isPrimary: createEmailSettingsRequest.isPrimary ?? false,
+      emailSendTimeout: createEmailSettingsRequest.emailSendTimeout ?? 30000,
     };
 
     // Create the email setting in the database

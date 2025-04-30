@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { BASE_ENTITY_COLUMNS } from '@/constants/common';
 
-export abstract class BaseEntity {
+export abstract class BaseEntityWithTenant {
   @PrimaryGeneratedColumn('uuid', { name: BASE_ENTITY_COLUMNS.ID })
   id: string;
 
@@ -28,4 +28,8 @@ export abstract class BaseEntity {
   })
   @Index()
   updatedBy: string;
+
+  @Column({ type: 'uuid', name: BASE_ENTITY_COLUMNS.ORGANIZATION_ID })
+  @Index()
+  organizationId: string;
 }
