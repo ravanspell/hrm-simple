@@ -8,11 +8,10 @@ export class EmailSettingsRepository extends Repository<EmailSettings> {
     super(EmailSettings, dataSource.createEntityManager());
   }
 
-  async createEmailSettings(
+  async upsertEmailSettings(
     data: Partial<EmailSettings>,
   ): Promise<EmailSettings> {
-    const newEmailSettings = this.create(data);
-    return this.save(newEmailSettings);
+    return this.save(data);
   }
 
   async findEmailSettingsByOrganization(

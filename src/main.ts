@@ -19,6 +19,7 @@ import { Session } from './auth/entities/session.entity';
 import { SentryInterceptor } from './interceptors/sentry.interceptor';
 import { SentryService } from './utilities/sentry/sentry.service';
 import helmet from 'helmet';
+import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {
   /**
@@ -113,7 +114,7 @@ async function bootstrap() {
   const sessionConfig = {
     secret: process.env.SESSION_TOKEN_SECRET,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     store: sessionStore,
     name: 'myhrm_session',
     cookie: {
@@ -124,20 +125,27 @@ async function bootstrap() {
       path: '/',
       domain: process.env.COOKIE_DOMAIN || undefined,
     },
+    rolling: true,
   };
 
+  // Initialize session middleware first
   app.use(session(sessionConfig));
+
+  // Then initialize passport
   app.use(passport.initialize());
   app.use(passport.session());
 
   // Get SentryService instance
   const sentryService = app.get(SentryService);
+  const reflector = app.get(Reflector);
 
+  // Apply global interceptors
   app.useGlobalInterceptors(
-    new TransformInterceptor(),
+    new TransformInterceptor(reflector),
     new SentryInterceptor(sentryService),
   );
 
+  // Apply global pipes
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -149,6 +157,7 @@ async function bootstrap() {
     }),
   );
 
+  // Start the application
   await app.listen(3001);
 }
 
